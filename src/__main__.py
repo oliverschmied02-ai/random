@@ -1,0 +1,238 @@
+"""
+CLI entry point.
+
+Usage:
+  python -m zvg scrape [OPTIONS]
+  python -m zvg analyse [OPTIONS]
+  python -m zvg report [OPTIONS]
+  python -m zvg schedule
+
+Examples:
+  python -m zvg scrape --land Bayern --plz 80000-82000
+  python -m zvg scrape --land Bayern --gericht "AG München"
+  python -m zvg analyse --all
+  python -m zvg report --formats csv excel html
+  python -m zvg schedule
+"""
+from __future__ import annotations
+
+import asyncio
+import logging
+import sys
+from pathlib import Path
+
+import click
+from rich.logging import RichHandler
+
+# ---------------------------------------------------------------------------
+# Logging setup
+# ---------------------------------------------------------------------------
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(message)s",
+    handlers=[RichHandler(rich_tracebacks=True, show_path=False)],
+)
+logger = logging.getLogger(__name__)
+
+
+# ---------------------------------------------------------------------------
+# CLI
+# ---------------------------------------------------------------------------
+
+@click.group()
+@click.option("--config", default="config.yaml", show_default=True, help="Path to config.yaml")
+@click.option("--verbose", "-v", is_flag=True, help="Enable debug logging")
+@click.pass_context
+def cli(ctx: click.Context, config: str, verbose: bool) -> None:
+    """ZVG Intelligence Platform — Zwangsversteigerungen scraper & analyser."""
+    if verbose:
+        logging.getLogger().setLevel(logging.DEBUG)
+    from src.config import load_config
+    ctx.ensure_object(dict)
+    ctx.obj["config"] = load_config(config)
+
+
+@cli.command()
+@click.option("--land", help="Bundesland (overrides config)")
+@click.option("--gericht", help="Amtsgericht (overrides config)")
+@click.option("--plz", help="PLZ or range e.g. '80000-82000' (overrides config)")
+@click.option("--no-download", is_flag=True, help="Skip PDF/photo download")
+@click.option("--no-drive", is_flag=True, help="Skip Google Drive upload")
+@click.option("--no-analyse", is_flag=True, help="Skip AI analysis")
+@click.pass_context
+def scrape(
+    ctx: click.Context,
+    land: str | None,
+    gericht: str | None,
+    plz: str | None,
+    no_download: bool,
+    no_drive: bool,
+    no_analyse: bool,
+) -> None:
+    """Scrape ZVG Portal and save listings."""
+    config = ctx.obj["config"]
+
+    # CLI overrides
+    if land:
+        config.scraper.area_of_interest.bundesland = land
+    if gericht:
+        config.scraper.area_of_interest.amtsgerichte = [gericht]
+    if plz:
+        if "-" in plz:
+            start, end = plz.split("-", 1)
+            config.scraper.area_of_interest.plz_range = [
+                str(p) for p in range(int(start), int(end) + 1, 100)
+            ]
+        else:
+            config.scraper.area_of_interest.plz_range = [plz]
+
+    asyncio.run(
+        _run_scrape(config, no_download=no_download, no_drive=no_drive, no_analyse=no_analyse)
+    )
+
+
+@cli.command()
+@click.option("--all", "run_all", is_flag=True, help="Re-analyse all listings in DB")
+@click.pass_context
+def analyse(ctx: click.Context, run_all: bool) -> None:
+    """Run analysis (PDF extraction + AI) on downloaded listings."""
+    config = ctx.obj["config"]
+    asyncio.run(_run_analyse(config, run_all=run_all))
+
+
+@cli.command()
+@click.option(
+    "--formats",
+    multiple=True,
+    default=["csv", "excel", "html"],
+    show_default=True,
+    help="Output formats",
+)
+@click.pass_context
+def report(ctx: click.Context, formats: tuple[str, ...]) -> None:
+    """Generate reports from the local database."""
+    config = ctx.obj["config"]
+    config.reporting.output_formats = list(formats)
+    _run_report(config)
+
+
+@cli.command()
+@click.pass_context
+def schedule(ctx: click.Context) -> None:
+    """Start the cron scheduler (runs pipeline on configured schedule)."""
+    config = ctx.obj["config"]
+    from src.scraper.scheduler import start_scheduler
+    start_scheduler(config)
+
+
+# ---------------------------------------------------------------------------
+# Pipeline implementations
+# ---------------------------------------------------------------------------
+
+async def _run_scrape(config, no_download: bool, no_drive: bool, no_analyse: bool) -> None:
+    from src.scraper.session import ZVGSession
+    from src.scraper.search import fetch_all_listings
+    from src.scraper.listing_parser import parse_listing
+    from src.scraper.document_downloader import download_documents
+    from src.storage.local_db import ListingDB
+    from src.storage.drive_client import DriveClient
+    from src.storage.file_organizer import organise_to_drive
+    from src.analysis.enricher import enrich_listing
+    from src.analysis.ai_analyst import analyse_listing
+    from src.analysis.alerting import send_alerts
+
+    db = ListingDB(config.storage.local_db_path)
+    db.init()
+
+    logger.info("Starting scrape for %s", config.scraper.area_of_interest.bundesland)
+
+    async with ZVGSession(config.scraper) as session:
+        page = await session.new_page()
+        raw_listings = await fetch_all_listings(
+            page, config.scraper.area_of_interest, config.scraper
+        )
+
+    new_listings = []
+    for raw in raw_listings:
+        listing = parse_listing(raw)
+        if db.is_new_or_changed(listing):
+            new_listings.append(listing)
+
+    logger.info("Found %d new/changed listings (total scraped: %d)", len(new_listings), len(raw_listings))
+
+    if not no_download:
+        for listing in new_listings:
+            await download_documents(listing, config.storage, config.scraper)
+
+    for listing in new_listings:
+        enrich_listing(listing)
+
+    if not no_analyse and config.anthropic_api_key:
+        for listing in new_listings:
+            await analyse_listing(listing, config)
+
+    for listing in new_listings:
+        db.upsert(listing)
+
+    if not no_drive:
+        creds_file = config.storage.google_drive.credentials_file
+        if creds_file.exists():
+            drive = DriveClient(config.storage.google_drive)
+            for listing in new_listings:
+                await organise_to_drive(listing, drive, config.storage)
+        else:
+            logger.info(
+                "Google Drive credentials not found at %s — skipping Drive sync",
+                creds_file,
+            )
+
+    send_alerts(new_listings, config)
+
+    from src.analysis.report import generate_reports
+    all_listings = db.get_all()
+    generate_reports(all_listings, config)
+
+    logger.info("Done. %d listings processed.", len(new_listings))
+
+
+async def _run_analyse(config, run_all: bool) -> None:
+    from src.storage.local_db import ListingDB
+    from src.analysis.enricher import enrich_listing
+    from src.analysis.ai_analyst import analyse_listing
+
+    db = ListingDB(config.storage.local_db_path)
+    db.init()
+    listings = db.get_all()
+
+    if not run_all:
+        listings = [l for l in listings if l.ai_attractiveness_score is None]
+
+    logger.info("Analysing %d listings", len(listings))
+    for listing in listings:
+        enrich_listing(listing)
+        if config.anthropic_api_key:
+            await analyse_listing(listing, config)
+        db.upsert(listing)
+
+    logger.info("Analysis complete")
+
+
+def _run_report(config) -> None:
+    from src.storage.local_db import ListingDB
+    from src.analysis.report import generate_reports
+
+    db = ListingDB(config.storage.local_db_path)
+    db.init()
+    listings = db.get_all()
+    paths = generate_reports(listings, config)
+    for fmt, path in paths.items():
+        logger.info("[%s] %s", fmt.upper(), path)
+
+
+# ---------------------------------------------------------------------------
+# Entry point
+# ---------------------------------------------------------------------------
+
+if __name__ == "__main__":
+    cli(obj={})
