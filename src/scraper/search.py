@@ -297,7 +297,8 @@ def _parse_address(objekt_text: str) -> dict[str, str]:
         return result
 
     # Pattern: "Musterstraße 5, 80331 München" or "80331 München"
-    m = re.search(r"(\d{5})\s+([^\n,]+)", objekt_text)
+    # Ort ends at comma, newline, or keywords like "Beschreibung:"
+    m = re.search(r"(\d{5})\s+([A-ZÄÖÜa-zäöü][^\n,]{1,40}?)(?:\s*(?:Beschreibung:|letzte\s|$))", objekt_text)
     if m:
         result["plz"] = m.group(1)
         result["ort"] = m.group(2).strip()

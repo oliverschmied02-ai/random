@@ -400,7 +400,8 @@ elif page == "📋 Alle Objekte":
         bl_options = sorted(df["bundesland"].dropna().unique().tolist())
         bl_filter = fc2.multiselect("Bundesland", bl_options, default=bl_options)
 
-        vw_max = int(df["verkehrswert"].dropna().max() or 1_000_000)
+        _vw_max = df["verkehrswert"].dropna().max()
+        vw_max = int(_vw_max) if _vw_max == _vw_max else 1_000_000  # guard against NaN
         vw_range = fc3.slider(
             "Verkehrswert (€)", 0, vw_max,
             (0, min(500_000, vw_max)),
@@ -686,6 +687,22 @@ elif page == "⚙️ Einstellungen":
         )
         st.caption("Beispiele: `0 7 * * *` = täglich 7 Uhr | `0 8 * * 1` = montags 8 Uhr")
 
+    # ── Lokaler Speicherort ──
+    with st.expander("📁 Lokaler Speicherort", expanded=True):
+        default_files_dir = str(
+            cfg.get("storage", {}).get("files_dir", "")
+            or Path.home() / "Downloads" / "ZVG"
+        )
+        files_dir_input = st.text_input(
+            "Ordner für heruntergeladene Dateien (Gutachten, Fotos, ...)",
+            value=default_files_dir,
+            placeholder=str(Path.home() / "Downloads" / "ZVG"),
+            help="Absoluter Pfad wo PDFs und Fotos gespeichert werden.",
+        )
+        if files_dir_input:
+            resolved = Path(files_dir_input).expanduser()
+            st.caption(f"Gespeichert in: `{resolved}`")
+
     # ── Google Drive ──
     with st.expander("☁️ Google Drive"):
         st.markdown(
@@ -754,7 +771,10 @@ elif page == "⚙️ Einstellungen":
         analysis_cfg["ai_model"] = claude_model
         analysis_cfg["ollama_model"] = ollama_model
         analysis_cfg["ollama_endpoint"] = ollama_endpoint
-        drive_cfg = cfg.setdefault("storage", {}).setdefault("google_drive", {})
+        storage_cfg = cfg.setdefault("storage", {})
+        if files_dir_input:
+            storage_cfg["files_dir"] = str(Path(files_dir_input).expanduser())
+        drive_cfg = storage_cfg.setdefault("google_drive", {})
         drive_cfg["root_folder_name"] = drive_folder
         drive_cfg["root_folder_link"] = drive_folder_link
         save_config_yaml(cfg)
