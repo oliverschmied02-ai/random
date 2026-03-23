@@ -84,7 +84,7 @@ def _enrich_from_detail(listing: Listing, html: str, land_abk: str) -> None:
     """
     soup = BeautifulSoup(html, "lxml")
 
-    # Extract key-value pairs from the detail table
+    # Extract key-value pairs from the detail table (keys lowercased for lookup)
     kv: dict[str, str] = {}
     for row in soup.find_all("tr"):
         cells = row.find_all("td")
@@ -93,15 +93,46 @@ def _enrich_from_detail(listing: Listing, html: str, land_abk: str) -> None:
             val = cells[1].get_text(separator=" ", strip=True)
             kv[key] = val
 
+    def _kv_get(*fragments: str) -> str:
+        """Return first kv value whose key contains any of the fragments."""
+        for frag in fragments:
+            for k, v in kv.items():
+                if frag in k:
+                    return v
+        return ""
+
     # Art der Versteigerung
-    art = kv.get("art der versteigerung", "")
+    art = _kv_get("art der versteigerung")
     if art and not listing.art_der_versteigerung:
         listing.art_der_versteigerung = art
 
-    # Beschreibung enriches objekt_beschreibung
-    beschreibung = kv.get("beschreibung", "")
-    if beschreibung and len(beschreibung) > len(listing.objekt_beschreibung):
-        listing.objekt_beschreibung = beschreibung
+    # Objekt/Lage — better address source than search-result cell
+    objekt_lage = _kv_get("objekt/lage", "objekt / lage")
+    if objekt_lage:
+        # Extract PLZ + Ort
+        m_addr = re.search(r"(\d{5})\s+([A-ZÄÖÜa-zäöü][^\n,]{1,40}?)(?:\s*$|\s*,)", objekt_lage)
+        if m_addr:
+            listing.plz = m_addr.group(1)
+            listing.ort = m_addr.group(2).strip()
+        # Use as objekt_beschreibung if richer
+        if len(objekt_lage) > len(listing.objekt_beschreibung):
+            listing.objekt_beschreibung = objekt_lage
+
+    # Beschreibung — extract free-text and Wohnfläche
+    beschreibung = _kv_get("beschreibung")
+    if beschreibung:
+        if len(beschreibung) > len(listing.objekt_beschreibung):
+            listing.objekt_beschreibung = beschreibung
+        # Extract Wohnfläche: "ca. 95,28 m²" or "95,28 m²" or "95.28 m²"
+        if listing.wohnflaeche_sqm is None:
+            m_wfl = re.search(r"(?:ca\.?\s*)?([\d.,]+)\s*m[²2]\s*Wohnfl", beschreibung, re.IGNORECASE)
+            if not m_wfl:
+                m_wfl = re.search(r"Wohnfl[äa][^\d]*([\d.,]+)\s*m[²2]", beschreibung, re.IGNORECASE)
+            if m_wfl:
+                try:
+                    listing.wohnflaeche_sqm = float(m_wfl.group(1).replace(".", "").replace(",", "."))
+                except ValueError:
+                    pass
 
     # Cancellation check
     full_text = soup.get_text()
@@ -123,18 +154,22 @@ def _enrich_from_detail(listing: Listing, html: str, land_abk: str) -> None:
 
         # Attachment links: ?button=showAnhang&...  (must be checked before skip patterns)
         if "showanhang" in href.lower():
-            if "gutachten" in text:
+            if "gutachten" in text or "pdf" in text or "wertgutachten" in text:
                 listing.gutachten_url = abs_href
-            elif "exposé" in text or "expose" in text:
+            elif "exposé" in text or "expose" in text or "exposee" in text:
                 listing.expose_url = abs_href
             elif any(ext in href.lower() for ext in [".jpg", ".jpeg", ".png", ".gif"]):
                 listing.foto_urls.append(abs_href)
-            elif "foto" in text or "bild" in text:
+            elif "foto" in text or "bild" in text or "image" in text:
                 listing.foto_urls.append(abs_href)
             else:
-                # Default unknown attachments to Gutachten if none set yet
+                # Unknown attachment — assign by position: first=gutachten, second=expose, rest=fotos
                 if not listing.gutachten_url:
                     listing.gutachten_url = abs_href
+                elif not listing.expose_url:
+                    listing.expose_url = abs_href
+                else:
+                    listing.foto_urls.append(abs_href)
 
         # Skip internal navigation links (after attachment check)
         elif any(p in href for p in _SKIP_LINK_PATTERNS):
@@ -149,22 +184,29 @@ def _enrich_from_detail(listing: Listing, html: str, land_abk: str) -> None:
         elif any(href.lower().endswith(ext) for ext in [".jpg", ".jpeg", ".png", ".gif"]):
             listing.foto_urls.append(abs_href)
 
-    # PLZ / Ort — try to extract if not already set
+    # PLZ / Ort — fallback to full-text search if still missing
     if not listing.plz:
         m = re.search(r"\b(\d{5})\s+([A-ZÄÖÜ][^\n,]{2,30})", full_text)
         if m:
             listing.plz = m.group(1)
             listing.ort = m.group(2).strip()
 
-    # Verkehrswert — sometimes only on the detail page
+    # Verkehrswert — portal label is "Verkehrswert in €:" so we use flexible lookup
     if listing.verkehrswert is None:
-        m = re.search(
-            r"Verkehrswert\s*[:\-]?\s*([\d.,]+)\s*[€EUReur]*",
-            full_text,
-            re.IGNORECASE,
-        )
-        if m:
-            listing.verkehrswert = _parse_money(m.group(1))
+        # Try kv first (handles "verkehrswert in €" key)
+        vw_raw = _kv_get("verkehrswert")
+        if vw_raw:
+            listing.verkehrswert = _parse_money(vw_raw)
+        else:
+            # Regex fallback: "Verkehrswert in €: 517.000,00" or plain "Verkehrswert: 517.000"
+            m = re.search(
+                r"Verkehrswert[^:]*:\s*([\d.,]+)",
+                full_text,
+                re.IGNORECASE,
+            )
+            if m:
+                listing.verkehrswert = _parse_money(m.group(1))
+        if listing.verkehrswert:
             listing.compute_bietgrenzen()
 
 

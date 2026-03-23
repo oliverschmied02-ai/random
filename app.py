@@ -259,26 +259,12 @@ elif page == "🔍 Suche starten":
     area = cfg.get("scraper", {}).get("area_of_interest", {})
 
     with st.form("search_form"):
-        st.subheader("🗺️ Suchgebiet")
-        col1, col2 = st.columns(2)
-
-        bundesland = col1.selectbox(
+        bundesland = st.selectbox(
             "Bundesland",
             BUNDESLAENDER,
             index=BUNDESLAENDER.index(area.get("bundesland", "Bayern"))
             if area.get("bundesland") in BUNDESLAENDER else 1,
-        )
-        plz_input = col2.text_input(
-            "PLZ oder PLZ-Bereich (optional)",
-            value=", ".join(area.get("plz_range") or []),
-            placeholder="z.B. 80331 oder 80000-82000",
-            help="Leer lassen = ganzes Bundesland",
-        )
-        gericht_input = st.text_input(
-            "Bestimmtes Amtsgericht (optional)",
-            value=", ".join(area.get("amtsgerichte") or []),
-            placeholder="z.B. AG München",
-            help="Leer lassen = alle Gerichte im Bundesland",
+            help="Alle Angebote im gewählten Bundesland werden geladen.",
         )
 
         st.subheader("⚙️ Optionen")
@@ -292,30 +278,14 @@ elif page == "🔍 Suche starten":
         )
 
     if submitted:
-        # Save config
-        plz_range = []
-        if plz_input.strip():
-            raw_plz = plz_input.strip()
-            if "-" in raw_plz and raw_plz.replace("-", "").isdigit():
-                start, end = raw_plz.split("-", 1)
-                plz_range = [str(p) for p in range(int(start), int(end) + 1, 100)]
-            else:
-                plz_range = [p.strip() for p in raw_plz.split(",") if p.strip()]
-
-        gerichte = [g.strip() for g in gericht_input.split(",") if g.strip()]
-
         cfg.setdefault("scraper", {}).setdefault("area_of_interest", {})
         cfg["scraper"]["area_of_interest"]["bundesland"] = bundesland
-        cfg["scraper"]["area_of_interest"]["plz_range"] = plz_range
-        cfg["scraper"]["area_of_interest"]["amtsgerichte"] = gerichte
+        cfg["scraper"]["area_of_interest"]["plz_range"] = []
+        cfg["scraper"]["area_of_interest"]["amtsgerichte"] = []
         save_config_yaml(cfg)
 
         # Build CLI command
         cmd = [sys.executable, "-m", "src", "scrape", "--land", bundesland]
-        if plz_range:
-            cmd += ["--plz", plz_input.strip()]
-        if gerichte:
-            cmd += ["--gericht", gerichte[0]]
         if not do_download:
             cmd.append("--no-download")
         if not do_analyse:
