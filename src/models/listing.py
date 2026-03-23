@@ -63,6 +63,11 @@ class Listing:
     drive_folder_id: Optional[str] = None
     drive_folder_url: Optional[str] = None
 
+    # Cloudflare R2 public URLs (set after upload)
+    r2_gutachten_url: Optional[str] = None
+    r2_expose_url: Optional[str] = None
+    r2_foto_urls: list[str] = field(default_factory=list)
+
     # Metadata
     scraped_at: datetime = field(default_factory=datetime.utcnow)
     last_updated: datetime = field(default_factory=datetime.utcnow)
@@ -118,6 +123,9 @@ class Listing:
             "ai_recommended_max_bid": self.ai_recommended_max_bid,
             "gutachten_url": self.gutachten_url,
             "drive_folder_url": self.drive_folder_url,
+            "r2_gutachten_url": self.r2_gutachten_url,
+            "r2_expose_url": self.r2_expose_url,
+            "r2_foto_urls": "; ".join(self.r2_foto_urls),
             "scraped_at": self.scraped_at.isoformat(),
             "last_updated": self.last_updated.isoformat(),
         }

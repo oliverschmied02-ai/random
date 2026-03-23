@@ -35,6 +35,17 @@ class ScraperConfig(BaseSettings):
     headless: bool = True
 
 
+class R2Config(BaseSettings):
+    model_config = SettingsConfigDict(extra="allow")
+
+    account_id: str = ""
+    access_key_id: str = ""
+    secret_access_key: str = ""
+    bucket_name: str = "zvg-data"
+    public_url: str = ""       # e.g. https://pub-<hash>.r2.dev  or custom domain
+    enabled: bool = False      # set to true once credentials are configured
+
+
 class GoogleDriveConfig(BaseSettings):
     model_config = SettingsConfigDict(extra="allow")
 
@@ -51,6 +62,7 @@ class StorageConfig(BaseSettings):
     local_db_path: Path = Path("./data/zvg.db")
     files_dir: Path = Path("./data/files")
     google_drive: GoogleDriveConfig = GoogleDriveConfig()
+    r2: R2Config = R2Config()
 
 
 class AnalysisConfig(BaseSettings):
@@ -129,6 +141,7 @@ def load_config(config_path: str | Path = "config.yaml") -> AppConfig:
             local_db_path=storage_raw.get("local_db_path", "./data/zvg.db"),
             files_dir=storage_raw.get("files_dir", "./data/files"),
             google_drive=GoogleDriveConfig(**drive_raw),
+            r2=R2Config(**storage_raw.get("r2", {})),
         ),
         analysis=AnalysisConfig(
             run_after_scrape=analysis_raw.get("run_after_scrape", True),

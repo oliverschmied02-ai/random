@@ -1,5 +1,6 @@
 """
 Maps a Listing to its Google Drive folder path and syncs local files.
+Also supports uploading to Cloudflare R2 (organise_to_r2).
 """
 from __future__ import annotations
 
@@ -11,6 +12,7 @@ from pathlib import Path
 from src.config import StorageConfig
 from src.models.listing import Listing
 from src.storage.drive_client import DriveClient, folder_id_from_link
+from src.storage.r2_client import R2Client
 
 logger = logging.getLogger(__name__)
 
@@ -105,6 +107,47 @@ async def organise_to_drive(
     logger.info(
         "Synced %s → Drive %s", listing.aktenzeichen, listing.drive_folder_url
     )
+
+
+def _r2_prefix(listing: Listing) -> str:
+    """R2 key prefix for a listing, e.g. Bayern/AG_Muenchen/12_K_45_24"""
+    return "/".join([
+        _safe(listing.bundesland),
+        _safe(listing.amtsgericht),
+        _safe(listing.aktenzeichen.replace(" ", "_").replace("/", "_")),
+    ])
+
+
+def organise_to_r2(listing: Listing, r2: R2Client) -> None:
+    """
+    Upload all local files for a listing to Cloudflare R2.
+    Sets r2_gutachten_url, r2_expose_url, r2_foto_urls on the listing.
+    Already-uploaded files are skipped (idempotent).
+    """
+    prefix = _r2_prefix(listing)
+
+    if listing.gutachten_local_path:
+        p = Path(listing.gutachten_local_path)
+        if p.exists():
+            key = f"{prefix}/{p.name}"
+            listing.r2_gutachten_url = r2.upload_file(p, key) or None
+
+    if listing.expose_local_path:
+        p = Path(listing.expose_local_path)
+        if p.exists():
+            key = f"{prefix}/{p.name}"
+            listing.r2_expose_url = r2.upload_file(p, key) or None
+
+    listing.r2_foto_urls = []
+    for local_path in listing.foto_local_paths:
+        p = Path(local_path)
+        if p.exists():
+            key = f"{prefix}/fotos/{p.name}"
+            url = r2.upload_file(p, key)
+            if url:
+                listing.r2_foto_urls.append(url)
+
+    logger.info("R2 synced: %s", listing.aktenzeichen)
 
 
 async def upload_master_csv(

@@ -1,0 +1,72 @@
+# Render.com deployment configuration
+# Free tier: 750 hours/month web service + free cron jobs
+# Deploy: connect your GitHub repo at https://dashboard.render.com
+#
+# IMPORTANT — Database persistence on free tier:
+#   Render free web services have NO persistent disk.
+#   The app uses R2 to backup/restore the SQLite DB automatically:
+#   - On scrape: DB is uploaded to R2 after each run (state/zvg.db)
+#   - On startup: app pulls DB from R2 if local copy missing
+#   Set R2_* env vars below and enable R2 in config.yaml.
+#   Alternatively, upgrade to a Render paid plan ($7/mo) for a persistent disk.
+
+services:
+  # ── Streamlit web app ──────────────────────────────────────────────────────
+  - type: web
+    name: zvg-intelligence
+    env: python
+    plan: free
+    region: frankfurt          # closest to German data
+    buildCommand: pip install -r requirements.txt
+    startCommand: >
+      streamlit run app.py
+      --server.port=$PORT
+      --server.address=0.0.0.0
+      --server.headless=true
+      --server.fileWatcherType=none
+    envVars:
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: OPENROUTER_API_KEY
+        sync: false
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false
+      - key: TELEGRAM_CHAT_ID
+        sync: false
+      - key: R2_ACCOUNT_ID
+        sync: false
+      - key: R2_ACCESS_KEY_ID
+        sync: false
+      - key: R2_SECRET_ACCESS_KEY
+        sync: false
+      - key: R2_BUCKET_NAME
+        sync: false
+      - key: R2_PUBLIC_URL
+        sync: false
+      - key: PYTHONUNBUFFERED
+        value: "1"
+
+  # ── Daily scraper cron job ─────────────────────────────────────────────────
+  - type: cron
+    name: zvg-scraper-daily
+    env: python
+    plan: free
+    region: frankfurt
+    schedule: "0 7 * * 1-5"   # weekdays at 07:00 UTC (09:00 Berlin summer time)
+    buildCommand: pip install -r requirements.txt
+    startCommand: python -m src scrape --no-drive
+    envVars:
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: R2_ACCOUNT_ID
+        sync: false
+      - key: R2_ACCESS_KEY_ID
+        sync: false
+      - key: R2_SECRET_ACCESS_KEY
+        sync: false
+      - key: R2_BUCKET_NAME
+        sync: false
+      - key: R2_PUBLIC_URL
+        sync: false
+      - key: PYTHONUNBUFFERED
+        value: "1"

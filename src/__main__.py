@@ -51,6 +51,7 @@ def cli(ctx: click.Context, config: str, verbose: bool) -> None:
 @click.option("--plz", help="PLZ or range e.g. '80000-82000'")
 @click.option("--no-download", is_flag=True, help="Skip PDF/photo download")
 @click.option("--no-drive", is_flag=True, help="Skip Google Drive upload")
+@click.option("--no-r2", is_flag=True, help="Skip Cloudflare R2 upload")
 @click.option("--no-analyse", is_flag=True, help="Skip AI analysis")
 @click.pass_context
 def scrape(
@@ -60,6 +61,7 @@ def scrape(
     plz: str | None,
     no_download: bool,
     no_drive: bool,
+    no_r2: bool,
     no_analyse: bool,
 ) -> None:
     """Scrape ZVG Portal and process listings."""
@@ -80,7 +82,13 @@ def scrape(
             config.scraper.area_of_interest.plz_range = [plz]
 
     asyncio.run(
-        _run_scrape(config, no_download=no_download, no_drive=no_drive, no_analyse=no_analyse)
+        _run_scrape(
+            config,
+            no_download=no_download,
+            no_drive=no_drive,
+            no_r2=no_r2,
+            no_analyse=no_analyse,
+        )
     )
 
 
@@ -119,14 +127,17 @@ def schedule(ctx: click.Context) -> None:
 # Pipeline helpers
 # ---------------------------------------------------------------------------
 
-async def _run_scrape(config, no_download: bool, no_drive: bool, no_analyse: bool) -> None:
+async def _run_scrape(
+    config, no_download: bool, no_drive: bool, no_r2: bool, no_analyse: bool
+) -> None:
     from src.scraper.session import make_session, fetch_detail_page
     from src.scraper.search import fetch_all_listings
     from src.scraper.listing_parser import parse_listing
     from src.scraper.document_downloader import download_documents
     from src.storage.local_db import ListingDB
     from src.storage.drive_client import DriveClient
-    from src.storage.file_organizer import organise_to_drive
+    from src.storage.file_organizer import organise_to_drive, organise_to_r2
+    from src.storage.r2_client import R2Client, push_db
     from src.analysis.enricher import enrich_listing
     from src.analysis.ai_analyst import analyse_listing
     from src.analysis.report import generate_reports
@@ -183,9 +194,38 @@ async def _run_scrape(config, no_download: bool, no_drive: bool, no_analyse: boo
         else:
             logger.info("No Drive credentials found — skipping Drive sync")
 
+    # Cloudflare R2 upload
+    r2_cfg = config.storage.r2
+    r2: R2Client | None = None
+    if not no_r2 and r2_cfg.enabled and r2_cfg.account_id and r2_cfg.access_key_id:
+        try:
+            r2 = R2Client(
+                account_id=r2_cfg.account_id,
+                access_key_id=r2_cfg.access_key_id,
+                secret_access_key=r2_cfg.secret_access_key,
+                bucket_name=r2_cfg.bucket_name,
+                public_url_base=r2_cfg.public_url,
+            )
+            for listing in new_listings:
+                organise_to_r2(listing, r2)
+                db.upsert(listing)
+            logger.info("R2 sync complete")
+        except Exception as exc:
+            logger.warning("R2 upload failed: %s", exc)
+    elif not no_r2 and not r2_cfg.enabled:
+        logger.debug("R2 not configured — skipping (set storage.r2.enabled: true in config.yaml)")
+
     all_listings = db.get_all()
     generate_reports(all_listings, config)
     send_alerts(new_listings, config)
+
+    # Persist DB to R2 for ephemeral servers (Render free tier)
+    if r2 is not None:
+        try:
+            push_db(r2, config.storage.local_db_path)
+        except Exception as exc:
+            logger.warning("R2 DB backup failed: %s", exc)
+
     logger.info("Done. Processed %d listings.", len(new_listings))
 
 

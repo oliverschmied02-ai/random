@@ -71,6 +71,20 @@ CREATE TABLE IF NOT EXISTS run_log (
 """
 
 
+def _migrate(conn: sqlite3.Connection) -> None:
+    """Add new columns that didn't exist in earlier schema versions."""
+    existing = {row[1] for row in conn.execute("PRAGMA table_info(listings)")}
+    new_cols = [
+        ("r2_gutachten_url", "TEXT"),
+        ("r2_expose_url", "TEXT"),
+        ("r2_foto_urls", "TEXT"),  # JSON array
+    ]
+    for col, col_type in new_cols:
+        if col not in existing:
+            conn.execute(f"ALTER TABLE listings ADD COLUMN {col} {col_type}")
+    conn.commit()
+
+
 class ListingDB:
     def __init__(self, db_path: Path | str) -> None:
         self._path = Path(db_path)
@@ -80,6 +94,7 @@ class ListingDB:
     def init(self) -> None:
         conn = self._get_conn()
         conn.executescript(_CREATE_SQL)
+        _migrate(conn)
         conn.commit()
 
     def _get_conn(self) -> sqlite3.Connection:
@@ -141,6 +156,9 @@ class ListingDB:
             listing.ai_recommended_max_bid,
             listing.drive_folder_id,
             listing.drive_folder_url,
+            listing.r2_gutachten_url,
+            listing.r2_expose_url,
+            json.dumps(listing.r2_foto_urls),
             listing.scraped_at.isoformat(),
             now,
         )
@@ -157,9 +175,10 @@ class ListingDB:
                 lat, lon, full_address,
                 ai_summary, ai_risk_flags, ai_attractiveness_score,
                 ai_recommended_max_bid, drive_folder_id, drive_folder_url,
+                r2_gutachten_url, r2_expose_url, r2_foto_urls,
                 scraped_at, last_updated
             ) VALUES (
-                ?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?
+                ?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?
             )
             ON CONFLICT(unique_key) DO UPDATE SET
                 status=excluded.status,
@@ -188,6 +207,9 @@ class ListingDB:
                 ai_recommended_max_bid=excluded.ai_recommended_max_bid,
                 drive_folder_id=excluded.drive_folder_id,
                 drive_folder_url=excluded.drive_folder_url,
+                r2_gutachten_url=excluded.r2_gutachten_url,
+                r2_expose_url=excluded.r2_expose_url,
+                r2_foto_urls=excluded.r2_foto_urls,
                 last_updated=excluded.last_updated
             """,
             data,
@@ -256,6 +278,9 @@ def _row_to_listing(row: sqlite3.Row) -> Listing:
         ai_recommended_max_bid=row["ai_recommended_max_bid"],
         drive_folder_id=row["drive_folder_id"],
         drive_folder_url=row["drive_folder_url"],
+        r2_gutachten_url=row["r2_gutachten_url"],
+        r2_expose_url=row["r2_expose_url"],
+        r2_foto_urls=json.loads(row["r2_foto_urls"] or "[]"),
         scraped_at=dt(row["scraped_at"]) or datetime.utcnow(),
         last_updated=dt(row["last_updated"]) or datetime.utcnow(),
     )

@@ -12,6 +12,17 @@ scraper:
 storage:
   local_db_path: ./data/zvg.db
   files_dir: ./data/files
+
+  # Cloudflare R2 — scalable file storage (10 GB free, no egress fees)
+  # Setup: https://dash.cloudflare.com → R2 → create bucket + API token
+  r2:
+    enabled: false
+    account_id: ""            # Cloudflare account ID
+    access_key_id: ""         # R2 API token key ID
+    secret_access_key: ""     # R2 API token secret (use env var R2_SECRET_ACCESS_KEY)
+    bucket_name: "zvg-data"
+    public_url: ""            # e.g. https://pub-<hash>.r2.dev — leave empty to disable public links
+
   google_drive:
     credentials_file: ./secrets/gdrive_credentials.json
     token_file: ./secrets/gdrive_token.json

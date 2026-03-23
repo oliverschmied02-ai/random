@@ -1,0 +1,10 @@
+.git
+__pycache__
+*.pyc
+*.pyo
+.env
+secrets/
+data/
+reports/
+*.db
+.DS_Store

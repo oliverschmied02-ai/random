@@ -272,6 +272,8 @@ elif page == "🔍 Suche starten":
         do_download = c1.checkbox("PDFs + Fotos laden", value=True)
         do_analyse = c2.checkbox("KI-Analyse ausführen", value=True)
         do_drive = c3.checkbox("Google Drive sync", value=False)
+        c4, _, _ = st.columns(3)
+        do_r2 = c4.checkbox("R2 Upload", value=bool(cfg.get("storage", {}).get("r2", {}).get("enabled", False)))
 
         submitted = st.form_submit_button(
             "🚀 Suche starten", use_container_width=True, type="primary"
@@ -292,6 +294,8 @@ elif page == "🔍 Suche starten":
             cmd.append("--no-analyse")
         if not do_drive:
             cmd.append("--no-drive")
+        if not do_r2:
+            cmd.append("--no-r2")
 
         st.info(f"Starte: `{' '.join(cmd)}`")
 
@@ -459,6 +463,10 @@ elif page == "📋 Alle Objekte":
             st.markdown(f"**Sicherheitsgrenze (70%):** {fmt_eur(row.get('sicherheitsgrenze_70pct'))}")
             if row.get("drive_folder_url"):
                 st.markdown(f"[📁 Google Drive Ordner öffnen]({row['drive_folder_url']})")
+            if row.get("r2_gutachten_url"):
+                st.markdown(f"[📄 Gutachten (R2)]({row['r2_gutachten_url']})")
+            if row.get("r2_expose_url"):
+                st.markdown(f"[📄 Exposé (R2)]({row['r2_expose_url']})")
         with c2:
             st.markdown(f"**Wohnfläche:** {row.get('wohnflaeche_sqm') or '–'} m²")
             st.markdown(f"**Grundstück:** {row.get('grundstueck_sqm') or '–'} m²")
@@ -707,6 +715,38 @@ elif page == "⚙️ Einstellungen":
             resolved = Path(files_dir_input).expanduser()
             st.caption(f"Gespeichert in: `{resolved}`")
 
+    # ── Cloudflare R2 ──
+    with st.expander("☁️ Cloudflare R2 — Skalierbare Dateispeicherung", expanded=False):
+        st.markdown(
+            "**10 GB kostenlos, kein Egress-Preis** — optimal für öffentliches Deployment.\n\n"
+            "Setup: [dash.cloudflare.com](https://dash.cloudflare.com) → R2 → "
+            "Bucket erstellen → API-Token erstellen (Object Read & Write)."
+        )
+        r2_cfg_raw = cfg.get("storage", {}).get("r2", {})
+        r2_enabled = st.checkbox("R2 aktivieren", value=bool(r2_cfg_raw.get("enabled", False)))
+        c1, c2 = st.columns(2)
+        r2_account = c1.text_input(
+            "Account ID", value=r2_cfg_raw.get("account_id", ""),
+            placeholder="abc123...",
+            help="Cloudflare Dashboard → rechts oben unter Account Home",
+        )
+        r2_bucket = c2.text_input(
+            "Bucket Name", value=r2_cfg_raw.get("bucket_name", "zvg-data"),
+        )
+        r2_key_id = c1.text_input(
+            "Access Key ID", value=r2_cfg_raw.get("access_key_id", ""),
+        )
+        r2_secret = c2.text_input(
+            "Secret Access Key", value=r2_cfg_raw.get("secret_access_key", ""),
+            type="password",
+        )
+        r2_public_url = st.text_input(
+            "Public URL (optional)",
+            value=r2_cfg_raw.get("public_url", ""),
+            placeholder="https://pub-....r2.dev",
+            help="Aktiviere 'Public Access' am Bucket für direkt abrufbare URLs.",
+        )
+
     # ── Google Drive ──
     with st.expander("☁️ Google Drive"):
         st.markdown(
@@ -781,6 +821,13 @@ elif page == "⚙️ Einstellungen":
         drive_cfg = storage_cfg.setdefault("google_drive", {})
         drive_cfg["root_folder_name"] = drive_folder
         drive_cfg["root_folder_link"] = drive_folder_link
+        r2_cfg_save = storage_cfg.setdefault("r2", {})
+        r2_cfg_save["enabled"] = r2_enabled
+        r2_cfg_save["account_id"] = r2_account
+        r2_cfg_save["access_key_id"] = r2_key_id
+        r2_cfg_save["secret_access_key"] = r2_secret
+        r2_cfg_save["bucket_name"] = r2_bucket
+        r2_cfg_save["public_url"] = r2_public_url
         save_config_yaml(cfg)
 
         st.success("✅ Einstellungen gespeichert!")
