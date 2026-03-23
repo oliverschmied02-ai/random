@@ -115,16 +115,13 @@ def _enrich_from_detail(listing: Listing, html: str, land_abk: str) -> None:
     for a in soup.find_all("a", href=True):
         href: str = a["href"]
 
-        # Skip internal navigation links
-        if any(p in href for p in _SKIP_LINK_PATTERNS):
-            continue
         if href in ("#", ""):
             continue
 
         abs_href = href if href.startswith("http") else f"{ZVG_BASE_URL}/{href.lstrip('/')}"
         text = a.get_text(strip=True).lower()
 
-        # Attachment links: ?button=showAnhang&...
+        # Attachment links: ?button=showAnhang&...  (must be checked before skip patterns)
         if "showanhang" in href.lower():
             if "gutachten" in text:
                 listing.gutachten_url = abs_href
@@ -138,6 +135,10 @@ def _enrich_from_detail(listing: Listing, html: str, land_abk: str) -> None:
                 # Default unknown attachments to Gutachten if none set yet
                 if not listing.gutachten_url:
                     listing.gutachten_url = abs_href
+
+        # Skip internal navigation links (after attachment check)
+        elif any(p in href for p in _SKIP_LINK_PATTERNS):
+            continue
 
         # Direct PDF links
         elif href.lower().endswith(".pdf"):
