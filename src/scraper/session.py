@@ -1,76 +1,79 @@
 """
-Playwright-based session manager for zvg-portal.de.
+HTTP session management for zvg-portal.de.
 
-The ZVG portal uses PHP session cookies and form-based navigation.
-A real browser context (Playwright) is the most reliable approach.
+The ZVG portal works with a standard requests.Session (PHP session cookies).
+Playwright is kept as an optional fallback for cases where JavaScript rendering
+becomes necessary.
+
+Encoding note: all portal responses are latin1 / iso-8859-1, not UTF-8.
 """
 from __future__ import annotations
 
-import asyncio
-import time
-from contextlib import asynccontextmanager
-from typing import AsyncGenerator
+import logging
 
-from playwright.async_api import (
-    Browser,
-    BrowserContext,
-    Page,
-    Playwright,
-    async_playwright,
-)
-from tenacity import retry, stop_after_attempt, wait_exponential
+import requests
 
 from src.config import ScraperConfig
+
+logger = logging.getLogger(__name__)
 
 ZVG_BASE_URL = "https://www.zvg-portal.de"
 ZVG_SEARCH_URL = f"{ZVG_BASE_URL}/index.php?button=Termine+suchen"
 
+_DEFAULT_HEADERS = {
+    "User-Agent": (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) "
+        "Chrome/120.0.0.0 Safari/537.36"
+    ),
+    "Accept-Language": "de-DE,de;q=0.9",
+    "Referer": f"{ZVG_BASE_URL}/index.php?button=Suchen",
+}
 
-class ZVGSession:
+
+def make_session(config: ScraperConfig) -> requests.Session:
     """
-    Manages a single Playwright browser session for the ZVG portal.
-
-    Usage:
-        async with ZVGSession(config) as session:
-            page = await session.new_page()
-            ...
+    Create a requests.Session pre-configured for the ZVG portal.
+    Warms up the session to obtain the PHP session cookie.
     """
+    session = requests.Session()
+    session.headers.update(_DEFAULT_HEADERS)
 
-    def __init__(self, config: ScraperConfig) -> None:
-        self._config = config
-        self._playwright: Playwright | None = None
-        self._browser: Browser | None = None
-        self._context: BrowserContext | None = None
-
-    async def __aenter__(self) -> "ZVGSession":
-        self._playwright = await async_playwright().start()
-        self._browser = await self._playwright.chromium.launch(
-            headless=self._config.headless,
-            args=["--no-sandbox", "--disable-setuid-sandbox"],
+    # Warm-up request to establish PHP session cookie
+    try:
+        resp = session.get(
+            f"{ZVG_BASE_URL}/index.php?button=Suchen",
+            timeout=20,
         )
-        self._context = await self._browser.new_context(
-            user_agent=(
-                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                "AppleWebKit/537.36 (KHTML, like Gecko) "
-                "Chrome/120.0.0.0 Safari/537.36"
-            ),
-            locale="de-DE",
-            timezone_id="Europe/Berlin",
-        )
-        return self
+        resp.raise_for_status()
+        logger.debug("ZVG session established (cookies: %s)", dict(session.cookies))
+    except requests.RequestException as exc:
+        logger.warning("Session warm-up failed: %s", exc)
 
-    async def __aexit__(self, *_: object) -> None:
-        if self._context:
-            await self._context.close()
-        if self._browser:
-            await self._browser.close()
-        if self._playwright:
-            await self._playwright.stop()
+    return session
 
-    async def new_page(self) -> Page:
-        assert self._context is not None, "Session not started"
-        return await self._context.new_page()
 
-    async def rate_limit(self) -> None:
-        """Honour configured rate limit between requests."""
-        await asyncio.sleep(self._config.rate_limit_seconds)
+def fetch_detail_page(
+    session: requests.Session,
+    zvg_id: int,
+    land_abk: str,
+) -> str:
+    """
+    Fetch the detail page for a single listing.
+    Returns decoded HTML string (latin1).
+    """
+    url = (
+        f"{ZVG_BASE_URL}/index.php"
+        f"?button=showZvg&zvg_id={zvg_id}&land_abk={land_abk}"
+    )
+    resp = session.get(url, timeout=30)
+    resp.encoding = "latin1"
+    return resp.text
+
+
+def attachment_url(land_abk: str, file_id: int, zvg_id: int) -> str:
+    """Build the URL for downloading a PDF or photo attachment."""
+    return (
+        f"{ZVG_BASE_URL}/?button=showAnhang"
+        f"&land_abk={land_abk}&file_id={file_id}&zvg_id={zvg_id}"
+    )

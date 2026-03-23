@@ -1,227 +1,322 @@
 """
 Submit search form on zvg-portal.de and paginate through results.
 
-Returns a list of raw dicts with fields extracted from the result table.
-Caller is responsible for converting these to Listing objects via listing_parser.
+Technical notes (from portal reverse-engineering):
+- Endpoint: POST https://www.zvg-portal.de/index.php?button=Suchen&all=1
+- State is passed as `land_abk` (2-letter abbreviation, e.g. "by")
+- HTML encoding is latin1 / iso-8859-1 — NOT utf-8
+- Detail page URL: index.php?button=showZvg&zvg_id=<id>&land_abk=<state>
+- PDF/attachment URL: ?button=showAnhang&land_abk=<state>&file_id=<id>&zvg_id=<id>
+- Standard requests session works; Playwright only needed if cookies become an issue
 """
 from __future__ import annotations
 
 import logging
+import time
 from typing import Any
 
+import requests
 from bs4 import BeautifulSoup
-from playwright.async_api import Page
 from tenacity import retry, stop_after_attempt, wait_exponential
 
 from src.config import AreaOfInterest, ScraperConfig
-from src.scraper.session import ZVG_SEARCH_URL
 
 logger = logging.getLogger(__name__)
 
-# Mapping of canonical Bundesland names → portal form values
-BUNDESLAND_MAP: dict[str, str] = {
-    "Baden-Württemberg": "Baden-Württemberg",
-    "Bayern": "Bayern",
-    "Berlin": "Berlin",
-    "Brandenburg": "Brandenburg",
-    "Bremen": "Bremen",
-    "Hessen": "Hessen",
-    "Niedersachsen": "Niedersachsen",
-    "Nordrhein-Westfalen": "Nordrhein-Westfalen",
-    "Rheinland-Pfalz": "Rheinland-Pfalz",
-    "Saarland": "Saarland",
-    "Sachsen": "Sachsen",
-    "Sachsen-Anhalt": "Sachsen-Anhalt",
-    "Schleswig-Holstein": "Schleswig-Holstein",
-    "Thüringen": "Thüringen",
-    # Hamburg and Mecklenburg-Vorpommern are NOT covered by zvg-portal.de
+ZVG_BASE = "https://www.zvg-portal.de"
+ZVG_SEARCH_URL = f"{ZVG_BASE}/index.php"
+
+# Canonical Bundesland name → portal land_abk code
+BUNDESLAND_CODES: dict[str, str] = {
+    "Baden-Württemberg": "bw",
+    "Bayern": "by",
+    "Berlin": "be",
+    "Brandenburg": "br",
+    "Bremen": "hb",
+    "Hamburg": "hh",
+    "Hessen": "he",
+    "Mecklenburg-Vorpommern": "mv",
+    "Niedersachsen": "ni",
+    "Nordrhein-Westfalen": "nw",
+    "Rheinland-Pfalz": "rp",
+    "Saarland": "sl",
+    "Sachsen": "sn",
+    "Sachsen-Anhalt": "st",
+    "Schleswig-Holstein": "sh",
+    "Thüringen": "th",
+}
+
+# Courts that do NOT publish on zvg-portal.de
+_NO_COVERAGE = {"Hamburg", "Mecklenburg-Vorpommern"}
+
+_HEADERS = {
+    "User-Agent": (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) "
+        "Chrome/120.0.0.0 Safari/537.36"
+    ),
+    "Referer": f"{ZVG_BASE}/index.php?button=Suchen",
+    "Accept-Language": "de-DE,de;q=0.9",
 }
 
 
-async def fetch_all_listings(
-    page: Page,
+def fetch_all_listings(
     area: AreaOfInterest,
     config: ScraperConfig,
 ) -> list[dict[str, Any]]:
     """
-    Navigate the ZVG search form for the given area and return all raw
-    listing dicts from every page of results.
+    Collect all raw listing dicts for the configured area.
+    Uses a persistent requests.Session to reuse cookies.
     """
-    bundesland = BUNDESLAND_MAP.get(area.bundesland, area.bundesland)
-    if bundesland not in BUNDESLAND_MAP.values():
+    bundesland = area.bundesland
+    if bundesland in _NO_COVERAGE:
         logger.warning(
-            "Bundesland '%s' may not be covered by zvg-portal.de", bundesland
+            "%s is not covered by zvg-portal.de — skipping", bundesland
+        )
+        return []
+
+    land_abk = BUNDESLAND_CODES.get(bundesland)
+    if not land_abk:
+        raise ValueError(
+            f"Unknown Bundesland '{bundesland}'. "
+            f"Valid options: {list(BUNDESLAND_CODES.keys())}"
         )
 
-    courts = area.amtsgerichte or [""]  # empty = all courts
+    session = requests.Session()
+    session.headers.update(_HEADERS)
+
+    # Warm up session (loads PHP session cookie)
+    session.get(
+        f"{ZVG_BASE}/index.php?button=Suchen",
+        timeout=20,
+    )
+
+    courts = area.amtsgerichte or ["-- Alle Amtsgerichte --"]
+    plz_values = area.plz_range or [""]
 
     all_raw: list[dict[str, Any]] = []
-    seen_keys: set[str] = set()
+    seen: set[str] = set()
 
-    for gericht in courts:
-        for plz in (area.plz_range or [""]):
-            raw = await _search_one(
-                page=page,
-                bundesland=bundesland,
-                gericht=gericht,
+    for gericht_name in courts:
+        # Resolve court name → ger_id (0 = all courts)
+        ger_id = 0
+
+        for plz in plz_values:
+            raw = _search_one(
+                session=session,
+                land_abk=land_abk,
+                ger_id=ger_id,
+                ger_name=gericht_name,
                 plz=plz,
                 config=config,
             )
             for item in raw:
                 key = f"{item.get('amtsgericht')}::{item.get('aktenzeichen')}"
-                if key not in seen_keys:
-                    seen_keys.add(key)
+                if key not in seen:
+                    seen.add(key)
                     all_raw.append(item)
-            await page.wait_for_timeout(int(config.rate_limit_seconds * 1000))
+            time.sleep(config.rate_limit_seconds)
 
-    logger.info("Total raw listings collected: %d", len(all_raw))
+    logger.info("Total listings collected: %d", len(all_raw))
     return all_raw
 
 
-async def _search_one(
-    page: Page,
-    bundesland: str,
-    gericht: str,
+def _search_one(
+    session: requests.Session,
+    land_abk: str,
+    ger_id: int,
+    ger_name: str,
     plz: str,
     config: ScraperConfig,
 ) -> list[dict[str, Any]]:
-    """Submit one search and paginate through all result pages."""
     logger.info(
-        "Searching: Bundesland=%s  Gericht=%s  PLZ=%s", bundesland, gericht, plz
+        "Searching: land_abk=%s  gericht=%s  plz=%s", land_abk, ger_name, plz
     )
 
-    await page.goto(ZVG_SEARCH_URL, wait_until="networkidle", timeout=30_000)
+    # POST payload — exact parameter names from portal form
+    payload = {
+        "ger_name": ger_name,
+        "order_by": "2",
+        "land_abk": land_abk,
+        "ger_id": str(ger_id),
+        "az1": "",
+        "az2": "",
+        "az3": "",
+        "az4": "",
+        "art": "",
+        "obj": "",
+        "str": "",
+        "hnr": "",
+        "plz": plz,
+        "ort": "",
+        "ortsteil": "",
+        "vtermin": "",
+        "btermin": "",
+    }
 
-    # --- Fill search form ---
-    # Select Bundesland
-    await page.select_option('select[name="land"]', label=bundesland)
-    await page.wait_for_timeout(500)  # wait for court list to populate via JS
-
-    # Select Gericht if specified
-    if gericht:
-        try:
-            await page.select_option('select[name="gericht"]', label=gericht)
-        except Exception:
-            logger.warning("Court '%s' not found in dropdown, skipping", gericht)
-            return []
-
-    # Fill PLZ field if specified
-    if plz:
-        plz_field = page.locator('input[name="plz"]')
-        if await plz_field.count():
-            await plz_field.fill(plz)
-
-    # Submit
-    await page.click('input[type="submit"][value="Suchen"]')
-    await page.wait_for_load_state("networkidle", timeout=30_000)
-
-    return await _collect_all_pages(page, bundesland, config)
-
-
-async def _collect_all_pages(
-    page: Page,
-    bundesland: str,
-    config: ScraperConfig,
-) -> list[dict[str, Any]]:
-    """Iterate through paginated results and collect all rows."""
-    results: list[dict[str, Any]] = []
+    all_rows: list[dict[str, Any]] = []
     page_num = 1
 
     while True:
-        html = await page.content()
-        rows = _parse_result_table(html, bundesland)
-        results.extend(rows)
-        logger.debug("  Page %d: %d rows", page_num, len(rows))
-
-        # Check for "next page" link / button
-        next_btn = page.locator('a:has-text("weiter"), a:has-text(">>"), input[value="weiter"]')
-        if await next_btn.count() == 0:
+        try:
+            resp = session.post(
+                f"{ZVG_BASE}/index.php",
+                params={"button": "Suchen", "all": "1"},
+                data=payload,
+                timeout=30,
+            )
+            resp.raise_for_status()
+        except requests.RequestException as exc:
+            logger.error("Search request failed: %s", exc)
             break
 
-        await next_btn.first.click()
-        await page.wait_for_load_state("networkidle", timeout=30_000)
-        await page.wait_for_timeout(int(config.rate_limit_seconds * 1000))
+        # Portal returns latin1 encoded HTML
+        resp.encoding = "latin1"
+        html = resp.text
+
+        rows = _parse_result_table(html, land_abk)
+        all_rows.extend(rows)
+        logger.debug("  Page %d: %d rows", page_num, len(rows))
+
+        # Check for pagination ("weiter" link / next page button)
+        soup = BeautifulSoup(html, "lxml")
+        next_link = soup.find("a", string=lambda t: t and "weiter" in t.lower())
+        if not next_link or not next_link.get("href"):
+            break
+
+        # Follow pagination link
+        next_url = next_link["href"]
+        if not next_url.startswith("http"):
+            next_url = f"{ZVG_BASE}/{next_url.lstrip('/')}"
+        try:
+            resp = session.get(next_url, timeout=30)
+            resp.encoding = "latin1"
+            html = resp.text
+        except requests.RequestException as exc:
+            logger.error("Pagination request failed: %s", exc)
+            break
+
+        # For subsequent pages, parse directly (payload not needed)
+        rows = _parse_result_table(html, land_abk)
+        all_rows.extend(rows)
         page_num += 1
+        time.sleep(config.rate_limit_seconds)
 
-    return results
+        # Check for another next-page link
+        soup = BeautifulSoup(html, "lxml")
+        if not soup.find("a", string=lambda t: t and "weiter" in t.lower()):
+            break
+
+    return all_rows
 
 
-def _parse_result_table(html: str, bundesland: str) -> list[dict[str, Any]]:
+def _parse_result_table(html: str, land_abk: str) -> list[dict[str, Any]]:
     """
-    Parse the HTML result table from the ZVG portal search results page.
+    Parse the search results table.
 
-    The portal renders a <table> where each <tr> represents one listing.
-    Typical columns (may vary slightly by Bundesland):
-      Aktenzeichen | Amtsgericht | Termin | Objekt | Verkehrswert
+    The portal renders results in a <table> inside #inhalt.
+    Each <tr> contains: Aktenzeichen | Amtsgericht | Objekt/Lage | Termin | Verkehrswert
     """
+    import re
+
     soup = BeautifulSoup(html, "lxml")
     rows: list[dict[str, Any]] = []
 
-    # The results table has id="suchergebnis" or is the main content table
-    table = (
-        soup.find("table", {"id": "suchergebnis"})
-        or soup.find("table", class_="richtig")
-        or _find_result_table(soup)
-    )
-    if not table:
-        logger.debug("No result table found on page")
-        return rows
+    # Find the results table inside #inhalt
+    inhalt = soup.find(id="inhalt") or soup
+    trs = inhalt.find_all("tr")
 
-    trs = table.find_all("tr")
-    header_row = trs[0] if trs else None
-    headers = (
-        [th.get_text(strip=True).lower() for th in header_row.find_all(["th", "td"])]
-        if header_row
-        else []
-    )
-
-    for tr in trs[1:]:
+    for tr in trs:
         cells = tr.find_all("td")
         if len(cells) < 3:
             continue
 
-        raw: dict[str, Any] = {"bundesland": bundesland}
+        cell_texts = [c.get_text(separator=" ", strip=True) for c in cells]
 
-        # Try to map by header names first, fall back to positional
-        if headers and len(headers) == len(cells):
-            cell_map = {h: c for h, c in zip(headers, cells)}
-            raw["aktenzeichen"] = _text(cell_map.get("aktenzeichen") or cells[0])
-            raw["amtsgericht"] = _text(cell_map.get("amtsgericht") or cells[1])
-            raw["termin_raw"] = _text(cell_map.get("termin") or cells[2])
-            raw["objekt_beschreibung"] = _text(
-                cell_map.get("objekt") or cell_map.get("objektbeschreibung") or cells[3] if len(cells) > 3 else cells[-1]
+        # Identify Aktenzeichen cell (contains "K" pattern)
+        az_cell = None
+        az_text = ""
+        for i, c in enumerate(cells):
+            bold = c.find("b")
+            text = bold.get_text(strip=True) if bold else c.get_text(strip=True)
+            if re.search(r"K\s*\d+\s*/\s*\d+", text):
+                az_cell = c
+                az_text = text
+                break
+
+        if not az_cell or not az_text:
+            continue
+
+        raw: dict[str, Any] = {"land_abk": land_abk, "bundesland": _land_abk_to_name(land_abk)}
+
+        # Aktenzeichen
+        raw["aktenzeichen"] = az_text.strip()
+
+        # zvg_id from the link  index.php?button=showZvg&zvg_id=XXX&land_abk=YY
+        link = az_cell.find("a", href=True)
+        if link:
+            m = re.search(r"zvg_id=(\d+)", link["href"])
+            raw["zvg_id"] = int(m.group(1)) if m else None
+            raw["detail_url"] = (
+                f"{ZVG_BASE}/{link['href'].lstrip('/')}"
+                if not link["href"].startswith("http")
+                else link["href"]
             )
-            raw["verkehrswert_raw"] = _text(
-                cell_map.get("verkehrswert") or (cells[4] if len(cells) > 4 else None)
-            )
+
+        # Map remaining cells by position (portal is consistent):
+        # [0]=Aktenzeichen, [1]=Amtsgericht, [2]=Objekt/Lage, [3]=Termin, [4]=Verkehrswert
+        idx = list(cells).index(az_cell)
+        raw["amtsgericht"] = _cell_text(cells, idx + 1)
+        raw["objekt_beschreibung"] = _cell_text(cells, idx + 2)
+        raw["termin_raw"] = _cell_text(cells, idx + 3)
+        raw["verkehrswert_raw"] = _cell_text(cells, idx + 4)
+
+        # Extract PLZ + Ort from Objekt/Lage field
+        addr = _parse_address(raw["objekt_beschreibung"])
+        raw.update(addr)
+
+        # Cancellation flag
+        termin_text = raw["termin_raw"].lower()
+        if "aufgehoben" in termin_text or "abgesagt" in termin_text:
+            raw["status"] = "cancelled"
+            raw["cancellation_reason"] = raw["termin_raw"]
         else:
-            # Positional fallback
-            raw["aktenzeichen"] = _text(cells[0])
-            raw["amtsgericht"] = _text(cells[1]) if len(cells) > 1 else ""
-            raw["termin_raw"] = _text(cells[2]) if len(cells) > 2 else ""
-            raw["objekt_beschreibung"] = _text(cells[3]) if len(cells) > 3 else ""
-            raw["verkehrswert_raw"] = _text(cells[4]) if len(cells) > 4 else ""
+            raw["status"] = "active"
 
-        # Extract detail page link (Aktenzeichen is usually a hyperlink)
-        link = cells[0].find("a")
-        raw["detail_url"] = link["href"] if link and link.get("href") else None
-
-        if raw["aktenzeichen"]:
-            rows.append(raw)
+        rows.append(raw)
 
     return rows
 
 
-def _find_result_table(soup: BeautifulSoup):
-    """Heuristic: find the table most likely to be the results table."""
-    for table in soup.find_all("table"):
-        text = table.get_text()
-        if "Aktenzeichen" in text or "aktenzeichen" in text.lower():
-            return table
-    return None
+def _parse_address(objekt_text: str) -> dict[str, str]:
+    """Extract street, PLZ, Ort from the Objekt/Lage cell."""
+    import re
+
+    result = {"plz": "", "ort": "", "strasse": ""}
+    if not objekt_text:
+        return result
+
+    # Pattern: "Musterstraße 5, 80331 München" or "80331 München"
+    m = re.search(r"(\d{5})\s+([^\n,]+)", objekt_text)
+    if m:
+        result["plz"] = m.group(1)
+        result["ort"] = m.group(2).strip()
+
+    # Street before the PLZ
+    street_part = objekt_text[:m.start()].strip().rstrip(",") if m else ""
+    # Remove object type description (usually first line)
+    lines = street_part.split("\n")
+    if len(lines) >= 2:
+        result["strasse"] = lines[-1].strip().rstrip(",")
+
+    return result
 
 
-def _text(tag) -> str:
-    if tag is None:
-        return ""
-    return tag.get_text(separator=" ", strip=True)
+def _cell_text(cells, idx: int) -> str:
+    if 0 <= idx < len(cells):
+        return cells[idx].get_text(separator=" ", strip=True)
+    return ""
+
+
+def _land_abk_to_name(abk: str) -> str:
+    return {v: k for k, v in BUNDESLAND_CODES.items()}.get(abk, abk)
