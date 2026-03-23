@@ -6,6 +6,9 @@ Attachment URL format:
 
 The portal requires the Referer header to serve attachments.
 Files are saved to: <files_dir>/<bundesland>/<amtsgericht>/<aktenzeichen>/
+
+File extensions are detected from the HTTP Content-Type header, not the URL,
+because portal URLs carry no extension.
 """
 from __future__ import annotations
 
@@ -30,6 +33,24 @@ _DOWNLOAD_HEADERS = {
     ),
     "Referer": f"{ZVG_BASE_URL}/index.php?button=Suchen",
 }
+
+# Map MIME type → file extension
+_CT_EXT: dict[str, str] = {
+    "application/pdf": ".pdf",
+    "image/jpeg": ".jpg",
+    "image/jpg": ".jpg",
+    "image/png": ".png",
+    "image/gif": ".gif",
+    "image/webp": ".webp",
+    "image/tiff": ".tif",
+    "image/bmp": ".bmp",
+}
+
+
+def _ext_from_response(resp: requests.Response) -> str:
+    """Determine file extension from Content-Type header."""
+    ct = resp.headers.get("Content-Type", "").split(";")[0].strip().lower()
+    return _CT_EXT.get(ct, ".bin")
 
 
 def _safe_name(s: str) -> str:
@@ -62,9 +83,10 @@ def download_documents(
     dl_session.headers.update(_DOWNLOAD_HEADERS)
 
     if listing.gutachten_url:
+        # Stem only — extension detected from Content-Type at download time
         path = _download_file(
             dl_session, listing.gutachten_url,
-            dest_dir / "gutachten.pdf",
+            dest_dir / "gutachten",
             scraper_cfg.max_retries,
         )
         if path:
@@ -73,7 +95,7 @@ def download_documents(
     if listing.expose_url:
         path = _download_file(
             dl_session, listing.expose_url,
-            dest_dir / "expose.pdf",
+            dest_dir / "expose",
             scraper_cfg.max_retries,
         )
         if path:
@@ -82,10 +104,9 @@ def download_documents(
     foto_dir = dest_dir / "fotos"
     foto_dir.mkdir(exist_ok=True)
     for i, url in enumerate(listing.foto_urls, start=1):
-        ext = _ext_from_url(url)
         path = _download_file(
             dl_session, url,
-            foto_dir / f"{i:02d}{ext}",
+            foto_dir / f"{i:02d}",
             scraper_cfg.max_retries,
         )
         if path:
@@ -97,18 +118,28 @@ def download_documents(
 def _download_file(
     session: requests.Session,
     url: str,
-    dest: Path,
+    dest_stem: Path,
     max_retries: int,
 ) -> Path | None:
-    """Download a single file with exponential-backoff retry."""
-    if dest.exists():
-        logger.debug("Already downloaded: %s", dest)
-        return dest
+    """
+    Download a single file with exponential-backoff retry.
+
+    dest_stem is a path WITHOUT extension (e.g. /data/files/.../gutachten).
+    The actual extension is determined from the Content-Type header.
+    Skips download if a file with the same stem already exists.
+    """
+    # Check if already downloaded (any extension)
+    existing = list(dest_stem.parent.glob(dest_stem.name + ".*"))
+    if existing:
+        logger.debug("Already downloaded: %s", existing[0])
+        return existing[0]
 
     for attempt in range(1, max_retries + 1):
         try:
             resp = session.get(url, timeout=60, stream=True)
             resp.raise_for_status()
+            ext = _ext_from_response(resp)
+            dest = dest_stem.with_suffix(ext)
             dest.write_bytes(resp.content)
             logger.info("Downloaded %s → %s", url, dest.name)
             return dest
@@ -126,8 +157,3 @@ def _download_file(
             time.sleep(2 ** attempt)
 
     return None
-
-
-def _ext_from_url(url: str) -> str:
-    suffix = Path(url.split("?")[0]).suffix.lower()
-    return suffix if suffix in {".jpg", ".jpeg", ".png", ".gif", ".webp"} else ".jpg"

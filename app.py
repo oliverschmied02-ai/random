@@ -484,25 +484,59 @@ elif page == "📋 Alle Objekte":
         st.markdown("**Objekt-Beschreibung:**")
         st.markdown(f"> {row.get('objekt_beschreibung', '–')}")
 
-        # Show local PDFs
-        local_files = []
+        # Documents & Photos
+        _IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp", ".tif", ".tiff"}
+
         gutachten = row.get("gutachten_local_path")
         expose = row.get("expose_local_path")
-        if gutachten and Path(gutachten).exists():
-            local_files.append(("Gutachten PDF", gutachten))
-        if expose and Path(expose).exists():
-            local_files.append(("Exposé PDF", expose))
 
-        if local_files:
+        docs_to_show = []
+        if gutachten and Path(gutachten).exists():
+            docs_to_show.append(("Gutachten", gutachten))
+        if expose and Path(expose).exists():
+            docs_to_show.append(("Exposé", expose))
+
+        if docs_to_show:
             st.markdown("**Dokumente:**")
-            for label, path in local_files:
-                with open(path, "rb") as f:
-                    st.download_button(
-                        f"📄 {label} herunterladen",
-                        f,
-                        file_name=Path(path).name,
-                        mime="application/pdf",
-                    )
+            for label, path in docs_to_show:
+                p = Path(path)
+                if p.suffix.lower() in _IMAGE_EXTS:
+                    st.image(str(p), caption=label, use_container_width=True)
+                else:
+                    with open(path, "rb") as f:
+                        st.download_button(
+                            f"📄 {label} herunterladen",
+                            f,
+                            file_name=p.name,
+                            mime="application/pdf",
+                        )
+
+        # Fotos
+        foto_paths_raw = row.get("foto_local_paths") or row.get("foto_local_path") or ""
+        if isinstance(foto_paths_raw, str):
+            import json as _json
+            try:
+                foto_paths = _json.loads(foto_paths_raw)
+            except Exception:
+                foto_paths = [foto_paths_raw] if foto_paths_raw else []
+        else:
+            foto_paths = list(foto_paths_raw)
+
+        existing_fotos = [p for p in foto_paths if Path(p).exists()]
+        if existing_fotos:
+            st.markdown("**Fotos:**")
+            cols = st.columns(min(3, len(existing_fotos)))
+            for i, fp in enumerate(existing_fotos):
+                p = Path(fp)
+                if p.suffix.lower() in _IMAGE_EXTS:
+                    cols[i % 3].image(str(p), use_container_width=True)
+                else:
+                    with open(fp, "rb") as f:
+                        cols[i % 3].download_button(
+                            f"📥 Foto {i+1}",
+                            f,
+                            file_name=p.name,
+                        )
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
