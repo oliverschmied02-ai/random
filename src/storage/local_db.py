@@ -91,15 +91,16 @@ class ListingDB:
     def is_new_or_changed(self, listing: Listing) -> bool:
         conn = self._get_conn()
         row = conn.execute(
-            "SELECT status, verkehrswert FROM listings WHERE unique_key = ?",
+            "SELECT status, verkehrswert, gutachten_url FROM listings WHERE unique_key = ?",
             (listing.unique_key(),),
         ).fetchone()
         if row is None:
             return True  # new
-        # Changed if status or Verkehrswert differs
+        # Changed if status, Verkehrswert differs, or a PDF URL was newly found
         return (
             row["status"] != listing.status
             or row["verkehrswert"] != listing.verkehrswert
+            or (row["gutachten_url"] is None and listing.gutachten_url is not None)
         )
 
     def upsert(self, listing: Listing) -> None:

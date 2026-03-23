@@ -157,6 +157,12 @@ async def _run_scrape(config, no_download: bool, no_drive: bool, no_analyse: boo
     if not no_download:
         for listing in new_listings:
             download_documents(listing, config.storage, config.scraper, session)
+        # Also retry missing downloads for already-known listings
+        for listing in db.get_all():
+            if (listing.gutachten_url and not listing.gutachten_local_path) or \
+               (listing.expose_url and not listing.expose_local_path):
+                download_documents(listing, config.storage, config.scraper, session)
+                db.upsert(listing)
 
     for listing in new_listings:
         enrich_listing(listing)
