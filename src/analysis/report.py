@@ -251,10 +251,11 @@ def _build_map(listings: list[Listing]) -> str:
             else "orange" if (listing.ai_attractiveness_score or 0) >= 4
             else "red"
         )
+        vw_str = f"{listing.verkehrswert:,.0f} €" if listing.verkehrswert is not None else "k.A."
         popup_html = (
             f"<b>{listing.aktenzeichen}</b><br>"
             f"{listing.amtsgericht}<br>"
-            f"Verkehrswert: {listing.verkehrswert:,.0f} €<br>"
+            f"Verkehrswert: {vw_str}<br>"
             f"Score: {listing.ai_attractiveness_score or '–'}/10"
         )
         folium.CircleMarker(
