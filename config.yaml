@@ -7,7 +7,7 @@ scraper:
   schedule_cron: "0 7 * * *"        # daily at 07:00; set to "" to disable
   rate_limit_seconds: 2
   max_retries: 3
-  headless: true                     # run Playwright headless
+  headless: true                     # run headless (kein Browser-Fenster)
 
 storage:
   local_db_path: ./data/zvg.db
@@ -16,10 +16,19 @@ storage:
     credentials_file: ./secrets/gdrive_credentials.json
     token_file: ./secrets/gdrive_token.json
     root_folder_name: ZVG_Data
+    # Optional: Bestehenden Drive-Ordner per Link verwenden (überschreibt root_folder_name)
+    root_folder_link: ""             # z.B. https://drive.google.com/drive/folders/1abc...
 
 analysis:
   run_after_scrape: true
-  ai_model: claude-opus-4-6
+  # KI-Provider: claude | ollama | openrouter
+  ai_provider: claude
+  # Claude-Modelle (günstig → teuer): claude-haiku-4-5-20251001 | claude-sonnet-4-6 | claude-opus-4-6
+  # OpenRouter-Modelle: mistralai/mistral-7b-instruct | meta-llama/llama-3.1-8b-instruct
+  ai_model: claude-haiku-4-5-20251001
+  # Ollama (nur relevant wenn ai_provider: ollama)
+  ollama_model: llama3.2
+  ollama_endpoint: http://localhost:11434
   geocoding_provider: nominatim     # nominatim (free) or google
   alert_threshold_verkehrswert_max: 500000
   alert_channel: none               # none | email | telegram

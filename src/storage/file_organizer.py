@@ -10,7 +10,7 @@ from pathlib import Path
 
 from src.config import StorageConfig
 from src.models.listing import Listing
-from src.storage.drive_client import DriveClient
+from src.storage.drive_client import DriveClient, folder_id_from_link
 
 logger = logging.getLogger(__name__)
 
@@ -32,6 +32,19 @@ def listing_drive_path(listing: Listing, root: str) -> list[str]:
     ]
 
 
+def _get_root_folder_id(drive: DriveClient, storage_cfg: StorageConfig) -> str | None:
+    """
+    Gibt die Root-Folder-ID zurück.
+    Priorität: root_folder_link > root_folder_name (wird dann neu angelegt).
+    """
+    link = storage_cfg.google_drive.root_folder_link
+    if link:
+        fid = folder_id_from_link(link)
+        logger.info("Nutze vorhandenen Drive-Ordner (ID: %s)", fid)
+        return fid
+    return None  # file_organizer legt per Name an
+
+
 async def organise_to_drive(
     listing: Listing,
     drive: DriveClient,
@@ -41,10 +54,24 @@ async def organise_to_drive(
     Upload all local files for a listing to Google Drive and
     update the listing with Drive folder info.
     """
-    path_parts = listing_drive_path(
-        listing, storage_cfg.google_drive.root_folder_name
-    )
-    folder_id = drive.get_or_create_folder_path(path_parts)
+    root_id = _get_root_folder_id(drive, storage_cfg)
+
+    if root_id:
+        # Vorhandenen Ordner nutzen — nur Unterordner für Bundesland/AG/AZ anlegen
+        subpath = [
+            _safe(listing.bundesland),
+            _safe(listing.amtsgericht),
+            _safe(listing.aktenzeichen.replace(" ", "_").replace("/", "_")),
+        ]
+        parent_id = root_id
+        for part in subpath:
+            parent_id = drive.get_or_create_folder(part, parent_id)
+        folder_id = parent_id
+    else:
+        path_parts = listing_drive_path(
+            listing, storage_cfg.google_drive.root_folder_name
+        )
+        folder_id = drive.get_or_create_folder_path(path_parts)
     listing.drive_folder_id = folder_id
     listing.drive_folder_url = drive.get_folder_url(folder_id)
 
@@ -84,9 +111,13 @@ async def upload_master_csv(
     csv_path: Path,
     drive: DriveClient,
     root_folder_name: str,
+    root_folder_link: str = "",
 ) -> None:
     """Upload / overwrite the master listings CSV at the root Drive folder."""
-    root_id = drive.get_or_create_folder(root_folder_name)
+    if root_folder_link:
+        root_id = folder_id_from_link(root_folder_link)
+    else:
+        root_id = drive.get_or_create_folder(root_folder_name)
     # Delete existing master CSV to allow overwrite
     service = drive._get_service()
     existing = (

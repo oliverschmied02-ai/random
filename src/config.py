@@ -41,6 +41,8 @@ class GoogleDriveConfig(BaseSettings):
     credentials_file: Path = Path("./secrets/gdrive_credentials.json")
     token_file: Path = Path("./secrets/gdrive_token.json")
     root_folder_name: str = "ZVG_Data"
+    # Optional: direkt einen bestehenden Ordner per Share-Link verwenden
+    root_folder_link: str = ""  # z.B. https://drive.google.com/drive/folders/1abc...
 
 
 class StorageConfig(BaseSettings):
@@ -55,7 +57,10 @@ class AnalysisConfig(BaseSettings):
     model_config = SettingsConfigDict(extra="allow")
 
     run_after_scrape: bool = True
-    ai_model: str = "claude-opus-4-6"
+    ai_provider: str = "claude"  # claude | ollama | openrouter
+    ai_model: str = "claude-haiku-4-5-20251001"  # Standard: Haiku (günstig)
+    ollama_model: str = "llama3.2"
+    ollama_endpoint: str = "http://localhost:11434"
     geocoding_provider: str = "nominatim"
     alert_threshold_verkehrswert_max: float = 500_000.0
     alert_channel: str = "none"  # none | email | telegram
@@ -84,6 +89,7 @@ class AppConfig(BaseSettings):
 
     # .env / environment variables
     anthropic_api_key: str = ""
+    openrouter_api_key: str = ""
     alert_email_from: str = ""
     alert_email_to: str = ""
     alert_email_smtp_host: str = "smtp.gmail.com"
@@ -124,6 +130,15 @@ def load_config(config_path: str | Path = "config.yaml") -> AppConfig:
             files_dir=storage_raw.get("files_dir", "./data/files"),
             google_drive=GoogleDriveConfig(**drive_raw),
         ),
-        analysis=AnalysisConfig(**analysis_raw),
+        analysis=AnalysisConfig(
+            run_after_scrape=analysis_raw.get("run_after_scrape", True),
+            ai_provider=analysis_raw.get("ai_provider", "claude"),
+            ai_model=analysis_raw.get("ai_model", "claude-haiku-4-5-20251001"),
+            ollama_model=analysis_raw.get("ollama_model", "llama3.2"),
+            ollama_endpoint=analysis_raw.get("ollama_endpoint", "http://localhost:11434"),
+            geocoding_provider=analysis_raw.get("geocoding_provider", "nominatim"),
+            alert_threshold_verkehrswert_max=analysis_raw.get("alert_threshold_verkehrswert_max", 500_000.0),
+            alert_channel=analysis_raw.get("alert_channel", "none"),
+        ),
         reporting=ReportingConfig(**reporting_raw),
     )

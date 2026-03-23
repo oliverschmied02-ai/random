@@ -543,19 +543,101 @@ elif page == "⚙️ Einstellungen":
     cfg = load_config_yaml()
     env = load_env()
 
-    # ── API Keys ──
-    with st.expander("🔑 API-Keys & Zugangsdaten", expanded=True):
-        st.markdown(
-            "Den Anthropic API-Key bekommst du kostenlos auf "
-            "[console.anthropic.com](https://console.anthropic.com) "
-            "(Registrierung erforderlich)."
+    # ── KI-Provider ──
+    with st.expander("🤖 KI-Analyse", expanded=True):
+        ai_provider = st.selectbox(
+            "KI-Provider",
+            ["claude", "ollama", "openrouter"],
+            index=["claude", "ollama", "openrouter"].index(
+                cfg.get("analysis", {}).get("ai_provider", "claude")
+            ),
+            help=(
+                "claude = Anthropic API (beste Qualität, kostenpflichtig) | "
+                "ollama = lokal & kostenlos | "
+                "openrouter = günstige Cloud-Modelle"
+            ),
         )
-        anthropic_key = st.text_input(
-            "Anthropic API-Key (für KI-Analyse)",
-            value=env.get("ANTHROPIC_API_KEY", ""),
-            type="password",
-            placeholder="sk-ant-...",
-        )
+
+        if ai_provider == "claude":
+            st.markdown(
+                "API-Key unter [console.anthropic.com](https://console.anthropic.com). "
+                "**Haiku** ist ~20× günstiger als Opus und reicht für die meisten Analysen."
+            )
+            anthropic_key = st.text_input(
+                "Anthropic API-Key",
+                value=env.get("ANTHROPIC_API_KEY", ""),
+                type="password",
+                placeholder="sk-ant-...",
+            )
+            openrouter_key = env.get("OPENROUTER_API_KEY", "")
+            claude_model = st.selectbox(
+                "Claude-Modell",
+                ["claude-haiku-4-5-20251001", "claude-sonnet-4-6", "claude-opus-4-6"],
+                index=["claude-haiku-4-5-20251001", "claude-sonnet-4-6", "claude-opus-4-6"].index(
+                    cfg.get("analysis", {}).get("ai_model", "claude-haiku-4-5-20251001")
+                ),
+                help="Haiku: günstig & schnell | Sonnet: ausgewogen | Opus: Premium",
+            )
+            ollama_model = cfg.get("analysis", {}).get("ollama_model", "llama3.2")
+            ollama_endpoint = cfg.get("analysis", {}).get("ollama_endpoint", "http://localhost:11434")
+
+        elif ai_provider == "ollama":
+            st.markdown(
+                "Ollama läuft lokal — **komplett kostenlos**. "
+                "Installation: [ollama.com](https://ollama.com) → `ollama pull llama3.2`"
+            )
+            ollama_endpoint = st.text_input(
+                "Ollama Endpoint",
+                value=cfg.get("analysis", {}).get("ollama_endpoint", "http://localhost:11434"),
+                placeholder="http://localhost:11434",
+            )
+            ollama_model = st.text_input(
+                "Ollama Modell",
+                value=cfg.get("analysis", {}).get("ollama_model", "llama3.2"),
+                placeholder="llama3.2",
+                help="Verfügbare Modelle: llama3.2, mistral, qwen2.5, phi3",
+            )
+            anthropic_key = env.get("ANTHROPIC_API_KEY", "")
+            openrouter_key = env.get("OPENROUTER_API_KEY", "")
+            claude_model = cfg.get("analysis", {}).get("ai_model", "claude-haiku-4-5-20251001")
+
+            # Verbindungstest
+            if st.button("Ollama-Verbindung testen"):
+                import requests as _req
+                try:
+                    r = _req.get(f"{ollama_endpoint}/api/tags", timeout=5)
+                    models = [m["name"] for m in r.json().get("models", [])]
+                    if models:
+                        st.success(f"✅ Ollama erreichbar. Installierte Modelle: {', '.join(models)}")
+                    else:
+                        st.warning("Ollama erreichbar, aber keine Modelle installiert. Führe `ollama pull llama3.2` aus.")
+                except Exception as e:
+                    st.error(f"❌ Ollama nicht erreichbar: {e}. Starte Ollama mit `ollama serve`.")
+
+        elif ai_provider == "openrouter":
+            st.markdown(
+                "OpenRouter bietet viele Modelle zu niedrigen Preisen. "
+                "API-Key unter [openrouter.ai](https://openrouter.ai)."
+            )
+            openrouter_key = st.text_input(
+                "OpenRouter API-Key",
+                value=env.get("OPENROUTER_API_KEY", ""),
+                type="password",
+                placeholder="sk-or-...",
+            )
+            claude_model = st.text_input(
+                "Modell (OpenRouter)",
+                value=cfg.get("analysis", {}).get("ai_model", "mistralai/mistral-7b-instruct"),
+                placeholder="mistralai/mistral-7b-instruct",
+                help="Alle Modelle: openrouter.ai/models",
+            )
+            anthropic_key = env.get("ANTHROPIC_API_KEY", "")
+            ollama_model = cfg.get("analysis", {}).get("ollama_model", "llama3.2")
+            ollama_endpoint = cfg.get("analysis", {}).get("ollama_endpoint", "http://localhost:11434")
+
+    # ── API Keys (legacy für nicht-claude Provider) ──
+    with st.expander("🔑 API-Keys & Zugangsdaten", expanded=False):
+        st.markdown("Hier kannst du zusätzliche API-Keys hinterlegen.")
 
     # ── Alerts ──
     with st.expander("🔔 Benachrichtigungen"):
@@ -607,6 +689,30 @@ elif page == "⚙️ Einstellungen":
     # ── Google Drive ──
     with st.expander("☁️ Google Drive"):
         st.markdown(
+            "**Option A — Eigenen Ordner per Link angeben** (empfohlen): "
+            "Erstelle einen Ordner in deinem Google Drive, teile ihn mit "
+            "deinem Service-Account (oder öffentlich), und füge den Link unten ein."
+        )
+        drive_folder_link = st.text_input(
+            "Google Drive Ordner-Link",
+            value=cfg.get("storage", {}).get("google_drive", {}).get("root_folder_link", ""),
+            placeholder="https://drive.google.com/drive/folders/1abc...",
+            help="Teile den Ordner zuerst mit deinem Service-Account oder mache ihn für alle bearbeitbar.",
+        )
+
+        st.markdown("---")
+        st.markdown(
+            "**Option B — Neuen Ordner anlegen**: Gib einen Namen an, "
+            "der Ordner wird automatisch in deinem Drive erstellt."
+        )
+        drive_folder = st.text_input(
+            "Drive-Ordnername (wird neu erstellt)",
+            value=cfg.get("storage", {}).get("google_drive", {}).get("root_folder_name", "ZVG_Data"),
+            help="Wird ignoriert wenn ein Ordner-Link angegeben ist.",
+        )
+
+        st.markdown("---")
+        st.markdown(
             "Lade `credentials.json` von der "
             "[Google Cloud Console](https://console.cloud.google.com) herunter "
             "(Drive API aktivieren → OAuth2-Zugangsdaten erstellen)."
@@ -621,15 +727,14 @@ elif page == "⚙️ Einstellungen":
             (SECRETS_DIR / "gdrive_credentials.json").write_bytes(uploaded_creds.read())
             st.success("✅ Zugangsdaten gespeichert!")
 
-        drive_folder = st.text_input(
-            "Drive-Ordnername",
-            value=cfg.get("storage", {}).get("google_drive", {}).get("root_folder_name", "ZVG_Data"),
-        )
-
     # ── Save button ──
     if st.button("💾 Einstellungen speichern", type="primary", use_container_width=True):
         # Save .env
-        new_env = {**env, "ANTHROPIC_API_KEY": anthropic_key}
+        new_env = {
+            **env,
+            "ANTHROPIC_API_KEY": anthropic_key,
+            "OPENROUTER_API_KEY": openrouter_key,
+        }
         if alert_channel == "telegram":
             new_env["TELEGRAM_BOT_TOKEN"] = tg_token
             new_env["TELEGRAM_CHAT_ID"] = tg_chat
@@ -642,9 +747,16 @@ elif page == "⚙️ Einstellungen":
 
         # Save config.yaml
         cfg.setdefault("scraper", {})["schedule_cron"] = schedule_cron
-        cfg.setdefault("analysis", {})["alert_channel"] = alert_channel
-        cfg["analysis"]["alert_threshold_verkehrswert_max"] = alert_threshold
-        cfg.setdefault("storage", {}).setdefault("google_drive", {})["root_folder_name"] = drive_folder
+        analysis_cfg = cfg.setdefault("analysis", {})
+        analysis_cfg["alert_channel"] = alert_channel
+        analysis_cfg["alert_threshold_verkehrswert_max"] = alert_threshold
+        analysis_cfg["ai_provider"] = ai_provider
+        analysis_cfg["ai_model"] = claude_model
+        analysis_cfg["ollama_model"] = ollama_model
+        analysis_cfg["ollama_endpoint"] = ollama_endpoint
+        drive_cfg = cfg.setdefault("storage", {}).setdefault("google_drive", {})
+        drive_cfg["root_folder_name"] = drive_folder
+        drive_cfg["root_folder_link"] = drive_folder_link
         save_config_yaml(cfg)
 
         st.success("✅ Einstellungen gespeichert!")

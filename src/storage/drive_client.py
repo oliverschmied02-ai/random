@@ -29,6 +29,21 @@ logger = logging.getLogger(__name__)
 SCOPES = ["https://www.googleapis.com/auth/drive"]
 
 
+def folder_id_from_link(link: str) -> str:
+    """
+    Extrahiert die Folder-ID aus einem Google Drive Share-Link.
+    Unterstützte Formate:
+      https://drive.google.com/drive/folders/1abc...
+      https://drive.google.com/drive/u/0/folders/1abc...
+    Gibt den Link unverändert zurück wenn kein Folder-Muster erkannt wird.
+    """
+    import re
+    m = re.search(r"/folders/([a-zA-Z0-9_-]+)", link)
+    if m:
+        return m.group(1)
+    return link
+
+
 class DriveClient:
     """Thin wrapper around the Google Drive v3 API."""
 
