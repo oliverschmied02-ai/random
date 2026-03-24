@@ -127,6 +127,21 @@ def load_config(config_path: str | Path = "config.yaml") -> AppConfig:
     storage_raw = raw.get("storage", {})
     drive_raw = storage_raw.get("google_drive", {})
     analysis_raw = raw.get("analysis", {})
+
+    # R2: YAML values, overridden by R2_* env vars (for Render.com / server deployment)
+    r2_raw: dict[str, Any] = dict(storage_raw.get("r2", {}))
+    for field, env_key in [
+        ("account_id",       "R2_ACCOUNT_ID"),
+        ("access_key_id",    "R2_ACCESS_KEY_ID"),
+        ("secret_access_key","R2_SECRET_ACCESS_KEY"),
+        ("bucket_name",      "R2_BUCKET_NAME"),
+        ("public_url",       "R2_PUBLIC_URL"),
+    ]:
+        if env_key in os.environ and os.environ[env_key]:
+            r2_raw[field] = os.environ[env_key]
+    # Auto-enable R2 when all three required credentials are present
+    if r2_raw.get("account_id") and r2_raw.get("access_key_id") and r2_raw.get("secret_access_key"):
+        r2_raw["enabled"] = True
     reporting_raw = raw.get("reporting", {})
 
     return AppConfig(
@@ -141,7 +156,7 @@ def load_config(config_path: str | Path = "config.yaml") -> AppConfig:
             local_db_path=storage_raw.get("local_db_path", "./data/zvg.db"),
             files_dir=storage_raw.get("files_dir", "./data/files"),
             google_drive=GoogleDriveConfig(**drive_raw),
-            r2=R2Config(**storage_raw.get("r2", {})),
+            r2=R2Config(**r2_raw),
         ),
         analysis=AnalysisConfig(
             run_after_scrape=analysis_raw.get("run_after_scrape", True),
