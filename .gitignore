@@ -1,25 +1,19 @@
-# Local data and cache
-data/
-reports/
-secrets/
-*.db
+# Godot 4 — engine-generated files
+.godot/
+.import/
+export.cfg
+export_presets.cfg
+*.translation
 
-# Environment
-.env
-*.env
-
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
+# Godot exports / builds
 build/
-dist/
-*.egg-info/
-.venv/
-venv/
-env/
+builds/
+export/
+
+# Mono / C# (unused for now, kept harmless)
+.mono/
+data_*/
+mono_crash.*.json
 
 # IDE
 .idea/
