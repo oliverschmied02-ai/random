@@ -74,8 +74,17 @@ nicht mehr durch den Chat — sie muss über das Repository kommen.
 
 ## Animationen
 
-Geplant ist **Mixamo** (kostenlos mit Adobe-Konto, royaltyfrei). Achtung: der
-Dienst wird von Adobe nicht mehr gepflegt und hatte 2025 längere Ausfälle — er
-funktioniert, taugt aber nicht als Fundament. Wenn er ausfällt, kommen die
-Bewegungen aus einer der freien Mocap-Sammlungen; das Rig entscheidet, nicht
-der Anbieter.
+**Bis echte Animationen da sind, bewegt ein prozedurales Gangwerk die Figur**
+(`systems/figur/gangwerk.gd`): Schritte im Takt des zurückgelegten Wegs, Arme
+gegenläufig, Atmen im Stand. Es braucht nur die Mixamo-Knochennamen — fehlt
+einer, bleibt die Figur starr und eine Warnung sagt welcher.
+
+Für echte Bewegungen ist **Mixamo** geplant (kostenlos mit Adobe-Konto,
+royaltyfrei). Zwei Dinge dazu:
+
+* Mixamo liefert **FBX**; Godot liest das nicht ohne Weiteres. Der einfachste
+  Weg: FBX in Blender öffnen und als `.glb` exportieren — oder ein Werkzeug wie
+  `fbx2gltf`. Die fertige Animations-`.glb` kommt dann als eigene Datei hierher.
+* Der Dienst wird von Adobe nicht mehr gepflegt und hatte 2025 längere
+  Ausfälle. Wenn er wegbricht, kommen die Bewegungen aus einer freien
+  Mocap-Sammlung; das Rig entscheidet, nicht der Anbieter.

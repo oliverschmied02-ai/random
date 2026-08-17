@@ -35,14 +35,22 @@ extends Node3D
 ## Bushaltestelle. Solange es keine Animationen gibt, ist eine ruhige Haltung
 ## das Mindeste; 0 lässt die T-Pose stehen.
 @export_range(0.0, 90.0, 1.0) var arme_senken_grad: float = 68.0
+## Bewegt das Skelett prozedural (Gehen, Atmen), solange es keine echten
+## Animationen gibt. Aus, wenn später eine Animationsschicht übernimmt.
+@export var gangwerk_aktiv: bool = true
 ## Was ausgeblendet wird, sobald ein Modell steht.
 @export var platzhalter_pfad: NodePath = ^"Platzhalter"
 
 ## Das geladene Modell, oder null solange die Kapsel steht.
 var modell: Node3D
+## Das prozedurale Gangwerk, oder null (kein Modell, abgeschaltet, Rig fremd).
+var gangwerk: Gangwerk
+
+var _letzte_lage: Vector3
 
 
 func _ready() -> void:
+	set_physics_process(false)
 	if modell_pfad.is_empty() or not ResourceLoader.exists(modell_pfad):
 		return
 
@@ -66,6 +74,29 @@ func _ready() -> void:
 	var platzhalter := get_node_or_null(platzhalter_pfad) as Node3D
 	if platzhalter != null:
 		platzhalter.visible = false
+
+	# Das Gangwerk holt sich seine Ruhelage jetzt — nach dem Senken der Arme,
+	# denn diese Haltung ist die Basis aller Schwünge.
+	if gangwerk_aktiv:
+		var werk := Gangwerk.new()
+		if werk.einrichten(skelett_finden()):
+			gangwerk = werk
+			_letzte_lage = global_position
+			set_physics_process(true)
+
+
+func _physics_process(delta: float) -> void:
+	# Das Tempo kommt aus der tatsächlich zurückgelegten Strecke, nicht aus der
+	# `velocity` des Körpers: so schreitet die Figur auch dann aus, wenn eine
+	# Sequenz sie per Tween bewegt — etwa auf die Abschlussmarken — und steht
+	# still, sobald sie wirklich steht. Sprünge über einen Meter pro Physiktick
+	# sind Teleports (Prüfläufe, Szenenumbauten), kein Rennen.
+	var jetzt := global_position
+	var weg := jetzt - _letzte_lage
+	_letzte_lage = jetzt
+	weg.y = 0.0
+	var tempo := 0.0 if weg.length() > 1.0 else weg.length() / maxf(delta, 0.0001)
+	gangwerk.tick(delta, tempo)
 
 
 ## Skaliert das Modell so, dass es `zielhoehe` misst.

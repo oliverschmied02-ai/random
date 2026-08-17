@@ -40,6 +40,7 @@ func _ablauf() -> void:
 	_probe_bauen()
 	await _rueckfall_pruefen()
 	await _modell_pruefen()
+	await _gangwerk_pruefen()
 	_report()
 
 
@@ -170,6 +171,94 @@ func _modell_pruefen() -> void:
 
 	traeger.queue_free()
 	await physics_frame
+
+
+## Das prozedurale Gangwerk, am echten Modell gemessen.
+##
+## Ein Träger mit der Figur wird 2,5 s lang mit Gehtempo bewegt und dann
+## angehalten. Erwartet: beim Gehen trennen sich die Füße entlang der
+## Bewegungsrichtung und wechseln sich ab, die Arme schwingen mit, und nach dem
+## Anhalten kehrt alles in die Ruhelage zurück.
+func _gangwerk_pruefen() -> void:
+	if not ResourceLoader.exists("res://actors/models/oliver.glb"):
+		_note("Gangwerk nicht messbar — noch kein Modell im Projekt")
+		return
+
+	var traeger := Node3D.new()
+	root.add_child(traeger)
+	var platzhalter := Node3D.new()
+	platzhalter.name = "Platzhalter"
+	var figur := Figur.new()
+	figur.set_script(load("res://systems/figur/figur.gd"))
+	figur.modell_pfad = "res://actors/models/oliver.glb"
+	figur.zielhoehe = 1.82
+	figur.add_child(platzhalter)
+	traeger.add_child(figur)
+	await physics_frame
+
+	if figur.gangwerk == null:
+		_fail("the gait never came to life on the real model")
+		traeger.queue_free()
+		return
+
+	var skelett := figur.skelett_finden()
+	var fuss_l := skelett.find_bone("LeftFoot")
+	var fuss_r := skelett.find_bone("RightFoot")
+	var hand_l := skelett.find_bone("LeftHand")
+
+	# Ruhelage festhalten, dann losgehen.
+	await physics_frame
+	var ruhe_trennung := _fuss_trennung(skelett, fuss_l, fuss_r)
+	var ruhe_hand: float = skelett.get_bone_global_pose(hand_l).origin.z
+
+	var tempo := 3.4
+	var groesste_trennung := 0.0
+	var kleinste_trennung := 1000.0
+	var hand_min := 1000.0
+	var hand_max := -1000.0
+	for i in 150:
+		traeger.global_position.x += tempo / 60.0
+		await physics_frame
+		var trennung := _fuss_trennung(skelett, fuss_l, fuss_r)
+		groesste_trennung = maxf(groesste_trennung, trennung)
+		kleinste_trennung = minf(kleinste_trennung, trennung)
+		var hand_z: float = skelett.get_bone_global_pose(hand_l).origin.z
+		hand_min = minf(hand_min, hand_z)
+		hand_max = maxf(hand_max, hand_z)
+
+	_note("Gangbild: Füße bis %.2f m auseinander, Armschwung %.2f m"
+		% [groesste_trennung, hand_max - hand_min])
+	_expect(groesste_trennung > 0.25,
+		"walking strides: feet separate up to %.2f m" % groesste_trennung)
+	_expect(kleinste_trennung < 0.15,
+		"and pass each other again: closest %.2f m" % kleinste_trennung)
+	_expect(hand_max - hand_min > 0.08,
+		"the arms swing along: %.2f m of travel" % (hand_max - hand_min))
+
+	# Anhalten: nach einer Sekunde muss die Ruhelage wieder erreicht sein.
+	for i in 60:
+		await physics_frame
+	var trennung_danach := _fuss_trennung(skelett, fuss_l, fuss_r)
+	var hand_danach: float = skelett.get_bone_global_pose(hand_l).origin.z
+	_expect(absf(trennung_danach - ruhe_trennung) < 0.06,
+		"stopping settles the feet back to rest: %.2f m off"
+			% absf(trennung_danach - ruhe_trennung))
+	_expect(absf(hand_danach - ruhe_hand) < 0.06,
+		"and the arms: %.2f m off" % absf(hand_danach - ruhe_hand))
+	_expect(figur.gangwerk.intensitaet() < 0.05,
+		"the gait knows it is standing: intensity %.2f" % figur.gangwerk.intensitaet())
+
+	traeger.queue_free()
+	await physics_frame
+
+
+## Abstand der Füße entlang der Schreitrichtung. Geschritten wird entlang der
+## Blickrichtung der Figur — Welt-Z, denn der Träger steht ungedreht —, nicht
+## entlang der Bewegung des Trägers: das Gangwerk kennt nur „vorwärts".
+func _fuss_trennung(skelett: Skeleton3D, links: int, rechts: int) -> float:
+	var l := (skelett.global_transform * skelett.get_bone_global_pose(links)).origin
+	var r := (skelett.global_transform * skelett.get_bone_global_pose(rechts)).origin
+	return absf(l.z - r.z)
 
 
 # --- Werkzeug --------------------------------------------------------------

@@ -59,10 +59,33 @@ die Anleitung dazu steht in `actors/models/README.md`.
 
 **Oliver ist da** (2026-08-17): 90 273 Dreiecke, 73 Knochen im Mixamo-Schema,
 1,81 m, T-Pose, keine Animationen. Er steht im Kapitel, in richtiger Größe und
-Blickrichtung; Anne ist noch eine Kapsel. Weil es noch keine Animationen gibt,
-nimmt die Figur beim Aufbau die Arme aus der T-Pose herunter — eine ruhige
-Haltung ist das Mindeste, bevor jemand mit ausgestreckten Armen durch Berlin
-gleitet.
+Blickrichtung; Anne ist noch eine Kapsel. Beim Aufbau nimmt die Figur die Arme
+aus der T-Pose herunter — diese Haltung ist zugleich die Ruhelage des
+Gangwerks.
+
+### Prozedurales Gangwerk (`systems/figur/gangwerk.gd`)
+Die Modelle bringen keine Animationen mit, und eine Figur, die starr durch
+Berlin gleitet, ist schlimmer als eine Kapsel. Das Gangwerk bewegt das Skelett
+deshalb selbst: Beine gegengleich (26° Ausschlag, Knie beugt im Durchschwung),
+Arme gegenläufig, leichtes Einfedern der Hüfte, Vorlage bei Tempo, im Stand ein
+ruhiges Atmen. Gemessen am echten Modell: 0,88 m Schrittweite, 0,24 m
+Armschwung, saubere Rückkehr in die Ruhelage nach dem Anhalten.
+
+Zwei Entscheidungen tragen es:
+
+* **Die Phase läuft über den zurückgelegten Weg**, nicht über die Zeit —
+  dasselbe Prinzip und dieselbe Schrittlänge wie bei den Schrittgeräuschen
+  (1,5 m), Bild und Ton bleiben von selbst ungefähr im Takt. Und weil das
+  Tempo aus der tatsächlichen Ortsveränderung kommt statt aus der `velocity`,
+  schreitet die Figur auch, wenn eine Sequenz sie per Tween bewegt — der
+  Abschluss sieht dadurch nach Gehen aus statt nach Gleiten.
+* **Gedreht wird im Skelettraum**, nur die Drehung, nie die Position: Knie und
+  Fuß folgen der Elternkette. Eltern werden vor Kindern gesetzt, dadurch sind
+  die Winkel absolut und der Fuß bleibt von allein annähernd parallel zum
+  Boden.
+
+Sobald echte Animationen einziehen, ist `gangwerk_aktiv` am Knoten `Visual`
+der Schalter, der es abstellt.
 
 Damit wächst der fertige Build von 29 auf 47 MB und passt nicht mehr durch den
 Chat. Texturen sind bereits auf 512 Pixel begrenzt (spart 10 MB, aus
@@ -388,6 +411,14 @@ Hüft- statt Kopfhöhe, sonst stehen beide in der unteren Bildhälfte und die
 Dialogbox schneidet ihnen die Füße ab. Der Prüflauf misst das jetzt mit: er
 verlangt Füße, Mitte und Kopf beider Figuren im Sichtkegel.
 
+**Gelenke klebten an ihren Ruhepositionen.** Der erste Wurf des Gangwerks
+setzte je Knochen die volle Ruhelage — Drehung **und Ursprung**. Damit drehten
+die Beine auf der Stelle um festgenagelte Gelenke: der Fuß blieb, wo er im
+Stand war, nur die Hände schwangen (die hingen als einzige an einem nicht
+angesteuerten Knochen). Der Prüflauf zeigte es als „Füße 0,00 m auseinander,
+Armschwung 0,11 m". Jetzt wird nur die Drehung gesetzt und die Position folgt
+der Elternkette.
+
 **Lambdas fangen lokale Variablen als Kopie ein.** In GDScript ist
 `var fertig := false` plus `func(): fertig = true` wirkungslos — die Zuweisung
 trifft eine Kopie. Im Kapitel wartete deshalb die Aufstellung vor jedem Gespräch
@@ -409,6 +440,10 @@ zeilenweise, nicht spaltenweise. Dadurch stiegen die Rampen zur falschen Seite
 
 ## Aktuelle Grenzen
 
+* Das Gangwerk ist Platzhalter-Bewegung: glaubwürdig aus Spielentfernung, aber
+  ohne Fersenabrollen, ohne Hüftrotation, ohne Gewichtsverlagerung. Echte
+  Animationen (Mixamo aufs vorhandene Rig) ersetzen es; der Schalter dafür ist
+  `gangwerk_aktiv`.
 * Alle Sichtbaren Elemente sind Platzhalter-Geometrie. Die Testfläche ist ein
   Entwicklungswerkzeug und wird später verworfen, nicht ausgebaut.
 * Keine Animationen — die Figur gleitet als Kapsel. Der Controller liefert
