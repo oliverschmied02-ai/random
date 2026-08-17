@@ -1,7 +1,8 @@
-[gd_scene load_steps=12 format=3]
+[gd_scene load_steps=13 format=3]
 
 [ext_resource type="Script" path="res://actors/companion/companion.gd" id="1_companion"]
 [ext_resource type="Script" path="res://systems/audio/schritte.gd" id="3_schritte"]
+[ext_resource type="Script" path="res://systems/figur/figur.gd" id="4_figur"]
 [ext_resource type="Script" path="res://systems/interaction/interactable.gd" id="2_interactable"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_body"]
@@ -52,20 +53,25 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.91, 0)
 shape = SubResource("CapsuleShape3D_body")
 
 [node name="Visual" type="Node3D" parent="."]
+script = ExtResource("4_figur")
+modell_pfad = "res://actors/models/oliver.glb"
+zielhoehe = 1.82
 
-[node name="Body" type="MeshInstance3D" parent="Visual"]
+[node name="Platzhalter" type="Node3D" parent="Visual"]
+
+[node name="Body" type="MeshInstance3D" parent="Visual/Platzhalter"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.91, 0)
 mesh = SubResource("CapsuleMesh_body")
 
-[node name="Kopf" type="MeshInstance3D" parent="Visual"]
+[node name="Kopf" type="MeshInstance3D" parent="Visual/Platzhalter"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.67, 0)
 mesh = SubResource("SphereMesh_kopf")
 
-[node name="FacingMarker" type="MeshInstance3D" parent="Visual"]
+[node name="FacingMarker" type="MeshInstance3D" parent="Visual/Platzhalter"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.56, -0.31)
 mesh = SubResource("BoxMesh_marker")
 
-[node name="Shoulders" type="MeshInstance3D" parent="Visual"]
+[node name="Shoulders" type="MeshInstance3D" parent="Visual/Platzhalter"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.38, 0)
 mesh = SubResource("BoxMesh_shoulders")
 

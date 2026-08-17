@@ -57,6 +57,10 @@ und die Signale `started_moving` / `stopped_moving`.
 | **Platzhalter** | Kapsel in Dunkelblau mit hellem Scheitel und weißem Kragenbalken |
 | **Priorität** | CRITICAL |
 
+**Steckplatz steht.** `actors/models/anne.glb` und `oliver.glb` — Datei
+hinlegen genügt, die Kapseln verschwinden von selbst. Anleitung und Fehlersuche
+in `actors/models/README.md`.
+
 **Weg zu realistischen Figuren.** Aus je einem Foto lässt sich kein
 fotorealistisches Modell rechnen — dafür bräuchte es entweder viele Aufnahmen
 aus verschiedenen Winkeln (Photogrammetrie) oder einen Charakter-Generator, der

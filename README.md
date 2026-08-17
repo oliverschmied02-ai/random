@@ -74,6 +74,7 @@ godot --headless --path . --script res://tools/headless_darts_check.gd
 godot --headless --path . --script res://tools/headless_chapter_check.gd
 godot --headless --path . --script res://tools/headless_ending_check.gd
 godot --headless --path . --script res://tools/headless_rahmen_check.gd
+godot --headless --path . --script res://tools/headless_figur_check.gd
 ```
 
 Der erste fährt die Figur über Bahn, Treppe und Rampe und prüft
@@ -114,6 +115,7 @@ nach `audio/` legen. Schleifen brauchen in der zugehörigen `.import`-Datei
 ```
 actors/player/     Spielfigur (CharacterBody3D + Controller)
 actors/companion/  Begleitfigur
+actors/models/     Platz für die Personenmodelle (siehe README dort)
 camera/            Third-Person-Kamerarig
 systems/           Wiederverwendbare Systeme (Interaktion, Dialog, Bewegung)
 chapters/berlin/   Kapitel 1: Szene, Ablauf, Dialogtexte

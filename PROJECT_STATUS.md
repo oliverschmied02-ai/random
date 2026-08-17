@@ -42,6 +42,21 @@ im Skript ändern und neu erzeugen. Ersetzen heißt: gleiche Datei, gleicher Nam
   `systems/audio/ton.gd` merkt die Werte in `user://einstellungen.cfg` — als
   statische Klasse und nicht als Autoload, damit auch die Prüfläufe drankommen.
 
+### Platz für die echten Figuren (`systems/figur/figur.gd`)
+Der Knoten `Visual` beider Figuren ist ein Steckplatz: liegt unter
+`actors/models/` eine Datei mit dem erwarteten Namen, wird sie geladen, um 180°
+gedreht (glTF schaut nach +Z, Godot nach −Z), **gemessen** und auf die
+Sollhöhe skaliert; der Kapsel-Platzhalter blendet sich aus. Fehlt die Datei,
+bleibt alles beim Alten — Bewegung, Kollision und Kamera hängen an der Figur,
+nie an ihrem Aussehen.
+
+Skaliert wird nicht nach Gefühl, sondern aus den Ausmaßen aller sichtbaren
+Teile: ein Mensch, der einen Kopf zu groß ist, fällt sofort auf. Der Prüflauf
+baut sich dafür einen 2,40 m großen Prüfling und verlangt 1,75 m ± 2 cm.
+
+Erwartet werden `actors/models/anne.glb` (1,72 m) und `oliver.glb` (1,82 m);
+die Anleitung dazu steht in `actors/models/README.md`.
+
 ### Projektgerüst
 * `project.godot` mit Forward+ Renderer, 60 Hz fester Physik-Tick, 1920×1080
 * Input-Map vollständig über Actions (nie harte Keycodes):
@@ -461,13 +476,19 @@ Tonlage. `chapters/berlin/dialogue_lines.gd` enthält ausschließlich Inhalt —
 Sätze umschreiben, ergänzen oder streichen ist gefahrlos. Die drei Erinnerungen
 sind der offensichtliche Ort für Insider.
 
-**Die Figuren.** Entschieden ist: **realistisch**, nach den Fotos vom
-2026-08-17. Aus je einem Frontalfoto lässt sich kein fotorealistisches Modell
-rechnen; der Weg dorthin steht in `ASSET_REQUIREMENTS.md` (Ready Player Me,
-Character Creator, MakeHuman — nicht MetaHuman, dessen Lizenz Godot ausschließt),
-Animationen von Mixamo. Die Platzhalter tragen bereits die Farben der Vorlagen:
-Anne dunkles Oberteil und blondes Haar, Oliver dunkelblauer Pullover, helles
-Haar, weißer Kragen.
+**Die Figuren.** Entschieden ist: **realistisch**, über **Ready Player Me**,
+nach den Fotos vom 2026-08-17. Der Steckplatz steht und ist geprüft; es fehlen
+nur die beiden Dateien, und die entstehen im Browser mit Konto — das kann diese
+Umgebung nicht, ihr Netzzugang lässt `models.readyplayer.me` ohnehin nicht zu.
+Anleitung: `actors/models/README.md`.
+
+Danach: **Animationen von Mixamo** (kostenlos, passt auf das Rig von Ready
+Player Me) und eine Mischschicht, die zwischen Stehen, Gehen und Laufen über
+`Player.speed_ratio` überblendet. Erst mit den Modellen zu bauen — ohne sie
+wären die Zustände geraten.
+
+Die Platzhalter tragen bereits die Farben der Vorlagen: Anne dunkles Oberteil
+und blondes Haar, Oliver dunkelblauer Pullover, helles Haar, weißer Kragen.
 
 **Kulisse und Feinschliff.** Berliner Kulisse statt Blöcke, echte Aufnahmen
 statt synthetischer Klänge, Kameraübergänge, Pacing, Dialogtiming. Dazu die
