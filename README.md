@@ -9,12 +9,13 @@ das wichtige Momente unserer Beziehung als spielbare Szenen nacherzählt.
 "Vaccination Darts"). Weitere Kapitel sind konzeptionell vorgesehen, werden
 aber bewusst noch nicht gebaut.
 
-**Stand:** Stage 5 — Kapitel 1 ist von Anfang bis Ende erzählt. Oliver vor
+**Stand:** Stage 6 — Kapitel 1 ist von Anfang bis Ende erzählt, mit Titel und Ton. Oliver vor
 seiner Bürotür abholen, zu zweit durch die Stadt laufen (zwei Gespräche
 unterwegs, dazu drei optionale Erinnerungen am Weg), an der Dönerbude ankommen,
 dort *Vaccination Darts* spielen — und danach ein Schlussbild, in dem die
 beiden miteinander reden, gefolgt vom Abspann.
-Ausschließlich Platzhalter-Geometrie, alle Dialoge sind Platzhaltertexte.
+Ausschließlich Platzhalter-Geometrie, alle Dialoge sind Platzhaltertexte, aller
+Ton ist synthetisch erzeugt.
 
 ## Starten
 
@@ -31,7 +32,7 @@ godot --path .        # oder das Projekt im Editor öffnen und F5 drücken
 | Sprinten | Shift | rechter Trigger |
 | Ansehen / Ansprechen | E | A |
 | Werfen (Minispiel) | linke Maustaste | A |
-| Pause | Escape | — |
+| Pause und Lautstärke | Escape | Select |
 | Einstellmenü | F1 | — |
 | Debug-Overlay | F3 | — |
 
@@ -72,6 +73,7 @@ godot --headless --path . --script res://tools/headless_check.gd
 godot --headless --path . --script res://tools/headless_darts_check.gd
 godot --headless --path . --script res://tools/headless_chapter_check.gd
 godot --headless --path . --script res://tools/headless_ending_check.gd
+godot --headless --path . --script res://tools/headless_rahmen_check.gd
 ```
 
 Der erste fährt die Figur über Bahn, Treppe und Rampe und prüft
@@ -92,6 +94,21 @@ an und prüft, dass sie redet und die Steuerung zurückgibt, gewinnt danach eine
 Runde und misst das Schlussbild nach — beide auf ihren Marken, einander
 zugewandt, ganz im Bild.
 
+Der fünfte nimmt den Rahmen: Audiobusse, Lautstärkeregler, Titelbildschirm,
+Kapitelauftakt und die Schrittkadenz beim Gehen.
+
+## Ton
+
+Alle Klänge sind synthetische Platzhalter und entstehen hier:
+
+```bash
+python3 tools/make_placeholder_audio.py
+```
+
+Kein Fremdmaterial, keine Abhängigkeiten. Ersetzen heißt: Datei gleichen Namens
+nach `audio/` legen. Schleifen brauchen in der zugehörigen `.import`-Datei
+`edit/loop_mode=2`.
+
 ## Projektstruktur
 
 ```
@@ -100,8 +117,9 @@ actors/companion/  Begleitfigur
 camera/            Third-Person-Kamerarig
 systems/           Wiederverwendbare Systeme (Interaktion, Dialog, Bewegung)
 chapters/berlin/   Kapitel 1: Szene, Ablauf, Dialogtexte
+audio/             Klänge und Musik (synthetische Platzhalter)
 scenes/            Testfläche zum Beurteilen der Bewegung
-ui/                Oberfläche (Ziel, Hinweis, Dialog, Pause, Abspann, Debug, Einstellungen)
+ui/                Titelbildschirm und Oberfläche (Ziel, Dialog, Pause, Kapitelkarte, Debug)
 tools/             Entwicklungswerkzeuge (headless Prüfläufe)
 ```
 

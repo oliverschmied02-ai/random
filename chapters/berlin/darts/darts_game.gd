@@ -60,6 +60,10 @@ const _SYRINGE := preload("res://chapters/berlin/darts/syringe.tscn")
 @onready var _einschlag: CPUParticles3D = $Einschlag
 @onready var _konfetti: CPUParticles3D = $Konfetti
 @onready var _hud = $DartsHud
+@onready var _einschlagklang: AudioStreamPlayer3D = $Einschlagklang
+@onready var _ladeklang: AudioStreamPlayer = $Ladeklang
+@onready var _trefferklang: AudioStreamPlayer = $Trefferklang
+@onready var _gewonnenklang: AudioStreamPlayer = $Gewonnenklang
 
 var zustand: Zustand = Zustand.INAKTIV
 var punkte: int = 0
@@ -168,6 +172,12 @@ func _laden(delta: float) -> void:
 		_kraft_steigt = true
 	_hud.setze_kraft(_kraft, true)
 
+	# Der Ladeton steigt mit dem Balken. Damit hört man den Ladestand, statt ihn
+	# nur zu sehen — beim Zielen schaut man ohnehin auf die Scheibe.
+	if not _ladeklang.playing:
+		_ladeklang.play()
+	_ladeklang.pitch_scale = 0.8 + _kraft * 0.7
+
 
 ## Übergibt die Szene an den Abschluss: Anzeige weg, Eingaben aus, Kamera frei.
 ##
@@ -176,6 +186,7 @@ func _laden(delta: float) -> void:
 func abschluss_uebernehmen() -> void:
 	zustand = Zustand.INAKTIV
 	_wackeln = 0.0
+	_ladeklang.stop()
 	set_process(false)
 	set_process_unhandled_input(false)
 	_hud.visible = false
@@ -188,6 +199,7 @@ func ziel_punkt() -> Vector3:
 
 func _werfen() -> void:
 	zustand = Zustand.FLUG
+	_ladeklang.stop()
 	_hud.setze_kraft(0.0, false)
 	_hud.setze_fadenkreuz(Vector2.ZERO, false)
 
@@ -231,6 +243,14 @@ func _auf_einschlag(treffer_punkte: int, ort: Vector3, _radius: float) -> void:
 	_einschlag.restart()
 	_wackeln = kamera_wackeln * (1.6 if treffer_punkte >= DartsConfig.GUTER_TREFFER else 0.7)
 
+	_einschlagklang.global_position = ort
+	# Näher an der Mitte klingt der Treffer heller — dieselbe Aufnahme, nur
+	# höher abgespielt. Billiger Trick, aber man hört sofort, ob es gut war.
+	_einschlagklang.pitch_scale = 1.0 + 0.2 * (float(treffer_punkte) / 50.0)
+	_einschlagklang.play()
+	if treffer_punkte >= DartsConfig.GUTER_TREFFER:
+		_trefferklang.play()
+
 	await get_tree().create_timer(pause_nach_wurf).timeout
 
 	if wurf_nummer >= DartsConfig.WUERFE_PRO_RUNDE:
@@ -247,6 +267,7 @@ func _runde_beenden() -> void:
 
 	if punkte >= DartsConfig.ZIELPUNKTZAHL:
 		_konfetti.restart()
+		_gewonnenklang.play()
 		_hud.zeige_banner(
 			"GESCHAFFT",
 			"%d Punkte. Oliver ist beeindruckt und wird es nie zugeben." % punkte

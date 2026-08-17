@@ -2,8 +2,9 @@
 
 **Spiel:** Our Story — Kapitel 1: Berlin
 **Engine:** Godot 4.5 (GDScript)
-**Aktuelle Stufe:** Stage 5 — Abschluss, Pausenmenü und Erinnerungen
-(implementiert, wartet auf Probespielen). Stage 1 bis 4 abgenommen.
+**Aktuelle Stufe:** Stage 6 — der Rahmen ums Spiel: Titelbildschirm, Ton,
+Kapitelauftakt (implementiert, wartet auf Probespielen). Stage 1 bis 4
+abgenommen, Stage 5 ausgeliefert.
 
 **Kapitel 1 ist damit von Anfang bis Ende erzählt:** abholen, laufen, ankommen,
 werfen, gewinnen — und danach ein Schlussbild, in dem die beiden miteinander
@@ -12,6 +13,34 @@ reden, gefolgt vom Abspann.
 ---
 
 ## Was funktioniert
+
+### Rahmen (`ui/title_screen.tscn`, `ui/chapter_card.tscn`)
+Das Spiel fiel vorher mit der Tür ins Haus: Doppelklick, und man stand mitten
+in Berlin, mit gefangener Maus. Jetzt gibt es einen Anfang.
+
+* **Titelbildschirm** mit gezeichneter Dachlinie (`ui/skyline.gd`, `_draw()`
+  statt Bilddatei — zwei Dutzend Rechtecke und ein Kreis, passt sich jeder
+  Fenstergröße an), Titel, *Anfangen*, *Beenden* und leiser Musik. *Anfangen*
+  blendet ab und wechselt erst dann die Szene.
+* **Kapitelkarte** — dieselbe Tafel am Anfang und am Ende: `auftakt()` beginnt
+  schwarz und gibt das Bild frei, `abspann()` nimmt es weg und behält es.
+  Während des Auftakts ruht die Steuerung.
+* **Pausenmenü** mit Lautstärkereglern und *Zum Titelbildschirm*.
+
+### Ton (`audio/`, `systems/audio/`)
+Alle Klänge sind **synthetische Platzhalter** und entstehen in
+`tools/make_placeholder_audio.py` — ohne Fremdmaterial, ohne Abhängigkeiten,
+reproduzierbar. Ein Schritt kürzer oder ein Einschlag trockener heißt: eine Zahl
+im Skript ändern und neu erzeugen. Ersetzen heißt: gleiche Datei, gleicher Name.
+
+* Vier Tritte, Stadtschleife, Brummen des Budenschilds, Dart-Einschlag,
+  Ladeton, Volltreffer, Siegfanfare, Menüklick, Titelmusik
+* **Schritte** (`systems/audio/schritte.gd`) zählen den zurückgelegten *Weg*
+  statt der Zeit: alle 1,5 m ein Tritt. Damit hängt die Kadenz am Tempo — wer
+  rennt, tritt öfter auf. Gemessen: 2,2 Schritte je Sekunde beim Gehen.
+* Zwei Busse, **Musik** und **Klang**, je ein Regler im Pausenmenü.
+  `systems/audio/ton.gd` merkt die Werte in `user://einstellungen.cfg` — als
+  statische Klasse und nicht als Autoload, damit auch die Prüfläufe drankommen.
 
 ### Projektgerüst
 * `project.godot` mit Forward+ Renderer, 60 Hz fester Physik-Tick, 1920×1080
@@ -333,6 +362,19 @@ Hüft- statt Kopfhöhe, sonst stehen beide in der unteren Bildhälfte und die
 Dialogbox schneidet ihnen die Füße ab. Der Prüflauf misst das jetzt mit: er
 verlangt Füße, Mitte und Kopf beider Figuren im Sichtkegel.
 
+**Lambdas fangen lokale Variablen als Kopie ein.** In GDScript ist
+`var fertig := false` plus `func(): fertig = true` wirkungslos — die Zuweisung
+trifft eine Kopie. Im Kapitel wartete deshalb die Aufstellung vor jedem Gespräch
+immer in die volle Frist von 2,5 s, statt loszulegen, sobald Oliver steht; und
+im Prüflauf zählte der Schrittzähler ins Leere und meldete „gar kein Ton". Beide
+Stellen benutzen jetzt ein Dictionary bzw. ein Feld — beides wird als Referenz
+gefangen.
+
+**Die Schleifen liefen nicht.** Godots WAV-Importeur nummeriert
+`edit/loop_mode` anders als die Laufzeit-Aufzählung: *0 = aus der WAV lesen,
+1 = aus, 2 = vorwärts*. Mit der naheliegenden 1 blieb die Titelmusik nach einem
+Durchlauf still. Der Rahmen-Prüflauf prüft das jetzt mit.
+
 **Transponierte Transforms.** Godot serialisiert `Transform3D` in `.tscn`
 zeilenweise, nicht spaltenweise. Dadurch stiegen die Rampen zur falschen Seite
 (die Figur lief unten durch) und die Sonne leuchtete nach oben.
@@ -346,7 +388,9 @@ zeilenweise, nicht spaltenweise. Dadurch stiegen die Rampen zur falschen Seite
 * Keine Animationen — die Figur gleitet als Kapsel. Der Controller liefert
   bereits `current_speed`, `speed_ratio` und die Bewegungssignale, an die eine
   Animationsschicht andocken kann.
-* Kein Ton.
+* Aller Ton ist synthetisch — Platzhalter in der richtigen Rolle und Länge,
+  keine Aufnahmen. Es gibt keine Stimmen, keine Schrittvarianten nach
+  Untergrund, keine Ereignisse in der Stadtschleife.
 * Kamera und Spieler laufen beide im 60-Hz-Physiktakt. Das vermeidet Ruckeln
   zwischen beiden, deckelt die Kamerabewegung aber auf 60 Hz. Falls sich das
   auf einem 144-Hz-Monitor stockend anfühlt, ist das der erste Punkt zum
@@ -393,7 +437,7 @@ Stage 1 bis 4 sind abgenommen. Stage 5 (Abschluss, Pausenmenü, Erinnerungen)
 liegt zum Probespielen bereit; die echten Dialogtexte sind ausdrücklich
 zurückgestellt.
 
-### Beim Probespielen von Stage 5 zu beurteilen
+### Beim Probespielen von Stage 5 und 6 zu beurteilen
 
 * Trägt das Schlussbild? Stehen die beiden gut zueinander, ist der Abstand
   richtig, kommt der Umschnitt zu früh oder zu spät?
@@ -401,11 +445,14 @@ zurückgestellt.
   Umbau beginnt), `abschluss_fahrt` (2,0 s Kamerafahrt), `abschluss_bildwinkel`
   (50°), `abschluss_blickhoehe` (0,8 m). Die Marken für beide Figuren und die
   Kamera stehen als Marker3D unter `Abschluss`.
-* Steht der Abspann lange genug? (`ui/chapter_end.tscn`: `verdunkeln_dauer`,
-  `titel_dauer`, `stehen_lassen`)
+* Steht der Abspann lange genug? (`ui/chapter_card.tscn`: `verdunkeln_dauer`,
+  `titel_dauer`, `stehen_lassen`, `auftakt_stehen`)
 * Findet man die drei Erinnerungen am Weg — oder läuft man an allen vorbei?
-  Sollen es mehr sein, weniger, andere Orte?
-* Stört das Pausenmenü an irgendeiner Stelle, an der es nicht stören darf?
+* Ist der Auftakt (5 s Titeltafel) zu lang oder zu kurz?
+* Sind die Schritte zu laut, zu schnell, zu blechern? Die Kadenz sitzt in
+  `Player > Schritte > schrittlaenge` (1,5 m), die Lautstärke am Knoten selbst.
+* Trägt die Stadtatmosphäre, oder fällt auf, dass nichts passiert?
+* Passt die Grundmischung — Musik zu Geräuschen? (Regler in der Pause)
 
 ### Danach
 
@@ -414,8 +461,16 @@ Tonlage. `chapters/berlin/dialogue_lines.gd` enthält ausschließlich Inhalt —
 Sätze umschreiben, ergänzen oder streichen ist gefahrlos. Die drei Erinnerungen
 sind der offensichtliche Ort für Insider.
 
-**Feinschliff (Stage 6).** Echte Modelle und Animationen, Berliner Kulisse statt
-Blöcke, Ton und Musik, Kameraübergänge, Pacing, Dialogtiming. Dazu die
+**Die Figuren.** Entschieden ist: **realistisch**, nach den Fotos vom
+2026-08-17. Aus je einem Frontalfoto lässt sich kein fotorealistisches Modell
+rechnen; der Weg dorthin steht in `ASSET_REQUIREMENTS.md` (Ready Player Me,
+Character Creator, MakeHuman — nicht MetaHuman, dessen Lizenz Godot ausschließt),
+Animationen von Mixamo. Die Platzhalter tragen bereits die Farben der Vorlagen:
+Anne dunkles Oberteil und blondes Haar, Oliver dunkelblauer Pullover, helles
+Haar, weißer Kragen.
+
+**Kulisse und Feinschliff.** Berliner Kulisse statt Blöcke, echte Aufnahmen
+statt synthetischer Klänge, Kameraübergänge, Pacing, Dialogtiming. Dazu die
 gesammelten Punkte: eine Reaktion zwischen den Würfen, ein echter Weg statt des
 Gleitens auf die Abschlussmarken.
 

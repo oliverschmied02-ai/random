@@ -1,6 +1,7 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene load_steps=4 format=3]
 
 [ext_resource type="Script" path="res://ui/pause_menu.gd" id="1_pause"]
+[ext_resource type="AudioStream" path="res://audio/klick.wav" id="2_klick"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
 bg_color = Color(0.0627451, 0.0666667, 0.0862745, 0.921569)
@@ -30,10 +31,10 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -170.0
-offset_top = -110.0
-offset_right = 170.0
-offset_bottom = 110.0
+offset_left = -200.0
+offset_top = -190.0
+offset_right = 200.0
+offset_bottom = 190.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
@@ -47,7 +48,7 @@ theme_override_constants/margin_bottom = 24
 
 [node name="VBox" type="VBoxContainer" parent="Wurzel/Panel/Margin"]
 layout_mode = 2
-theme_override_constants/separation = 16
+theme_override_constants/separation = 14
 alignment = 1
 
 [node name="Titel" type="Label" parent="Wurzel/Panel/Margin/VBox"]
@@ -62,7 +63,57 @@ layout_mode = 2
 theme_override_font_sizes/font_size = 20
 text = "Weiter"
 
+[node name="MusikZeile" type="HBoxContainer" parent="Wurzel/Panel/Margin/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Name" type="Label" parent="Wurzel/Panel/Margin/VBox/MusikZeile"]
+custom_minimum_size = Vector2(90, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.827451, 0.827451, 0.85098, 1)
+theme_override_font_sizes/font_size = 17
+text = "Musik"
+
+[node name="Regler" type="HSlider" parent="Wurzel/Panel/Margin/VBox/MusikZeile"]
+custom_minimum_size = Vector2(0, 24)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+max_value = 1.0
+step = 0.05
+
+[node name="KlangZeile" type="HBoxContainer" parent="Wurzel/Panel/Margin/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Name" type="Label" parent="Wurzel/Panel/Margin/VBox/KlangZeile"]
+custom_minimum_size = Vector2(90, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.827451, 0.827451, 0.85098, 1)
+theme_override_font_sizes/font_size = 17
+text = "Geräusche"
+
+[node name="Regler" type="HSlider" parent="Wurzel/Panel/Margin/VBox/KlangZeile"]
+custom_minimum_size = Vector2(0, 24)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+max_value = 1.0
+step = 0.05
+
+[node name="Trenner" type="HSeparator" parent="Wurzel/Panel/Margin/VBox"]
+layout_mode = 2
+
+[node name="ZumTitel" type="Button" parent="Wurzel/Panel/Margin/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "Zum Titelbildschirm"
+
 [node name="Beenden" type="Button" parent="Wurzel/Panel/Margin/VBox"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 20
+theme_override_font_sizes/font_size = 18
 text = "Spiel beenden"
+
+[node name="Klick" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("2_klick")
+bus = &"Klang"

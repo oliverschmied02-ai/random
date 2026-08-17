@@ -12,8 +12,12 @@ config_version=5
 
 config/name="Our Story"
 config/description="A personal stylized 3D story game. Chapter 1 — Berlin."
-run/main_scene="res://chapters/berlin/berlin_chapter.tscn"
+run/main_scene="res://ui/title_screen.tscn"
 config/features=PackedStringArray("4.5", "Forward Plus")
+
+[audio]
+
+buses/default_bus_layout="res://audio/bus_layout.tres"
 
 [display]
 

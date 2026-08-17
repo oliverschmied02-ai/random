@@ -1,7 +1,11 @@
-[gd_scene load_steps=18 format=3]
+[gd_scene load_steps=22 format=3]
 
 [ext_resource type="Script" path="res://chapters/berlin/darts/darts_game.gd" id="1_darts"]
 [ext_resource type="PackedScene" path="res://chapters/berlin/darts/darts_hud.tscn" id="2_hud"]
+[ext_resource type="AudioStream" path="res://audio/einschlag.wav" id="3_einschlag"]
+[ext_resource type="AudioStream" path="res://audio/laden.wav" id="4_laden"]
+[ext_resource type="AudioStream" path="res://audio/treffer_gut.wav" id="5_treffer"]
+[ext_resource type="AudioStream" path="res://audio/gewonnen.wav" id="6_gewonnen"]
 
 [sub_resource type="StandardMaterial3D" id="Mat_wandbrett"]
 albedo_color = Color(0.231373, 0.176471, 0.145098, 1)
@@ -183,3 +187,24 @@ scale_amount_max = 1.3
 color_ramp = SubResource("Tex_konfetti")
 
 [node name="DartsHud" parent="." instance=ExtResource("2_hud")]
+
+[node name="Einschlagklang" type="AudioStreamPlayer3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 132, 1.73, -243.8)
+stream = ExtResource("3_einschlag")
+unit_size = 8.0
+bus = &"Klang"
+
+[node name="Ladeklang" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("4_laden")
+volume_db = -16.0
+bus = &"Klang"
+
+[node name="Trefferklang" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("5_treffer")
+volume_db = -6.0
+bus = &"Klang"
+
+[node name="Gewonnenklang" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("6_gewonnen")
+volume_db = -4.0
+bus = &"Musik"

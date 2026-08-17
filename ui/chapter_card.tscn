@@ -1,10 +1,10 @@
 [gd_scene load_steps=2 format=3]
 
-[ext_resource type="Script" path="res://ui/chapter_end.gd" id="1_ende"]
+[ext_resource type="Script" path="res://ui/chapter_card.gd" id="1_karte"]
 
-[node name="ChapterEnd" type="CanvasLayer"]
+[node name="ChapterCard" type="CanvasLayer"]
 layer = 30
-script = ExtResource("1_ende")
+script = ExtResource("1_karte")
 
 [node name="Schwarz" type="ColorRect" parent="."]
 anchors_preset = 15

@@ -42,7 +42,7 @@ func _initialize() -> void:
 	_oliver = _root.get_node_or_null("Oliver") as Companion
 	_dialogue = _root.get_node_or_null("UI/DialogueBox") as DialogueBox
 	_darts = _root.get_node_or_null("DartsGame") as DartsGame
-	_abspann = _root.get_node_or_null("UI/ChapterEnd") as CanvasLayer
+	_abspann = _root.get_node_or_null("UI/ChapterCard") as CanvasLayer
 	# Positionen erst ab dem ersten Physikschritt lesen — der Baum steht hier
 	# noch nicht. Der Ablauf hängt gleich an seinem ersten `await`.
 	_ablauf()
@@ -59,7 +59,15 @@ func _ablauf() -> void:
 		_report()
 		return
 	if _abspann == null:
-		_fail("chapter scene is missing UI/ChapterEnd")
+		_fail("chapter scene is missing UI/ChapterCard")
+
+	# Das Kapitel beginnt mit der Titeltafel und hält so lange die Steuerung.
+	# Vorher anzusprechen führte zu nichts — der Sensor schweigt bewusst.
+	var warten := 0
+	while not _player.input_enabled and warten < 3000:
+		warten += 1
+		await physics_frame
+	_expect(_player.input_enabled, "the opening hands the controls over")
 
 	await _erinnerungen_pruefen()
 	await _abschluss_pruefen()

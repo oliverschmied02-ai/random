@@ -1,0 +1,136 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://ui/title_screen.gd" id="1_titel"]
+[ext_resource type="Script" path="res://ui/skyline.gd" id="2_skyline"]
+[ext_resource type="AudioStream" path="res://audio/titelmusik.wav" id="3_musik"]
+[ext_resource type="AudioStream" path="res://audio/klick.wav" id="4_klick"]
+
+[sub_resource type="Gradient" id="Gradient_himmel"]
+offsets = PackedFloat32Array(0, 0.55, 1)
+colors = PackedColorArray(0.152941, 0.180392, 0.294118, 1, 0.454902, 0.376471, 0.396078, 1, 0.878431, 0.639216, 0.415686, 1)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_himmel"]
+gradient = SubResource("Gradient_himmel")
+width = 8
+height = 256
+fill_to = Vector2(0, 1)
+
+[node name="TitleScreen" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("1_titel")
+
+[node name="Himmel" type="TextureRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+texture = SubResource("GradientTexture2D_himmel")
+expand_mode = 1
+stretch_mode = 0
+
+[node name="Skyline" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 0.52
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 0
+mouse_filter = 2
+script = ExtResource("2_skyline")
+
+[node name="Mitte" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+
+[node name="VBox" type="VBoxContainer" parent="Mitte"]
+layout_mode = 1
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -300.0
+offset_top = -230.0
+offset_right = 300.0
+offset_bottom = 60.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 14
+
+[node name="Titel" type="Label" parent="Mitte/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.996078, 0.937255, 0.85098, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.470588)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 3
+theme_override_font_sizes/font_size = 92
+text = "Our Story"
+horizontal_alignment = 1
+
+[node name="Unterzeile" type="Label" parent="Mitte/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.937255, 0.858824, 0.752941, 1)
+theme_override_font_sizes/font_size = 24
+text = "Kapitel 1 — Berlin, 2020"
+horizontal_alignment = 1
+
+[node name="Abstand" type="Control" parent="Mitte/VBox"]
+custom_minimum_size = Vector2(0, 42)
+layout_mode = 2
+mouse_filter = 2
+
+[node name="Anfangen" type="Button" parent="Mitte/VBox"]
+custom_minimum_size = Vector2(0, 52)
+layout_mode = 2
+theme_override_font_sizes/font_size = 26
+text = "Anfangen"
+
+[node name="Beenden" type="Button" parent="Mitte/VBox"]
+custom_minimum_size = Vector2(0, 46)
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+text = "Beenden"
+
+[node name="Fusszeile" type="Label" parent="."]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -400.0
+offset_top = -52.0
+offset_right = 400.0
+offset_bottom = -22.0
+grow_horizontal = 2
+grow_vertical = 0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.988235, 0.898039, 0.678431, 0.784314)
+theme_override_font_sizes/font_size = 17
+text = "WASD gehen · Maus schauen · E ansprechen · Esc Pause"
+horizontal_alignment = 1
+
+[node name="Schwarz" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+color = Color(0.0313726, 0.0313726, 0.0392157, 1)
+
+[node name="Musik" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("3_musik")
+volume_db = -6.0
+autoplay = true
+bus = &"Musik"
+
+[node name="Klick" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("4_klick")
+bus = &"Klang"

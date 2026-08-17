@@ -1,6 +1,7 @@
-[gd_scene load_steps=9 format=3]
+[gd_scene load_steps=12 format=3]
 
 [ext_resource type="Script" path="res://actors/companion/companion.gd" id="1_companion"]
+[ext_resource type="Script" path="res://systems/audio/schritte.gd" id="3_schritte"]
 [ext_resource type="Script" path="res://systems/interaction/interactable.gd" id="2_interactable"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_body"]
@@ -8,8 +9,17 @@ radius = 0.35
 height = 1.82
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_body"]
-albedo_color = Color(0.376471, 0.494118, 0.639216, 1)
-roughness = 0.75
+albedo_color = Color(0.184314, 0.223529, 0.317647, 1)
+roughness = 0.8
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_haar"]
+albedo_color = Color(0.72549, 0.596078, 0.435294, 1)
+roughness = 0.7
+
+[sub_resource type="SphereMesh" id="SphereMesh_kopf"]
+material = SubResource("StandardMaterial3D_haar")
+radius = 0.215
+height = 0.43
 
 [sub_resource type="CapsuleMesh" id="CapsuleMesh_body"]
 material = SubResource("StandardMaterial3D_body")
@@ -17,8 +27,8 @@ radius = 0.35
 height = 1.82
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_marker"]
-albedo_color = Color(0.164706, 0.176471, 0.223529, 1)
-roughness = 0.6
+albedo_color = Color(0.878431, 0.882353, 0.878431, 1)
+roughness = 0.65
 
 [sub_resource type="BoxMesh" id="BoxMesh_marker"]
 material = SubResource("StandardMaterial3D_marker")
@@ -47,6 +57,10 @@ shape = SubResource("CapsuleShape3D_body")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.91, 0)
 mesh = SubResource("CapsuleMesh_body")
 
+[node name="Kopf" type="MeshInstance3D" parent="Visual"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.67, 0)
+mesh = SubResource("SphereMesh_kopf")
+
 [node name="FacingMarker" type="MeshInstance3D" parent="Visual"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.56, -0.31)
 mesh = SubResource("BoxMesh_marker")
@@ -66,3 +80,10 @@ one_shot = true
 [node name="Shape" type="CollisionShape3D" parent="Interactable"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
 shape = SubResource("SphereShape3D_reach")
+
+[node name="Schritte" type="AudioStreamPlayer3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.15, 0)
+bus = &"Klang"
+unit_size = 5.0
+volume_db = -3.0
+script = ExtResource("3_schritte")

@@ -1,4 +1,4 @@
-[gd_scene load_steps=30 format=3]
+[gd_scene load_steps=32 format=3]
 
 [ext_resource type="Script" path="res://chapters/berlin/chapter_berlin.gd" id="1_chapter"]
 [ext_resource type="PackedScene" path="res://actors/player/player.tscn" id="2_player"]
@@ -11,8 +11,10 @@
 [ext_resource type="PackedScene" path="res://ui/tuning_panel.tscn" id="9_tuning"]
 [ext_resource type="PackedScene" path="res://chapters/berlin/darts/darts_game.tscn" id="10_darts"]
 [ext_resource type="PackedScene" path="res://systems/interaction/memory_point.tscn" id="11_memory"]
-[ext_resource type="PackedScene" path="res://ui/chapter_end.tscn" id="12_ende"]
+[ext_resource type="PackedScene" path="res://ui/chapter_card.tscn" id="12_karte"]
 [ext_resource type="PackedScene" path="res://ui/pause_menu.tscn" id="13_pause"]
+[ext_resource type="AudioStream" path="res://audio/stadt.wav" id="14_stadt"]
+[ext_resource type="AudioStream" path="res://audio/bude_summen.wav" id="15_summen"]
 
 [sub_resource type="ProceduralSkyMaterial" id="Sky_mat"]
 sky_top_color = Color(0.454902, 0.588235, 0.717647, 1)
@@ -607,6 +609,23 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 132.6, 0.25, -240.4)
 [node name="Kamera" type="Marker3D" parent="Abschluss"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 133.1, 1.6, -237)
 
+[node name="Klang" type="Node3D" parent="."]
+
+[node name="Stadt" type="AudioStreamPlayer" parent="Klang"]
+stream = ExtResource("14_stadt")
+volume_db = -15.0
+autoplay = true
+bus = &"Klang"
+
+[node name="BudeSummen" type="AudioStreamPlayer3D" parent="Klang"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 122, 3, -236)
+stream = ExtResource("15_summen")
+volume_db = -10.0
+unit_size = 7.0
+max_distance = 45.0
+autoplay = true
+bus = &"Klang"
+
 [node name="Player" parent="." instance=ExtResource("2_player")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.2, 12)
 
@@ -629,6 +648,6 @@ transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 13.6, 0.25, -9)
 
 [node name="TuningPanel" parent="UI" instance=ExtResource("9_tuning")]
 
-[node name="ChapterEnd" parent="UI" instance=ExtResource("12_ende")]
+[node name="ChapterCard" parent="UI" instance=ExtResource("12_karte")]
 
 [node name="PauseMenu" parent="UI" instance=ExtResource("13_pause")]

@@ -15,15 +15,16 @@ begonnen wird.
 
 ## Spielerfigur
 
-### Wife Character Model
+### Anne — Spielfigur
 | | |
 | --- | --- |
-| **Zweck** | Die Spielfigur — stilisierte Version meiner Frau |
+| **Zweck** | Die Spielfigur |
 | **Szene** | `actors/player/player.tscn` → Knoten `Visual` |
 | **Typ** | Rigged 3D-Charaktermodell |
-| **Stil** | Stilisiert, klare Silhouette, warme Farben, keine Fotorealistik |
-| **Animation** | Rig muss zu den Animationen unten passen |
-| **Platzhalter** | Kapsel mit Schulterbalken und Nasenmarkierung für die Blickrichtung |
+| **Stil** | **Realistisch**, nach Foto (2026-08-17 übergeben) |
+| **Vorlage** | Blondes, schulterlanges Haar, glatt; dunkles Oberteil; feine Kette |
+| **Animation** | Rig muss zu den Animationen unten passen (Mixamo-kompatibel) |
+| **Platzhalter** | Kapsel in Dunkelgrau mit blondem Scheitel, hellen Schulterbalken und Nasenmarkierung |
 | **Priorität** | CRITICAL |
 
 Austausch: den Inhalt von `Visual` ersetzen. Die Kollisionskapsel (Radius 0,35 m,
@@ -44,16 +45,34 @@ oder die Kapsel einmalig anpassen.
 Andockpunkte sind vorhanden: `Player.speed_ratio`, `Player.current_speed`
 und die Signale `started_moving` / `stopped_moving`.
 
-### Oliver Character Model
+### Oliver — Begleiter
 | | |
 | --- | --- |
-| **Zweck** | Der Begleiter — stilisierte Version von mir |
+| **Zweck** | Der Begleiter |
 | **Szene** | `actors/companion/companion.tscn` → Knoten `Visual` |
 | **Typ** | Rigged 3D-Charaktermodell |
-| **Stil** | Wie die Spielfigur, klar davon unterscheidbare Silhouette |
+| **Stil** | **Realistisch**, nach Foto (2026-08-17 übergeben) |
+| **Vorlage** | Kurzes hellbraunes Haar, Seitenscheitel; dunkelblauer Pullover über weißem Hemdkragen |
 | **Animation** | Idle, Gehen, Zuhören/Sprechen |
-| **Platzhalter** | Blaue Kapsel mit Schulterbalken und Nasenmarkierung |
+| **Platzhalter** | Kapsel in Dunkelblau mit hellem Scheitel und weißem Kragenbalken |
 | **Priorität** | CRITICAL |
+
+**Weg zu realistischen Figuren.** Aus je einem Foto lässt sich kein
+fotorealistisches Modell rechnen — dafür bräuchte es entweder viele Aufnahmen
+aus verschiedenen Winkeln (Photogrammetrie) oder einen Charakter-Generator, der
+aus einem Frontalfoto ein Gesicht baut. Realistisch und für Godot brauchbar:
+
+* **Ready Player Me** — Frontalfoto hinein, glTF heraus, kostenlos, läuft direkt
+  in Godot. Realistisch, aber leicht geglättet.
+* **Character Creator 4 + Headshot** — deutlich näher am Foto, kostenpflichtig,
+  exportiert FBX/glTF.
+* **MakeHuman oder Daz3D** — kostenlos bzw. günstig, Gesicht von Hand nachbauen.
+
+Nicht geeignet: **MetaHuman**. Die Modelle sehen am besten aus, dürfen aber
+lizenzrechtlich nur in der Unreal Engine verwendet werden.
+
+Animationen kommen in allen Fällen von **Mixamo** (kostenlos, passt auf
+Standard-Rigs): Idle, Gehen, Laufen, Zuhören, Werfen.
 
 Der Companion liefert `speed_ratio`, `current_speed` und `state` — dieselben
 Andockpunkte wie die Spielfigur.
@@ -183,7 +202,7 @@ zusammenpassen — wer die Optik ändert, ändert die Wertung mit.
 | **Typ** | Einschlag, Aufladen, Volltreffer, Erfolgsmusik |
 | **Stil** | Trocken, satt, mit einem Augenzwinkern |
 | **Animation** | — |
-| **Platzhalter** | Keiner — es gibt bisher keinen Ton |
+| **Platzhalter** | Synthetisch aus `tools/make_placeholder_audio.py` |
 | **Priorität** | IMPORTANT |
 
 ### Footstep Sounds
@@ -193,9 +212,25 @@ zusammenpassen — wer die Optik ändert, ändert die Wertung mit.
 | **Szene** | `actors/player/player.tscn` |
 | **Typ** | Sound-Set (Asphalt, Pflaster) |
 | **Stil** | Trocken, nah, leicht stilisiert |
-| **Animation** | An Schrittzeitpunkte der Lauf-Animation koppeln |
-| **Platzhalter** | Keiner — es gibt bisher keinen Ton |
+| **Animation** | An Schrittzeitpunkte der Lauf-Animation koppeln — bis dahin zählt `Schritte` den Weg |
+| **Platzhalter** | Vier synthetische Tritte aus `tools/make_placeholder_audio.py` |
 | **Priorität** | IMPORTANT |
+
+### Stadtatmosphäre und Musik
+| | |
+| --- | --- |
+| **Zweck** | Der Ort soll klingen, nicht nur aussehen |
+| **Szene** | `chapters/berlin/berlin_chapter.tscn` → `Klang`, `ui/title_screen.tscn` |
+| **Typ** | Stadtschleife (fern, ereignislos), Brummen des Leuchtschilds, Titelmusik |
+| **Stil** | Leer und spätabendlich; die Musik warm, langsam, ohne Pathos |
+| **Animation** | — |
+| **Platzhalter** | Synthetisch: Rauschteppich, Netzbrummen, vier Akkorde aus Sinustönen |
+| **Priorität** | IMPORTANT |
+
+Die Platzhalter sind austauschbar, ohne Code anzufassen: gleicher Dateiname
+unter `audio/`, fertig. Schleifen (`stadt`, `bude_summen`, `laden`,
+`titelmusik`) brauchen in der `.import`-Datei `edit/loop_mode=2` — die Werte
+des Importeurs sind *0 = aus WAV lesen, 1 = aus, 2 = vorwärts*.
 
 ---
 

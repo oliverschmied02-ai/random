@@ -77,7 +77,7 @@ const _ERINNERUNGEN := [
 @onready var _dialogue: DialogueBox = $UI/DialogueBox
 @onready var _darts: DartsGame = $DartsGame
 @onready var _objective = $UI/ObjectiveLabel
-@onready var _abspann = $UI/ChapterEnd
+@onready var _karte = $UI/ChapterCard
 @onready var _platz_anne: Marker3D = $Abschluss/Anne
 @onready var _platz_oliver: Marker3D = $Abschluss/Oliver
 @onready var _abschluss_kamera: Marker3D = $Abschluss/Kamera
@@ -103,6 +103,15 @@ func _ready() -> void:
 			continue
 		punkt.interacted.connect(_on_erinnerung.bind(fundstueck["lines"]))
 
+	_auftakt()
+
+
+## Der Kapitelanfang: Titeltafel, dann geht das Bild auf. Die Steuerung ruht so
+## lange — wer schon läuft, während der Titel noch steht, hat den Anfang verpasst.
+func _auftakt() -> void:
+	_player.input_enabled = false
+	await _karte.auftakt("KAPITEL 1", "BERLIN — 2020")
+	_player.input_enabled = true
 	_objective.show_objective("Oliver von der Arbeit abholen")
 
 
@@ -216,7 +225,7 @@ func _abschluss_szene() -> void:
 	await tween.finished
 
 	await _dialogue.play(BerlinDialogue.ABSCHLUSS)
-	await _abspann.zeige("KAPITEL 1", "BERLIN — 2020")
+	await _karte.abspann("KAPITEL 1", "BERLIN — 2020")
 
 
 ## Wohin die Abschlusskamera schaut: auf die Mitte zwischen beiden, auf
@@ -272,12 +281,16 @@ func _oliver_danebenstellen() -> void:
 	rechts = Vector3(rechts.x, 0.0, rechts.z).normalized()
 	_oliver.move_to(_player.global_position + rechts * 1.7)
 
-	var angekommen := false
-	var beim_ankommen := func() -> void: angekommen = true
+	# Als Dictionary und nicht als einfaches `bool`: GDScript-Lambdas fangen
+	# lokale Variablen **als Kopie** ein. Ein `angekommen = true` im Lambda
+	# bliebe hier draußen wirkungslos, und die Schleife liefe immer in die
+	# volle Wartezeit — das Gespräch begänne jedes Mal 2,5 s zu spät.
+	var stand := {"angekommen": false}
+	var beim_ankommen := func() -> void: stand["angekommen"] = true
 	_oliver.arrived.connect(beim_ankommen, CONNECT_ONE_SHOT)
 
 	var frist := get_tree().create_timer(aufstell_wartezeit)
-	while not angekommen and frist.time_left > 0.0:
+	while not stand["angekommen"] and frist.time_left > 0.0:
 		await get_tree().process_frame
 
 	if _oliver.arrived.is_connected(beim_ankommen):
