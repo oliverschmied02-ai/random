@@ -2,7 +2,8 @@
 
 **Spiel:** Our Story — Kapitel 1: Berlin
 **Engine:** Godot 4.5 (GDScript)
-**Aktuelle Stufe:** Stage 1 — Foundation (implementiert, wartet auf Fahrgefühl-Test)
+**Aktuelle Stufe:** Stage 1 — Foundation **abgeschlossen** (Fahrgefühl am Mac
+bestätigt, 2026-08-17). Stage 2 noch nicht begonnen.
 
 ---
 
@@ -144,10 +145,13 @@ Probleme" beschrieben.
 
 ## Nächste sinnvolle Schritte
 
-**Zuerst: Probespielen.** Stage 1 gilt erst als fertig, wenn sich das Laufen
-gut anfühlt. Am schnellsten geht das über **F1** im laufenden Spiel; dieselben
-Werte stehen im Editor unter den Knoten `Player` und `ThirdPersonCamera`.
-Erfahrungsgemäß zuerst zu prüfen:
+Stage 1 ist abgenommen: die Bewegung fühlt sich gut an, die Startwerte bleiben
+wie sie sind. Als nächstes steht **Stage 2 — Meeting Oliver** an, sobald
+ausdrücklich beauftragt.
+
+Falls das Fahrgefühl später doch noch nachjustiert werden soll — über **F1** im
+laufenden Spiel, dieselben Werte stehen im Editor unter `Player` und
+`ThirdPersonCamera`:
 
 | Empfindung | Stellschraube |
 | --- | --- |
@@ -159,9 +163,14 @@ Erfahrungsgemäß zuerst zu prüfen:
 | Kamera zu nah / zu weit | `SpringArm3D > spring_length` (4,2) |
 | Kamera dreht sich ungefragt | `auto_align_enabled` / `auto_align_rate` |
 
-Danach, wenn ausdrücklich beauftragt: **Stage 2 — Meeting Oliver**
-(Platzhalterfiguren, Startbereich, Näherungs-Trigger, Dialog,
-Companion-Aktivierung).
+### Stage 2 — Meeting Oliver (geplant)
 
-Nicht begonnen und bewusst nicht vorbereitet: Alexanderplatz, Dialogsystem,
-Dart-Minispiel, spätere Kapitel.
+Umfang laut Brief: Platzhalterfigur für Oliver, kompakter Startbereich,
+Näherungs-Trigger, Dialog mit Platzhaltertexten, Companion-Aktivierung.
+Eigene Szene unter `chapters/berlin/`; die Testfläche bleibt als
+Entwicklungswerkzeug daneben bestehen.
+
+Nicht Teil von Stage 2: der Spaziergang durch Berlin (Stage 3), das
+Dart-Minispiel (Stage 4), echte Modelle und Animationen (Stage 5).
+
+Nicht begonnen und bewusst nicht vorbereitet: spätere Kapitel.
