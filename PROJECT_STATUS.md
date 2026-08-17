@@ -2,9 +2,9 @@
 
 **Spiel:** Our Story — Kapitel 1: Berlin
 **Engine:** Godot 4.5 (GDScript)
-**Aktuelle Stufe:** Stage 6 — der Rahmen ums Spiel: Titelbildschirm, Ton,
-Kapitelauftakt (implementiert, wartet auf Probespielen). Stage 1 bis 4
-abgenommen, Stage 5 ausgeliefert.
+**Aktuelle Stufe:** Stage 7 — Berlin bei Nacht: Fassaden, Gehwege, Laternen,
+Schilder (implementiert, wartet auf Probespielen). Stage 1 bis 4 abgenommen,
+Stage 5 und 6 ausgeliefert.
 
 **Kapitel 1 ist damit von Anfang bis Ende erzählt:** abholen, laufen, ankommen,
 werfen, gewinnen — und danach ein Schlussbild, in dem die beiden miteinander
@@ -13,6 +13,37 @@ reden, gefolgt vom Abspann.
 ---
 
 ## Was funktioniert
+
+### Kulisse (`chapters/berlin/kulisse.gd`)
+Das Kapitel spielt jetzt dort, wo seine Dialoge spielen: abends, halb elf.
+
+Die Kulisse ist **Anstrich, keine Architektur** — sie wird beim Laden über die
+vorhandenen Blöcke gelegt, prozedural und mit gesätem Zufall (je Wand aus ihrem
+Namen, jede Runde sieht gleich aus). Die Blöcke selbst und damit Kollision,
+Route und Zeiten bleiben unangetastet; einzige Ausnahme sind die Gehwegplatten
+mit ihrer 8-cm-Bordsteinkante, für die das Stufen-Steigen gebaut wurde.
+
+* **Fassaden:** Sockel, Fensterraster mit Rahmen, Gesimse, Stuckband, vereinzelt
+  Balkone; jede Wand in einem eigenen Berliner Altbauton. 14 % der Fenster sind
+  warm erleuchtet, der Rest ist dunkel — 2020, alle sind zu Hause.
+  Erdgeschosse mit Türen und heruntergelassenen Rollläden samt Ladenschild.
+* **Straßenraum:** Gehwege entlang der Hauskanten, gestrichelte Mittelstreifen,
+  Gleisbett unter den Tramschienen, zwei Litfaßsäulen.
+* **Nacht:** dunkler Himmel mit warmem Horizontrest, bläulicher Mond mit
+  weichen Schatten, zehn brennende Laternen mit Lichtkegeln, Glühen auf allen
+  Leuchtflächen. Ein schwaches Fülllicht an der Kamera hält die Gesichter
+  zwischen den Laternen lesbar.
+* **Schauplätze:** Büroeingang mit warmem Licht und „BÜRO"-Schild; Café mit
+  „CAFÉ"-Schriftzug und schiefem Zettel „WEGEN CORONA GESCHLOSSEN";
+  Dönerbude mit leuchtendem Schild, „DÖNER"-Schriftzug und Lichterkette;
+  Fernsehturm mit erleuchteter Kugel und rotem Blinklicht als Silhouette.
+* Alle Kleinteile (rund 7 000 Quader) liegen in einem Dutzend MultiMeshes —
+  ein Zeichenaufruf je Materialgruppe.
+
+Dabei gefunden: **das Café steckte seit Stage 3 komplett in der Hauswand.**
+Beim Begradigen der Blöcke war die Wand über das Café gewandert; auf keinem
+Prüfbild war diese Straßenseite je im Bild. Es steht jetzt vor der Fassade,
+Stühle und Absperrband auf dem Gehweg.
 
 ### Rahmen (`ui/title_screen.tscn`, `ui/chapter_card.tscn`)
 Das Spiel fiel vorher mit der Tür ins Haus: Doppelklick, und man stand mitten
@@ -441,6 +472,9 @@ zeilenweise, nicht spaltenweise. Dadurch stiegen die Rampen zur falschen Seite
 
 ## Aktuelle Grenzen
 
+* Die Kulisse bleibt Kastenarchitektur mit aufgesetzten Details — es gibt
+  keine Texturen, keine echten Balkongeländer, keine Menschen außer den
+  beiden. Der nächtliche Look trägt das; bei Tageslicht würde es kahl wirken.
 * Das Gangwerk ist Platzhalter-Bewegung: glaubwürdig aus Spielentfernung, aber
   ohne Fersenabrollen, ohne Hüftrotation, ohne Gewichtsverlagerung. Echte
   Animationen (Mixamo aufs vorhandene Rig) ersetzen es; der Schalter dafür ist

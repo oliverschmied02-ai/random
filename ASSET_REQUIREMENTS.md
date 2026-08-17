@@ -102,8 +102,8 @@ Andockpunkte wie die Spielfigur.
 | **Typ** | Modulare Gebäude, Bodenmaterialien, Straßenmöbel |
 | **Stil** | Stilisiert, warme Farben, starke Silhouetten |
 | **Animation** | Dezente Bewegung: Fahnen, Blätter, ferne Bahnen |
-| **Platzhalter** | CSG-Blöcke, Laternen aus Zylinder und Box |
-| **Priorität** | IMPORTANT |
+| **Platzhalter** | Prozedurale Nachtfassaden aus `kulisse.gd`: Fensterraster, Gesimse, Balkone, Läden, Gehwege, brennende Laternen |
+| **Priorität** | POLISH — der Platzhalter trägt inzwischen selbst |
 
 Fünf Abschnitte mit vier Ecken. Beim Austausch erhalten bleiben sollten: die
 Fahrbahnbreite von 24 m (schmalere Straßen liegen komplett im Schatten und

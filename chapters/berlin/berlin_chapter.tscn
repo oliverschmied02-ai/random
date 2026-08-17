@@ -1,4 +1,4 @@
-[gd_scene load_steps=32 format=3]
+[gd_scene load_steps=33 format=3]
 
 [ext_resource type="Script" path="res://chapters/berlin/chapter_berlin.gd" id="1_chapter"]
 [ext_resource type="PackedScene" path="res://actors/player/player.tscn" id="2_player"]
@@ -15,13 +15,14 @@
 [ext_resource type="PackedScene" path="res://ui/pause_menu.tscn" id="13_pause"]
 [ext_resource type="AudioStream" path="res://audio/stadt.wav" id="14_stadt"]
 [ext_resource type="AudioStream" path="res://audio/bude_summen.wav" id="15_summen"]
+[ext_resource type="Script" path="res://chapters/berlin/kulisse.gd" id="16_kulisse"]
 
 [sub_resource type="ProceduralSkyMaterial" id="Sky_mat"]
-sky_top_color = Color(0.454902, 0.588235, 0.717647, 1)
-sky_horizon_color = Color(0.85098, 0.831373, 0.780392, 1)
-sky_curve = 0.15
-ground_bottom_color = Color(0.505882, 0.494118, 0.470588, 1)
-ground_horizon_color = Color(0.85098, 0.831373, 0.780392, 1)
+sky_top_color = Color(0.012, 0.02, 0.05, 1)
+sky_horizon_color = Color(0.16, 0.115, 0.1, 1)
+sky_curve = 0.12
+ground_bottom_color = Color(0.015, 0.015, 0.025, 1)
+ground_horizon_color = Color(0.14, 0.1, 0.09, 1)
 
 [sub_resource type="Sky" id="Sky_env"]
 sky_material = SubResource("Sky_mat")
@@ -29,8 +30,9 @@ sky_material = SubResource("Sky_mat")
 [sub_resource type="Environment" id="Environment_main"]
 background_mode = 2
 sky = SubResource("Sky_env")
-ambient_light_source = 3
-ambient_light_energy = 1.35
+ambient_light_source = 2
+ambient_light_color = Color(0.42, 0.47, 0.62, 1)
+ambient_light_energy = 1.15
 reflected_light_source = 2
 tonemap_mode = 4
 tonemap_white = 6.0
@@ -38,12 +40,17 @@ ssao_enabled = true
 ssao_radius = 2.0
 ssao_intensity = 1.4
 fog_enabled = true
-fog_light_color = Color(0.803922, 0.796078, 0.756863, 1)
-fog_light_energy = 1.1
-fog_sun_scatter = 0.15
-fog_density = 0.0013
-fog_sky_affect = 0.35
+fog_light_color = Color(0.05, 0.06, 0.1, 1)
+fog_light_energy = 0.6
+fog_sun_scatter = 0.05
+fog_density = 0.0011
+fog_sky_affect = 0.3
 fog_aerial_perspective = 0.4
+glow_enabled = true
+glow_intensity = 0.45
+glow_strength = 1.0
+glow_bloom = 0.04
+glow_hdr_threshold = 1.3
 
 [sub_resource type="StandardMaterial3D" id="Mat_paving"]
 albedo_color = Color(0.505882, 0.494118, 0.470588, 1)
@@ -103,10 +110,10 @@ environment = SubResource("Environment_main")
 
 [node name="SunLight" type="DirectionalLight3D" parent="."]
 transform = Transform3D(0.866, -0.41, 0.287, 0, 0.574, 0.819, -0.5, -0.709, 0.497, 0, 24, 0)
-light_color = Color(1, 0.921569, 0.85098, 1)
-light_energy = 1.35
+light_color = Color(0.55, 0.66, 0.92, 1)
+light_energy = 0.55
 shadow_enabled = true
-shadow_blur = 1.4
+shadow_blur = 2.2
 directional_shadow_max_distance = 130.0
 
 [node name="Ground" type="CSGBox3D" parent="."]
@@ -114,6 +121,9 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 65, -0.5, -105)
 use_collision = true
 size = Vector3(220, 1, 330)
 material = SubResource("Mat_paving")
+
+[node name="Kulisse" type="Node3D" parent="."]
+script = ExtResource("16_kulisse")
 
 [node name="Walls" type="Node3D" parent="."]
 
@@ -245,28 +255,28 @@ material = SubResource("Mat_metal")
 [node name="ClosedCafe" type="Node3D" parent="."]
 
 [node name="Front" type="CSGBox3D" parent="ClosedCafe"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 47.7, 1.9, -100)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 48.2, 1.9, -100)
 size = Vector3(0.4, 3.8, 8)
 material = SubResource("Mat_dark")
 
 [node name="Markise" type="CSGBox3D" parent="ClosedCafe"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 46.7, 3.9, -100)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 49.1, 3.9, -100)
 size = Vector3(2.2, 0.22, 8.4)
 material = SubResource("Mat_accent")
 
 [node name="Absperr" type="CSGBox3D" parent="ClosedCafe"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 46.4, 0.5, -96.5)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 49.6, 0.58, -96.5)
 size = Vector3(2.2, 0.1, 0.15)
 material = SubResource("Mat_sign")
 
 [node name="StuhlA" type="CSGBox3D" parent="ClosedCafe"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 46.6, 0.45, -103)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 49.5, 0.53, -103)
 use_collision = true
 size = Vector3(0.5, 0.9, 0.5)
 material = SubResource("Mat_building_a")
 
 [node name="StuhlB" type="CSGBox3D" parent="ClosedCafe"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 46.6, 0.45, -104)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 49.5, 0.53, -104)
 use_collision = true
 size = Vector3(0.5, 0.9, 0.5)
 material = SubResource("Mat_building_a")
@@ -274,17 +284,17 @@ material = SubResource("Mat_building_a")
 [node name="Spender" type="Node3D" parent="."]
 
 [node name="Kasten" type="CSGBox3D" parent="Spender"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 121.0, 1.25, -190)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 120.2, 1.33, -190)
 size = Vector3(0.35, 0.5, 0.3)
 material = SubResource("Mat_sign")
 
 [node name="Schild" type="CSGBox3D" parent="Spender"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 121.0, 2.2, -190)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 120.2, 2.28, -190)
 size = Vector3(0.1, 0.6, 0.85)
 material = SubResource("Mat_accent")
 
 [node name="Staender" type="CSGCylinder3D" parent="Spender"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 121.0, 0.5, -190)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 120.2, 0.58, -190)
 use_collision = true
 radius = 0.05
 height = 1.0
@@ -338,7 +348,7 @@ material = SubResource("Mat_metal")
 [node name="Bank1" type="Node3D" parent="."]
 
 [node name="Sitz" type="CSGBox3D" parent="Bank1"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 69, 0.23, -90)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 70, 0.31, -90)
 use_collision = true
 size = Vector3(0.6, 0.46, 1.9)
 material = SubResource("Mat_building_a")
@@ -346,7 +356,7 @@ material = SubResource("Mat_building_a")
 [node name="Bank2" type="Node3D" parent="."]
 
 [node name="Sitz" type="CSGBox3D" parent="Bank2"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 139, 0.23, -180)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 140, 0.31, -180)
 use_collision = true
 size = Vector3(0.6, 0.46, 1.9)
 material = SubResource("Mat_building_a")
@@ -559,41 +569,41 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11, 0.9, -5)
 [node name="Fahrrad" type="Node3D" parent="Erinnerungen"]
 
 [node name="Hinterrad" type="CSGCylinder3D" parent="Erinnerungen/Fahrrad"]
-transform = Transform3D(0, 1, 0, -1, 0, 0, 0, 0, 1, 122, 0.34, -160.6)
+transform = Transform3D(0, 1, 0, -1, 0, 0, 0, 0, 1, 119.4, 0.42, -160.6)
 radius = 0.34
 height = 0.06
 sides = 12
 material = SubResource("Mat_dark")
 
 [node name="Vorderrad" type="CSGCylinder3D" parent="Erinnerungen/Fahrrad"]
-transform = Transform3D(0, 1, 0, -1, 0, 0, 0, 0, 1, 122, 0.34, -161.8)
+transform = Transform3D(0, 1, 0, -1, 0, 0, 0, 0, 1, 119.4, 0.42, -161.8)
 radius = 0.34
 height = 0.06
 sides = 12
 material = SubResource("Mat_dark")
 
 [node name="Oberrohr" type="CSGBox3D" parent="Erinnerungen/Fahrrad"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 122, 0.78, -161.25)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 119.4, 0.86, -161.25)
 size = Vector3(0.06, 0.06, 1.05)
 material = SubResource("Mat_metal")
 
 [node name="Sattelrohr" type="CSGBox3D" parent="Erinnerungen/Fahrrad"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 122, 0.56, -160.72)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 119.4, 0.64, -160.72)
 size = Vector3(0.06, 0.5, 0.06)
 material = SubResource("Mat_metal")
 
 [node name="Gabel" type="CSGBox3D" parent="Erinnerungen/Fahrrad"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 122, 0.62, -161.78)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 119.4, 0.70, -161.78)
 size = Vector3(0.05, 0.62, 0.05)
 material = SubResource("Mat_metal")
 
 [node name="Lenker" type="CSGBox3D" parent="Erinnerungen/Fahrrad"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 122, 0.93, -161.78)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 119.4, 1.01, -161.78)
 size = Vector3(0.5, 0.05, 0.05)
 material = SubResource("Mat_metal")
 
 [node name="ErinnerungFahrrad" parent="Erinnerungen" instance=ExtResource("11_memory")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 122.9, 0.9, -161.2)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 120.8, 0.98, -161.2)
 
 [node name="ErinnerungBank" parent="Erinnerungen" instance=ExtResource("11_memory")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 68.2, 0.9, -90)
