@@ -224,9 +224,15 @@ laufenden Spiel, dieselben Werte stehen im Editor unter `Player` und
 | Kamera zu nah / zu weit | `SpringArm3D > spring_length` (4,2) |
 | Kamera dreht sich ungefragt | `auto_align_enabled` / `auto_align_rate` |
 
-### Beim Probespielen von Stage 2 zu beurteilen
+### Rückmeldung aus dem Probespielen (2026-08-17)
 
-* Führt die Komposition den Blick von selbst zu Oliver, oder braucht es mehr?
+Stage 2 spielt sich gut, Oliver ist ohne Suchen zu finden — die Blickführung
+funktioniert also. Offener Wunsch: **Oliver soll an einem Hauseingang warten**
+statt frei auf dem Platz zu stehen. Als Kulissenarbeit in
+`ASSET_REQUIREMENTS.md` vermerkt.
+
+### Noch zu beurteilen
+
 * Stimmt der Abstand, in dem der Hinweis „Ansprechen" erscheint?
 * Ist das Dialogtempo richtig — Schreibgeschwindigkeit, Zeilenlänge?
 * Sitzt der Kamerawinkel im Gespräch gut? (`gespraechswinkel_grad`, 48°)

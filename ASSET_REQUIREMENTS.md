@@ -76,6 +76,13 @@ Andockpunkte wie die Spielfigur.
 Die Komposition (Achse zum Fernsehturm, querende Gleise) sollte beim Austausch
 erhalten bleiben — sie trägt die Führung zu Oliver.
 
+**Oliver braucht einen Hauseingang.** Er steht derzeit frei auf dem Platz. Wer
+wartet, lehnt an einer Tür, unter einem Vordach, in einer Nische — nicht mitten
+im Nichts. Der Eingang sollte an der Achse liegen, damit die Blickführung
+erhalten bleibt, und tief genug sein, dass er darin erkennbar *wartet*.
+Praktischer Nebeneffekt: eine Nische gibt der Gesprächskamera einen Hintergrund
+statt leerer Fläche.
+
 ### COVID-Requisiten
 | | |
 | --- | --- |
