@@ -64,19 +64,28 @@ in `actors/models/README.md`.
 **Weg zu realistischen Figuren.** Aus je einem Foto lässt sich kein
 fotorealistisches Modell rechnen — dafür bräuchte es entweder viele Aufnahmen
 aus verschiedenen Winkeln (Photogrammetrie) oder einen Charakter-Generator, der
-aus einem Frontalfoto ein Gesicht baut. Realistisch und für Godot brauchbar:
+aus einem Frontalfoto ein Gesicht baut.
 
-* **Ready Player Me** — Frontalfoto hinein, glTF heraus, kostenlos, läuft direkt
-  in Godot. Realistisch, aber leicht geglättet.
-* **Character Creator 4 + Headshot** — deutlich näher am Foto, kostenpflichtig,
-  exportiert FBX/glTF.
-* **MakeHuman oder Daz3D** — kostenlos bzw. günstig, Gesicht von Hand nachbauen.
+**Ready Player Me ist am 31. Januar 2026 abgeschaltet worden** (Netflix hat das
+Unternehmen gekauft). Bereits erzeugte Dateien laufen weiter, neue gibt es
+nicht. Was bleibt:
+
+* **MetaPerson Creator** (Avatar SDK) — Selfie hinein, geriggte Ganzkörperfigur
+  als GLB heraus, im Browser. Erste Figur frei, weitere gegen Guthaben.
+* **Avaturn** — dasselbe Prinzip, ebenfalls mit GLB-Ausgabe.
+* **Character Creator 4 + Headshot** — näher am Foto, kostenpflichtig.
+* **MakeHuman oder Daz3D** — kostenlos, Gesicht von Hand nachbauen.
 
 Nicht geeignet: **MetaHuman**. Die Modelle sehen am besten aus, dürfen aber
 lizenzrechtlich nur in der Unreal Engine verwendet werden.
 
-Animationen kommen in allen Fällen von **Mixamo** (kostenlos, passt auf
-Standard-Rigs): Idle, Gehen, Laufen, Zuhören, Werfen.
+Animationen: **Mixamo** (kostenlos mit Adobe-Konto, royaltyfrei, passt auf
+Standard-Rigs) — Idle, Gehen, Laufen, Zuhören, Werfen. Der Dienst wird von
+Adobe nicht mehr gepflegt; als Fundament taugt er nicht, als Quelle für den
+Anfang schon.
+
+Dass ein Anbieter verschwindet, darf das Spiel nicht treffen: der Steckplatz in
+`actors/models/` nimmt jede `.glb`, gleich woher.
 
 Der Companion liefert `speed_ratio`, `current_speed` und `state` — dieselben
 Andockpunkte wie die Spielfigur.

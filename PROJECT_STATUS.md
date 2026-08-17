@@ -476,16 +476,19 @@ Tonlage. `chapters/berlin/dialogue_lines.gd` enthält ausschließlich Inhalt —
 Sätze umschreiben, ergänzen oder streichen ist gefahrlos. Die drei Erinnerungen
 sind der offensichtliche Ort für Insider.
 
-**Die Figuren.** Entschieden ist: **realistisch**, über **Ready Player Me**,
-nach den Fotos vom 2026-08-17. Der Steckplatz steht und ist geprüft; es fehlen
-nur die beiden Dateien, und die entstehen im Browser mit Konto — das kann diese
-Umgebung nicht, ihr Netzzugang lässt `models.readyplayer.me` ohnehin nicht zu.
-Anleitung: `actors/models/README.md`.
+**Die Figuren.** Entschieden ist: **realistisch**, nach den Fotos vom
+2026-08-17. Der Steckplatz steht und ist geprüft; es fehlen nur die beiden
+Dateien, und die entstehen im Browser mit Konto — das kann diese Umgebung nicht.
 
-Danach: **Animationen von Mixamo** (kostenlos, passt auf das Rig von Ready
-Player Me) und eine Mischschicht, die zwischen Stehen, Gehen und Laufen über
-`Player.speed_ratio` überblendet. Erst mit den Modellen zu bauen — ohne sie
-wären die Zustände geraten.
+Ready Player Me, ursprünglich dafür vorgesehen, wurde am 31. Januar 2026
+abgeschaltet. Ersatz und Anleitung stehen in `actors/models/README.md`
+(MetaPerson Creator, Avaturn, Character Creator). Der Steckplatz ist bewusst
+werkzeugunabhängig: er nimmt jede `.glb`, gleich woher.
+
+Danach: **Animationen** (Mixamo oder eine freie Mocap-Sammlung) und eine
+Mischschicht, die zwischen Stehen, Gehen und Laufen über `Player.speed_ratio`
+überblendet. Erst mit den Modellen zu bauen — ohne sie wären die Zustände
+geraten.
 
 Die Platzhalter tragen bereits die Farben der Vorlagen: Anne dunkles Oberteil
 und blondes Haar, Oliver dunkelblauer Pullover, helles Haar, weißer Kragen.
