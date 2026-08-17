@@ -2,8 +2,8 @@
 
 **Spiel:** Our Story — Kapitel 1: Berlin
 **Engine:** Godot 4.5 (GDScript)
-**Aktuelle Stufe:** Stage 1 — Foundation **abgeschlossen** (Fahrgefühl am Mac
-bestätigt, 2026-08-17). Stage 2 noch nicht begonnen.
+**Aktuelle Stufe:** Stage 2 — Meeting Oliver (implementiert, wartet auf
+Probespielen). Stage 1 abgenommen am 2026-08-17.
 
 ---
 
@@ -49,6 +49,36 @@ Bewusst diagnostisch, nicht hübsch:
 ### Debug-Overlay (`ui/`)
 F3 blendet fps, Geschwindigkeit, Spitzenwert, Bodenkontakt, Position und
 Kameraabstand ein.
+
+### Startbereich Berlin (`chapters/berlin/berlin_start.tscn`)
+Kuratierter Platz statt Testfläche: Häuserzeilen bilden eine Achse, Tramgleise
+queren den Weg, Laternen säumen ihn, links eine geschlossene Café-Front mit
+Markise. Am Ende der Achse steht Oliver — und genau darüber der Fernsehturm.
+Die Komposition führt den Blick dorthin, ohne Questmarker.
+
+Der Turm sitzt 700 m entfernt und ist so bemessen, dass die Kugel zwischen
+Dachlinie (13°) und oberem Bildrand (20°) liegt. Wer ihn verschiebt, sollte
+das nachrechnen, sonst verschwindet er wieder aus dem Bild.
+
+### Interaktion (`systems/interaction/`)
+`Interactable` ist eine Area3D-Komponente mit Text, An/Aus und Einmal-Flag;
+sie weiß nicht, *was* passiert — das bleibt beim Kapitelskript. Der
+`InteractionSensor` am Spieler wählt aus mehreren Kandidaten den plausibelsten
+(Nähe **und** Blickrichtung) und schweigt, während eine Sequenz die Steuerung
+hat. Dieselbe Komponente trägt später Café, Desinfektionsspender und Fahrrad.
+
+### Dialog (`systems/dialogue/`)
+`DialogueBox` spielt eine Liste aus `{"speaker", "text"}` ab, mit
+Schreibmaschineneffekt; der erste Tastendruck vervollständigt die Zeile, der
+zweite blättert weiter. `await dialogue.play(...)` kehrt zurück, wenn der
+Spieler fertig gelesen hat. Die Texte stehen in
+`chapters/berlin/dialogue_lines.gd` — reiner Inhalt, keine Logik.
+
+### Companion (`actors/companion/`)
+Vier Zustände: wartend, folgend, auf Position gehend, festgehalten. Zielpunkt
+ist ein Punkt **neben und hinter** der Spielerin, nicht sie selbst — genau das
+verhindert das typische Anrempeln. Holt bei Abstand bis 5,4 m/s auf, dreht sich
+im Stehen zur Spielerin. Bewusst keine autonome KI.
 
 ### Einstellmenü (`ui/tuning_panel.gd`)
 F1 öffnet im laufenden Spiel Schieberegler für alle Fühl-Werte. Damit lässt
@@ -96,6 +126,17 @@ Aktueller Stand — alle Prüfungen bestanden:
 | Rampe 30° | erreicht y = 3,18 |
 | Kamera | bleibt hinter der Figur, innerhalb der Federarmlänge |
 
+Dazu der Kapitel-Prüflauf:
+
+```bash
+godot --headless --path . --script res://tools/headless_chapter_check.gd
+```
+
+Läuft die ganze Begegnung mit simulierter Eingabe durch: hingehen (23,4 m in
+7,0 s), Oliver wird als ansprechbar erkannt, Steuerung wird abgegeben, Dialog
+läuft ab (3,5 s), Companion aktiviert sich — und folgt dann tatsächlich
+(12,5 m mitgelaufen, 2,78 m Abstand gehalten).
+
 Der Prüflauf ersetzt **kein** Probespielen. Er belegt, dass die Werte
 stimmen — nicht, dass sich die Bewegung gut anfühlt.
 
@@ -113,6 +154,17 @@ Mindestdistanz abtasten (eine Frame-Bewegung ist kleiner als die Physik-Marge),
 und `is_on_floor()` allein genügt nicht als Bedingung — verkeilt auf einer
 Stufenkante meldet Godot „Wand", was das Stufen-Steigen genau dann abschaltet,
 wenn es die Figur befreien müsste.
+
+**Kamera-Selbstausrichtung ließ die Figur auf der Stelle pendeln.** Beim
+Rückwärtsgehen dreht sich die Figur um, die Kamera schwenkt hinterher — und
+damit kehrt sich die Bedeutung von „zurück" um, die Figur dreht sich wieder.
+Der Kapitel-Prüflauf deckte es auf: Oliver legte nur 2,4 m statt 13 m zurück,
+weil die Spielerin gar nicht vom Fleck kam. Die Ausrichtung greift jetzt nur
+noch, wenn die Figur sich von der Kamera *weg* bewegt
+(`auto_align_min_alignment`).
+
+**Fernsehturm hinter der Sichtweite.** Die Kamera war auf 500 m Sichtweite
+begrenzt, der Turm steht bei 700 m — er wurde schlicht weggeschnitten.
 
 **Transponierte Transforms.** Godot serialisiert `Transform3D` in `.tscn`
 zeilenweise, nicht spaltenweise. Dadurch stiegen die Rampen zur falschen Seite
@@ -135,6 +187,15 @@ zeilenweise, nicht spaltenweise. Dadurch stiegen die Rampen zur falschen Seite
 * Die 45°-Rampe liegt exakt auf Godots Grenzwinkel — ob sie begehbar ist, ist
   Zufall. Sie steht als Grenzfall-Test dort, nicht als Zusicherung.
 * `pause` gibt bisher nur die Maus frei; es gibt kein Pausenmenü.
+* Der Companion kollidiert nicht mit der Spielerin (eigene Physik-Ebene). Das
+  garantiert, dass er nie im Weg steht, sieht aber beim Durchlaufen komisch
+  aus. Bewusste Wahl für diese Stufe, bei echten Figuren neu zu bewerten.
+* Der Companion steuert geradlinig auf seinen Zielpunkt zu, ohne Navigation.
+  Auf dem offenen Platz reicht das. Für den Spaziergang in Stage 3 mit Ecken
+  und Hindernissen wird vermutlich eine NavigationRegion nötig.
+* Der Dialog wartet auf Tastendruck, ohne Zeitautomatik und ohne Ton.
+* Nach dem Treffen endet der Inhalt — „Gemeinsam weitergehen" führt noch
+  nirgendwohin. Das ist Stage 3.
 
 ## Bekannte Fehler
 
@@ -163,14 +224,23 @@ laufenden Spiel, dieselben Werte stehen im Editor unter `Player` und
 | Kamera zu nah / zu weit | `SpringArm3D > spring_length` (4,2) |
 | Kamera dreht sich ungefragt | `auto_align_enabled` / `auto_align_rate` |
 
-### Stage 2 — Meeting Oliver (geplant)
+### Beim Probespielen von Stage 2 zu beurteilen
 
-Umfang laut Brief: Platzhalterfigur für Oliver, kompakter Startbereich,
-Näherungs-Trigger, Dialog mit Platzhaltertexten, Companion-Aktivierung.
-Eigene Szene unter `chapters/berlin/`; die Testfläche bleibt als
-Entwicklungswerkzeug daneben bestehen.
+* Führt die Komposition den Blick von selbst zu Oliver, oder braucht es mehr?
+* Stimmt der Abstand, in dem der Hinweis „Ansprechen" erscheint?
+* Ist das Dialogtempo richtig — Schreibgeschwindigkeit, Zeilenlänge?
+* Sitzt der Kamerawinkel im Gespräch gut? (`gespraechswinkel_grad`, 48°)
+* Läuft Oliver angenehm mit, oder klebt er / bleibt er zurück?
+  Regler dafür stehen unter F1 im Abschnitt *Begleiter*.
 
-Nicht Teil von Stage 2: der Spaziergang durch Berlin (Stage 3), das
-Dart-Minispiel (Stage 4), echte Modelle und Animationen (Stage 5).
+### Stage 3 — Berlin Route (geplant, nicht begonnen)
+
+Kurze kuratierte Strecke vom Startbereich zum Dart-Ziel, optionale
+Interaktionen unterwegs (Café, Desinfektionsspender, Maskenschild, Fahrrad),
+Fortschritts-Trigger. Das Kapitelskript sendet dafür bereits
+`meeting_finished`.
+
+Nicht Teil davon: das Dart-Minispiel (Stage 4), echte Modelle und
+Animationen (Stage 5).
 
 Nicht begonnen und bewusst nicht vorbereitet: spätere Kapitel.

@@ -44,6 +44,49 @@ oder die Kapsel einmalig anpassen.
 Andockpunkte sind vorhanden: `Player.speed_ratio`, `Player.current_speed`
 und die Signale `started_moving` / `stopped_moving`.
 
+### Oliver Character Model
+| | |
+| --- | --- |
+| **Zweck** | Der Begleiter — stilisierte Version von mir |
+| **Szene** | `actors/companion/companion.tscn` → Knoten `Visual` |
+| **Typ** | Rigged 3D-Charaktermodell |
+| **Stil** | Wie die Spielfigur, klar davon unterscheidbare Silhouette |
+| **Animation** | Idle, Gehen, Zuhören/Sprechen |
+| **Platzhalter** | Blaue Kapsel mit Schulterbalken und Nasenmarkierung |
+| **Priorität** | CRITICAL |
+
+Der Companion liefert `speed_ratio`, `current_speed` und `state` — dieselben
+Andockpunkte wie die Spielfigur.
+
+---
+
+## Umgebung
+
+### Alexanderplatz-Kulisse
+| | |
+| --- | --- |
+| **Zweck** | Wiedererkennbares Berlin statt grauer Blöcke |
+| **Szene** | `chapters/berlin/berlin_start.tscn` |
+| **Typ** | Modulare Gebäude, Bodenmaterialien, Straßenmöbel |
+| **Stil** | Stilisiert, warme Farben, starke Silhouetten |
+| **Animation** | Dezente Bewegung: Fahnen, Blätter, ferne Bahnen |
+| **Platzhalter** | CSG-Blöcke, Laternen aus Zylinder und Box |
+| **Priorität** | IMPORTANT |
+
+Die Komposition (Achse zum Fernsehturm, querende Gleise) sollte beim Austausch
+erhalten bleiben — sie trägt die Führung zu Oliver.
+
+### COVID-Requisiten
+| | |
+| --- | --- |
+| **Zweck** | Die Zeit sofort lesbar machen |
+| **Szene** | `chapters/berlin/berlin_start.tscn` und die Route in Stage 3 |
+| **Typ** | Props: Desinfektionsspender, Abstandsschilder, Absperrband, Masken |
+| **Stil** | Leicht überzeichnet, nostalgisch-absurd, nicht bedrückend |
+| **Animation** | Keine nötig |
+| **Platzhalter** | Orange Schilderplatte, geschlossene Café-Front mit Markise |
+| **Priorität** | IMPORTANT |
+
 ---
 
 ## Ton

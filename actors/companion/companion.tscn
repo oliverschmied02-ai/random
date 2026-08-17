@@ -1,23 +1,20 @@
-[gd_scene load_steps=10 format=3]
+[gd_scene load_steps=9 format=3]
 
-[ext_resource type="Script" path="res://actors/player/player.gd" id="1_player"]
-[ext_resource type="Script" path="res://systems/interaction/interaction_sensor.gd" id="2_sensor"]
-
-[sub_resource type="SphereShape3D" id="SphereShape3D_reach"]
-radius = 1.6
+[ext_resource type="Script" path="res://actors/companion/companion.gd" id="1_companion"]
+[ext_resource type="Script" path="res://systems/interaction/interactable.gd" id="2_interactable"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_body"]
 radius = 0.35
-height = 1.75
+height = 1.82
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_body"]
-albedo_color = Color(0.847059, 0.541176, 0.443137, 1)
+albedo_color = Color(0.376471, 0.494118, 0.639216, 1)
 roughness = 0.75
 
 [sub_resource type="CapsuleMesh" id="CapsuleMesh_body"]
 material = SubResource("StandardMaterial3D_body")
 radius = 0.35
-height = 1.75
+height = 1.82
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_marker"]
 albedo_color = Color(0.164706, 0.176471, 0.223529, 1)
@@ -29,37 +26,43 @@ size = Vector3(0.18, 0.12, 0.16)
 
 [sub_resource type="BoxMesh" id="BoxMesh_shoulders"]
 material = SubResource("StandardMaterial3D_marker")
-size = Vector3(0.72, 0.12, 0.26)
+size = Vector3(0.8, 0.12, 0.28)
 
-[node name="Player" type="CharacterBody3D"]
-collision_layer = 2
+[sub_resource type="SphereShape3D" id="SphereShape3D_reach"]
+radius = 2.0
+
+[node name="Companion" type="CharacterBody3D"]
+collision_layer = 4
 collision_mask = 1
 floor_snap_length = 0.35
-script = ExtResource("1_player")
+script = ExtResource("1_companion")
 
 [node name="Collision" type="CollisionShape3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.875, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.91, 0)
 shape = SubResource("CapsuleShape3D_body")
 
 [node name="Visual" type="Node3D" parent="."]
 
 [node name="Body" type="MeshInstance3D" parent="Visual"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.875, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.91, 0)
 mesh = SubResource("CapsuleMesh_body")
 
 [node name="FacingMarker" type="MeshInstance3D" parent="Visual"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, -0.31)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.56, -0.31)
 mesh = SubResource("BoxMesh_marker")
 
 [node name="Shoulders" type="MeshInstance3D" parent="Visual"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.32, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.38, 0)
 mesh = SubResource("BoxMesh_shoulders")
 
-[node name="InteractionSensor" type="Area3D" parent="."]
-collision_layer = 0
-collision_mask = 8
-script = ExtResource("2_sensor")
+[node name="Interactable" type="Area3D" parent="."]
+collision_layer = 8
+collision_mask = 0
+monitoring = false
+script = ExtResource("2_interactable")
+prompt = "Ansprechen"
+one_shot = true
 
-[node name="Shape" type="CollisionShape3D" parent="InteractionSensor"]
+[node name="Shape" type="CollisionShape3D" parent="Interactable"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
 shape = SubResource("SphereShape3D_reach")

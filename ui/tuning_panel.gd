@@ -29,6 +29,16 @@ const ROWS: Array[Dictionary] = [
 	{"target": "player", "property": "max_step_height",
 		"label": "Stufenhöhe", "min": 0.0, "max": 0.8, "step": 0.01, "unit": " m"},
 
+	{"section": "Begleiter"},
+	{"target": "companion", "property": "follow_distance",
+		"label": "Abstand hinter dir", "min": 0.5, "max": 6.0, "step": 0.1, "unit": " m"},
+	{"target": "companion", "property": "side_offset",
+		"label": "Versatz zur Seite", "min": -3.0, "max": 3.0, "step": 0.1, "unit": " m"},
+	{"target": "companion", "property": "catch_up_speed",
+		"label": "Aufhol-Tempo", "min": 1.0, "max": 10.0, "step": 0.1, "unit": " m/s"},
+	{"target": "companion", "property": "turn_responsiveness",
+		"label": "Drehfreude", "min": 2.0, "max": 30.0, "step": 0.5, "unit": ""},
+
 	{"section": "Kamera"},
 	{"target": "spring_arm", "property": "spring_length",
 		"label": "Abstand", "min": 1.5, "max": 10.0, "step": 0.1, "unit": " m"},
@@ -60,6 +70,7 @@ const ROWS: Array[Dictionary] = [
 
 var _player: Player
 var _camera: ThirdPersonCamera
+var _companion: Companion
 var _defaults: Array = []
 var _controls: Array[Control] = []
 
@@ -73,6 +84,7 @@ func _ready() -> void:
 	await get_tree().process_frame
 	_player = get_tree().get_first_node_in_group(&"player") as Player
 	_camera = get_tree().get_first_node_in_group(&"camera_rig") as ThirdPersonCamera
+	_companion = get_tree().get_first_node_in_group(&"companion") as Companion
 	_build_rows()
 
 
@@ -165,6 +177,7 @@ func _resolve_target(key: String) -> Object:
 	match key:
 		"player": return _player
 		"camera": return _camera
+		"companion": return _companion
 		"spring_arm": return _camera.spring_arm if _camera != null else null
 	return null
 

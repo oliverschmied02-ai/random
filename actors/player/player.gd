@@ -61,6 +61,10 @@ var current_speed: float = 0.0
 var speed_ratio: float = 0.0
 ## Last non-zero movement direction on the XZ plane, in world space.
 var facing_direction: Vector3 = Vector3.FORWARD
+## Set to false by scripted sequences. The character keeps its physics and
+## coasts to a stop through the normal braking curve rather than freezing,
+## which reads far better than cutting movement dead.
+var input_enabled: bool = true
 
 var _target_speed: float = 0.0
 var _was_moving: bool = false
@@ -86,6 +90,9 @@ func _physics_process(delta: float) -> void:
 ## Reads the movement input and rotates it into the active camera's frame,
 ## so pushing "up" always moves away from the camera.
 func _read_move_input() -> Vector3:
+	if not input_enabled:
+		return Vector3.ZERO
+
 	var raw := Input.get_vector(
 		&"move_left", &"move_right", &"move_forward", &"move_back"
 	)

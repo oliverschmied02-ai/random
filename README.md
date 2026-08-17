@@ -9,8 +9,9 @@ das wichtige Momente unserer Beziehung als spielbare Szenen nacherzählt.
 "Vaccination Darts"). Weitere Kapitel sind konzeptionell vorgesehen, werden
 aber bewusst noch nicht gebaut.
 
-**Stand:** Stage 1 — Foundation. Spielbare Testfläche mit Third-Person-Bewegung
-und Verfolgerkamera, ausschließlich Platzhalter-Geometrie.
+**Stand:** Stage 2 — Meeting Oliver. Vom Startbereich am Alexanderplatz zu
+Oliver gehen, ihn ansprechen, ein kurzer Dialog, danach begleitet er die
+Spielerin. Ausschließlich Platzhalter-Geometrie.
 
 ## Starten
 
@@ -63,22 +64,29 @@ herausschneiden und als `godot_macos_release.arm64` in die Vorlage packen.
 
 ```bash
 godot --headless --path . --script res://tools/headless_check.gd
+godot --headless --path . --script res://tools/headless_chapter_check.gd
 ```
 
-Fährt die Figur mit simulierten Eingaben über Bahn, Treppe und Rampe und prüft
-Geschwindigkeiten, Bremsweg, Bodenkontakt und Kameraposition.
+Der erste fährt die Figur über Bahn, Treppe und Rampe und prüft
+Geschwindigkeiten, Bremsweg, Bodenkontakt und Kameraposition. Der zweite spielt
+die ganze Begegnung mit Oliver durch — hingehen, ansprechen, Dialog,
+Companion-Aktivierung, Mitlaufen.
 
 ## Projektstruktur
 
 ```
-actors/player/    Spielfigur (CharacterBody3D + Controller)
-camera/           Third-Person-Kamerarig
-scenes/           Spielszenen (aktuell die Testfläche)
-ui/               Oberfläche (aktuell das Debug-Overlay)
-tools/            Entwicklungswerkzeuge (headless Prüflauf)
+actors/player/     Spielfigur (CharacterBody3D + Controller)
+actors/companion/  Begleitfigur
+camera/            Third-Person-Kamerarig
+systems/           Wiederverwendbare Systeme (Interaktion, Dialog)
+chapters/berlin/   Kapitel 1: Szene, Ablauf, Dialogtexte
+scenes/            Testfläche zum Beurteilen der Bewegung
+ui/                Oberfläche (Ziel, Hinweis, Dialog, Debug, Einstellungen)
+tools/             Entwicklungswerkzeuge (headless Prüfläufe)
 ```
 
-Kapitelinhalte bekommen einen eigenen Ordner, sobald Stage 2 beginnt.
+Dialogtexte stehen in `chapters/berlin/dialogue_lines.gd` — reiner Inhalt,
+ohne Logik, gefahrlos zu ändern.
 
 ## Dokumentation
 

@@ -52,6 +52,17 @@ extends Node3D
 @export_range(0.1, 6.0, 0.1) var auto_align_rate: float = 1.1
 ## Auto-align only while the character is at least this fast (m/s).
 @export_range(0.0, 5.0, 0.1) var auto_align_min_speed: float = 1.0
+## Only swing around while the character is heading *away* from the camera.
+##
+## Without this the rig fights the player: walking towards the camera makes it
+## rotate behind the character, which flips the meaning of "back" on the stick,
+## which turns the character around again — and they oscillate on the spot.
+## 1.0 = only when running straight away, 0.0 = always, negative = never off.
+@export_range(-1.0, 1.0, 0.05) var auto_align_min_alignment: float = 0.2
+
+@export_group("Scripted framing")
+## How quickly the rig swings to an angle a scene asked for.
+@export_range(0.5, 10.0, 0.1) var scripted_blend_rate: float = 2.2
 
 @export_group("Feel")
 ## Base field of view.
@@ -69,6 +80,8 @@ var _yaw: float = 0.0
 var _pitch: float = -14.0
 var _mouse_delta: Vector2 = Vector2.ZERO
 var _time_since_look_input: float = 0.0
+## INF means no scene is asking for a particular angle.
+var _scripted_yaw: float = INF
 
 
 func _ready() -> void:
@@ -131,7 +144,12 @@ func _update_rotation(delta: float) -> void:
 	)
 
 	if not had_input:
-		_apply_auto_align(delta)
+		if is_finite(_scripted_yaw):
+			_yaw = lerp_angle(
+				_yaw, _scripted_yaw, 1.0 - exp(-scripted_blend_rate * delta)
+			)
+		else:
+			_apply_auto_align(delta)
 
 	rotation.y = _yaw
 	spring_arm.rotation.x = deg_to_rad(_pitch)
@@ -147,8 +165,14 @@ func _apply_auto_align(delta: float) -> void:
 	if _target_speed() < auto_align_min_speed:
 		return
 
+	var target_yaw := _target.global_rotation.y
+	# Compare where the character is heading with where the camera looks. Both
+	# are yaw angles, so the cosine of their difference is the alignment.
+	if cos(angle_difference(_yaw, target_yaw)) < auto_align_min_alignment:
+		return
+
 	var weight := 1.0 - exp(-auto_align_rate * delta)
-	_yaw = lerp_angle(_yaw, _target.global_rotation.y, weight)
+	_yaw = lerp_angle(_yaw, target_yaw, weight)
 
 
 func _update_position(delta: float) -> void:
@@ -182,6 +206,18 @@ func _target_speed() -> float:
 func _target_speed_ratio() -> float:
 	var player := _target as Player
 	return player.speed_ratio if player != null else 0.0
+
+
+## Swings the rig towards a yaw angle for a scripted moment — a conversation,
+## an arrival, a reveal. Player look input still overrides it: taking the
+## camera away entirely feels worse than a slightly imperfect frame.
+func aim_at_yaw(angle: float) -> void:
+	_scripted_yaw = angle
+
+
+## Hands the camera back to the normal follow and auto-align behaviour.
+func release_aim() -> void:
+	_scripted_yaw = INF
 
 
 ## Distance between camera and rig origin — the spring arm shortens this when
