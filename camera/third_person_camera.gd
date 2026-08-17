@@ -220,6 +220,13 @@ func release_aim() -> void:
 	_scripted_yaw = INF
 
 
+## Jumps to a yaw without blending — for placing the rig at the start of a
+## scene, and for driving it from automated checks.
+func snap_to_yaw(angle: float) -> void:
+	_yaw = angle
+	rotation.y = _yaw
+
+
 ## Distance between camera and rig origin — the spring arm shortens this when
 ## something is in the way. Used by the debug overlay.
 func current_distance() -> float:

@@ -7,10 +7,15 @@ extends CharacterBody3D
 ## things well: stay near the player without crowding them, go to a marked spot
 ## when a scene needs it, and hold still while people are talking.
 ##
-## The follow target is a point *beside and behind* the player rather than the
-## player themselves. Steering towards the player directly is what makes
-## companions bump into you and shove you off course; aiming past their
-## shoulder keeps them in frame and out of the way.
+## Following works off a trail of the player's own footsteps rather than a
+## straight line towards them. Steering directly at the player looks fine on an
+## open square and falls apart the moment there is a corner: the companion
+## walks into the wall the player just went around. Retracing the trail costs a
+## handful of stored positions and handles every corner the route can contain,
+## without a navigation mesh.
+##
+## A small sideways offset keeps them walking *beside* the trail rather than in
+## its exact centre, so they read as a person rather than a shadow.
 
 signal arrived
 
@@ -29,7 +34,12 @@ enum State {
 @export_range(0.5, 6.0, 0.1) var follow_distance: float = 2.2
 ## Sideways offset, so the companion walks beside rather than in the player's
 ## footsteps. Negative puts them on the other side.
-@export_range(-3.0, 3.0, 0.1) var side_offset: float = 1.0
+@export_range(-3.0, 3.0, 0.1) var side_offset: float = 0.9
+## Spacing of the recorded footsteps. Finer means corners are cut less, at the
+## cost of a few more stored points.
+@export_range(0.2, 3.0, 0.1) var trail_spacing: float = 0.7
+## Upper bound on stored footsteps, so the trail cannot grow without limit.
+@export_range(8, 256, 8) var max_trail_points: int = 96
 ## Closer to its target spot than this and the companion simply stops. Without
 ## a dead zone it shuffles constantly while the player stands still.
 @export_range(0.1, 2.0, 0.05) var arrive_distance: float = 0.45
@@ -51,6 +61,7 @@ var speed_ratio: float = 0.0
 var state: State = State.IDLE
 
 var _target: Node3D
+var _trail: PackedVector3Array = PackedVector3Array()
 var _scripted_position: Vector3 = Vector3.ZERO
 var _gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity", 18.0)
 
@@ -64,6 +75,11 @@ func _ready() -> void:
 ## meeting has happened.
 func activate() -> void:
 	state = State.FOLLOWING
+	# Seed the trail with where the player is standing, otherwise the companion
+	# has nowhere to walk to until they have moved a step.
+	_trail.clear()
+	if _target != null:
+		_trail.append(_target.global_position)
 
 
 ## Stops in place and keeps facing the player — for dialogue and cutscenes.
@@ -78,6 +94,8 @@ func move_to(target_position: Vector3) -> void:
 
 
 func _physics_process(delta: float) -> void:
+	if state == State.FOLLOWING:
+		_record_trail()
 	var desired := _desired_position()
 	var move_direction := Vector3.ZERO
 	var wanted_speed := walk_speed
@@ -105,21 +123,67 @@ func _physics_process(delta: float) -> void:
 func _desired_position() -> Vector3:
 	match state:
 		State.FOLLOWING:
-			if _target == null:
-				return Vector3.ZERO
-			var basis := _target.global_transform.basis
-			var back := Vector3(basis.z.x, 0.0, basis.z.z).normalized()
-			var right := Vector3(basis.x.x, 0.0, basis.x.z).normalized()
-			return _target.global_position + back * follow_distance + right * side_offset
+			return _next_trail_point()
 		State.SCRIPTED:
 			return _scripted_position
 	return Vector3.ZERO
 
 
+## Drops a breadcrumb whenever the player has moved far enough from the last
+## one. The trail is the path the companion will retrace.
+func _record_trail() -> void:
+	if _target == null:
+		return
+	var position := _target.global_position
+	if _trail.is_empty() or _trail[_trail.size() - 1].distance_to(position) > trail_spacing:
+		_trail.append(position)
+		if _trail.size() > max_trail_points:
+			_trail.remove_at(0)
+
+
+## The point to walk towards: the oldest footstep still ahead of us, nudged
+## sideways. Returns Vector3.ZERO when we are close enough to simply stop.
+func _next_trail_point() -> Vector3:
+	# Tick footsteps off generously enough to include the sideways offset. With
+	# a bare `arrive_distance` the companion parks next to a footstep it can
+	# never reach, the trail never advances, and it paces on the spot until the
+	# trail overflows — which is exactly what it looked like.
+	var reached := arrive_distance + absf(side_offset)
+	while _trail.size() > 0 and global_position.distance_to(_trail[0]) < reached:
+		_trail.remove_at(0)
+	if _trail.is_empty():
+		return Vector3.ZERO
+	if _trail_length() < follow_distance:
+		return Vector3.ZERO  # close enough behind — stand still instead of shuffling
+
+	var point := _trail[0]
+	# Offset sideways relative to the *trail's* direction, not to wherever the
+	# companion happens to stand. Deriving it from its own bearing flips the
+	# side every time it crosses the line, and it zig-zags.
+	var along := (_trail[1] if _trail.size() > 1 else _target.global_position) - point
+	along.y = 0.0
+	if along.length() > 0.01:
+		var sideways := Vector3(along.z, 0.0, -along.x).normalized()
+		point += sideways * side_offset
+	return point
+
+
+## Walking distance from here, along the remaining footsteps, to the player.
+func _trail_length() -> float:
+	if _trail.is_empty() or _target == null:
+		return 0.0
+	var total := global_position.distance_to(_trail[0])
+	for i in range(1, _trail.size()):
+		total += _trail[i - 1].distance_to(_trail[i])
+	return total + _trail[_trail.size() - 1].distance_to(_target.global_position)
+
+
 func _speed_for_distance() -> float:
 	if _target == null or state != State.FOLLOWING:
 		return walk_speed
-	var distance := global_position.distance_to(_target.global_position)
+	# Measured along the trail, not as the crow flies: around a corner the
+	# straight-line distance understates how far behind the companion is.
+	var distance := _trail_length()
 	if distance <= follow_distance:
 		return walk_speed
 	# Blend up to the catch-up speed as the player pulls away.

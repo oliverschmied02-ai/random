@@ -2,8 +2,8 @@
 
 **Spiel:** Our Story — Kapitel 1: Berlin
 **Engine:** Godot 4.5 (GDScript)
-**Aktuelle Stufe:** Stage 2 — Meeting Oliver (implementiert, wartet auf
-Probespielen). Stage 1 abgenommen am 2026-08-17.
+**Aktuelle Stufe:** Stage 3 — Berlin Route (implementiert, wartet auf
+Probespielen). Stage 1 und 2 abgenommen.
 
 ---
 
@@ -50,15 +50,25 @@ Bewusst diagnostisch, nicht hübsch:
 F3 blendet fps, Geschwindigkeit, Spitzenwert, Bodenkontakt, Position und
 Kameraabstand ein.
 
-### Startbereich Berlin (`chapters/berlin/berlin_start.tscn`)
-Kuratierter Platz statt Testfläche: Häuserzeilen bilden eine Achse, Tramgleise
-queren den Weg, Laternen säumen ihn, links eine geschlossene Café-Front mit
-Markise. Am Ende der Achse steht Oliver — und genau darüber der Fernsehturm.
-Die Komposition führt den Blick dorthin, ohne Questmarker.
+### Kapitelszene (`chapters/berlin/berlin_chapter.tscn`)
+Eine durchgehende Strecke von rund 360 m in fünf Abschnitten mit vier Ecken:
 
-Der Turm sitzt 700 m entfernt und ist so bemessen, dass die Kugel zwischen
-Dachlinie (13°) und oberem Bildrand (20°) liegt. Wer ihn verschiebt, sollte
-das nachrechnen, sonst verschwindet er wieder aus dem Bild.
+1. **Bürostraße** — die Spielerin startet hier, Oliver wartet rechts in einer
+   Eingangsnische mit Vordach und warmem Licht
+2. **Querstraße** mit Tramgleisen
+3. **Zweite Nord-Süd-Straße** — hier das geschlossene Café mit Markise,
+   Absperrband und herausgestellten Stühlen (erstes Gespräch)
+4. **Zweite Querstraße**
+5. **Straße zur Dönerbude** — Desinfektionsspender am Weg (zweites Gespräch),
+   am Ende die Bude mit Tresen, Vordach, Leuchtschild und Stehtischen
+
+Der Fernsehturm steht 700 m nördlich und ist so bemessen, dass die Kugel
+zwischen Dachlinie (13°) und oberem Bildrand (20°) liegt — er taucht in den
+nach Norden führenden Abschnitten immer wieder auf. Wer ihn verschiebt, sollte
+das nachrechnen, sonst verschwindet er aus dem Bild.
+
+Die Häuserblöcke sind gleichzeitig die Begrenzung: es gibt keine unsichtbaren
+Wände, man kann nirgends hinauslaufen.
 
 ### Interaktion (`systems/interaction/`)
 `Interactable` ist eine Area3D-Komponente mit Text, An/Aus und Einmal-Flag;
@@ -67,18 +77,42 @@ sie weiß nicht, *was* passiert — das bleibt beim Kapitelskript. Der
 (Nähe **und** Blickrichtung) und schweigt, während eine Sequenz die Steuerung
 hat. Dieselbe Komponente trägt später Café, Desinfektionsspender und Fahrrad.
 
+### Kapitelablauf (`chapters/berlin/chapter_berlin.gd`)
+Vier Stationen, als lesbare Abfolge geschrieben statt als Zustandsautomat:
+Abholen an der Bürotür (auf Tastendruck), zwei Gespräche unterwegs und die
+Ankunft an der Dönerbude (lösen beim Betreten aus, sie sind Teil der Geschichte
+und keine optionalen Fundstücke).
+
+Jede Szene läuft gleich ab: Steuerung abgeben, Oliver neben die Spielerin
+holen, Kamera zur Seite schwenken, reden, alles zurückgeben. Auf Oliver wird
+dabei höchstens 2,5 s gewartet — ein Gespräch, das nicht anfängt, weil jemand
+hängengeblieben ist, wäre schlimmer als eine unsaubere Bildaufteilung.
+
+Eine Station ergänzt man mit einem Area3D in der Szene und einer Zeile in
+`_STATIONEN`.
+
 ### Dialog (`systems/dialogue/`)
 `DialogueBox` spielt eine Liste aus `{"speaker", "text"}` ab, mit
 Schreibmaschineneffekt; der erste Tastendruck vervollständigt die Zeile, der
 zweite blättert weiter. `await dialogue.play(...)` kehrt zurück, wenn der
-Spieler fertig gelesen hat. Die Texte stehen in
+Spieler fertig gelesen hat. Die vier Gespräche stehen in
 `chapters/berlin/dialogue_lines.gd` — reiner Inhalt, keine Logik.
+**Alle Texte sind Platzhalter** in der beabsichtigten Tonlage, damit sich Länge
+und Tempo beurteilen lassen.
 
 ### Companion (`actors/companion/`)
-Vier Zustände: wartend, folgend, auf Position gehend, festgehalten. Zielpunkt
-ist ein Punkt **neben und hinter** der Spielerin, nicht sie selbst — genau das
-verhindert das typische Anrempeln. Holt bei Abstand bis 5,4 m/s auf, dreht sich
-im Stehen zur Spielerin. Bewusst keine autonome KI.
+Vier Zustände: wartend, folgend, auf Position gehend, festgehalten.
+
+Gefolgt wird **entlang der Fußspur der Spielerin**, nicht in gerader Linie zu
+ihr. Der direkte Weg funktioniert auf einem offenen Platz und scheitert an der
+ersten Ecke — der Begleiter läuft in die Hauswand, um die sie gerade herum ist.
+Das Nachlaufen auf der Spur kostet knapp hundert gespeicherte Positionen und
+bewältigt jede Ecke der Strecke, ohne Navigationsnetz. Ein kleiner seitlicher
+Versatz sorgt dafür, dass er neben der Spur läuft statt exakt darin.
+
+Holt bei Abstand bis 5,4 m/s auf — gemessen *entlang der Spur*, nicht Luftlinie,
+sonst wirkt er hinter einer Ecke näher als er ist. Dreht sich im Stehen zur
+Spielerin. Bewusst keine autonome KI.
 
 ### Einstellmenü (`ui/tuning_panel.gd`)
 F1 öffnet im laufenden Spiel Schieberegler für alle Fühl-Werte. Damit lässt
@@ -132,10 +166,23 @@ Dazu der Kapitel-Prüflauf:
 godot --headless --path . --script res://tools/headless_chapter_check.gd
 ```
 
-Läuft die ganze Begegnung mit simulierter Eingabe durch: hingehen (23,4 m in
-7,0 s), Oliver wird als ansprechbar erkannt, Steuerung wird abgegeben, Dialog
-läuft ab (3,5 s), Companion aktiviert sich — und folgt dann tatsächlich
-(12,5 m mitgelaufen, 2,78 m Abstand gehalten).
+Spielt **das ganze Kapitel** mit simulierter Eingabe durch — die Strecke wird
+wirklich abgelaufen, nicht übersprungen. Deshalb dauert er ungefähr so lange
+wie das Kapitel selbst, rund zwei Minuten.
+
+| Messung | Wert |
+| --- | --- |
+| Gesamtdauer | 126 s (2,1 min) |
+| davon Laufen | 106 s |
+| davon Dialoge | 12 s |
+| Von Oliver mitgelaufene Strecke | 343 m |
+| Größter Rückstand von Oliver | 2,5 m |
+| Ausgelöste Gespräche | 4 von 4 |
+
+Die 12 s für die Dialoge sind der Prüflauf beim Durchklicken in
+Höchstgeschwindigkeit. Wer die Zeilen wirklich liest, braucht dafür eher eine
+Minute — die Gesamtdauer landet damit bei etwa 2,5 bis 3 Minuten, also im
+angepeilten Bereich.
 
 Der Prüflauf ersetzt **kein** Probespielen. Er belegt, dass die Werte
 stimmen — nicht, dass sich die Bewegung gut anfühlt.
@@ -154,6 +201,24 @@ Mindestdistanz abtasten (eine Frame-Bewegung ist kleiner als die Physik-Marge),
 und `is_on_floor()` allein genügt nicht als Bedingung — verkeilt auf einer
 Stufenkante meldet Godot „Wand", was das Stufen-Steigen genau dann abschaltet,
 wenn es die Figur befreien müsste.
+
+**Der Begleiter pendelte 20 Sekunden lang vor der Bürotür.** Er steuert einen
+seitlich versetzten Punkt neben der Fußspur an, „erreicht" wurde aber am Punkt
+*ohne* Versatz gemessen — den erreicht er nie, also hakte die Spur nie weiter.
+Dazu klappte die Seitenrichtung bei jeder Bewegung um, weil sie aus seiner
+eigenen Blickrichtung stammte. Er lief also auf der Stelle hin und her, bis
+seine gespeicherte Spur überlief und ihn zufällig freigab — der Kapitel-Prüflauf
+maß einen Rückstand von 66,8 m, exakt die Spurlänge. Jetzt zählt der Versatz zur
+Erreicht-Schwelle, und die Seitenrichtung kommt aus dem Verlauf der Spur.
+
+**Drei Häuserblöcke ragten in die Fahrbahn.** An zwei Kreuzungen verengten sie
+die Straße, an der dritten versperrten sie die Abzweigung vollständig — der
+Prüflauf blieb dort hängen.
+
+**Die Straßen lagen komplett im Schatten.** 16 m breite Gassen zwischen 20 m
+hohen Blöcken bekommen bei tiefstehender Sonne kein Licht; der Auftakt wirkte
+bedrückend statt nostalgisch. Fahrbahnen auf 24 m verbreitert, Häuser gesenkt,
+Sonne höher gestellt.
 
 **Kamera-Selbstausrichtung ließ die Figur auf der Stelle pendeln.** Beim
 Rückwärtsgehen dreht sich die Figur um, die Kamera schwenkt hinterher — und
@@ -190,12 +255,20 @@ zeilenweise, nicht spaltenweise. Dadurch stiegen die Rampen zur falschen Seite
 * Der Companion kollidiert nicht mit der Spielerin (eigene Physik-Ebene). Das
   garantiert, dass er nie im Weg steht, sieht aber beim Durchlaufen komisch
   aus. Bewusste Wahl für diese Stufe, bei echten Figuren neu zu bewerten.
-* Der Companion steuert geradlinig auf seinen Zielpunkt zu, ohne Navigation.
-  Auf dem offenen Platz reicht das. Für den Spaziergang in Stage 3 mit Ecken
-  und Hindernissen wird vermutlich eine NavigationRegion nötig.
+* Der Companion folgt der Fußspur der Spielerin. Das bewältigt alle Ecken der
+  Strecke, hat aber eine Grenze: läuft man weiter als die gespeicherte Spur
+  reicht (rund 67 m), schneidet er die Kurve. Beim Gehen und Sprinten auf
+  dieser Strecke tritt das nicht auf.
+* Der Companion hat kein Stufen-Steigen wie die Spielerin. Auf der ebenen
+  Strecke egal, bei Treppen in späteren Abschnitten nachzurüsten.
 * Der Dialog wartet auf Tastendruck, ohne Zeitautomatik und ohne Ton.
-* Nach dem Treffen endet der Inhalt — „Gemeinsam weitergehen" führt noch
-  nirgendwohin. Das ist Stage 3.
+* An der Dönerbude endet der Inhalt mit „Fortsetzung folgt". Das Dart-Minispiel
+  ist Stage 4.
+* Die zwei Gespräche unterwegs lösen beim Betreten aus. Läuft man versehentlich
+  während eines laufenden Gesprächs in den nächsten Auslöser, wird dieser
+  übersprungen. Auf der linearen Strecke praktisch ausgeschlossen.
+* Es gibt noch keine optionalen Erinnerungspunkte zum Ansprechen — die
+  `Interactable`-Komponente trägt sie, angelegt ist bisher nur Oliver.
 
 ## Bekannte Fehler
 
@@ -239,14 +312,22 @@ statt frei auf dem Platz zu stehen. Als Kulissenarbeit in
 * Läuft Oliver angenehm mit, oder klebt er / bleibt er zurück?
   Regler dafür stehen unter F1 im Abschnitt *Begleiter*.
 
-### Stage 3 — Berlin Route (geplant, nicht begonnen)
+### Beim Probespielen von Stage 3 zu beurteilen
 
-Kurze kuratierte Strecke vom Startbereich zum Dart-Ziel, optionale
-Interaktionen unterwegs (Café, Desinfektionsspender, Maskenschild, Fahrrad),
-Fortschritts-Trigger. Das Kapitelskript sendet dafür bereits
-`meeting_finished`.
+* Stimmt die Gehzeit? Zielvorgabe waren 2–3 Minuten.
+* Sitzen die zwei Gespräche unterwegs an den richtigen Stellen, oder kommen
+  sie zu früh / zu spät?
+* Verliert man unterwegs die Orientierung, oder führt die Straße von selbst?
+* Läuft Oliver um die Ecken angenehm mit?
+* Trägt der Ablauf Abholen → Laufen → Ankommen, oder fehlt dazwischen etwas?
 
-Nicht Teil davon: das Dart-Minispiel (Stage 4), echte Modelle und
-Animationen (Stage 5).
+### Stage 4 — Vaccination Darts (geplant, nicht begonnen)
+
+Übergang an der Dönerbude, Dartscheibe, Spritzen-Projektil, Zielen, Wurfkraft,
+Wertung, Wiederholung, Erfolgszustand. Das Kapitelskript sendet dafür bereits
+`kapitel_abgeschlossen`.
+
+Danach Stage 5 (echte Modelle, Animationen, Kulisse) und Stage 6 (Ton, Musik,
+Feinschliff).
 
 Nicht begonnen und bewusst nicht vorbereitet: spätere Kapitel.

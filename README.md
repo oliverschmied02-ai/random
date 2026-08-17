@@ -9,9 +9,10 @@ das wichtige Momente unserer Beziehung als spielbare Szenen nacherzählt.
 "Vaccination Darts"). Weitere Kapitel sind konzeptionell vorgesehen, werden
 aber bewusst noch nicht gebaut.
 
-**Stand:** Stage 2 — Meeting Oliver. Vom Startbereich am Alexanderplatz zu
-Oliver gehen, ihn ansprechen, ein kurzer Dialog, danach begleitet er die
-Spielerin. Ausschließlich Platzhalter-Geometrie.
+**Stand:** Stage 3 — Berlin Route. Oliver vor seiner Bürotür abholen, zu zweit
+durch die Stadt laufen (zwei Gespräche unterwegs) und an einer Dönerbude
+ankommen, wo später das Dart-Minispiel stattfindet. Ausschließlich
+Platzhalter-Geometrie, alle Dialoge sind Platzhaltertexte.
 
 ## Starten
 
@@ -68,9 +69,13 @@ godot --headless --path . --script res://tools/headless_chapter_check.gd
 ```
 
 Der erste fährt die Figur über Bahn, Treppe und Rampe und prüft
-Geschwindigkeiten, Bremsweg, Bodenkontakt und Kameraposition. Der zweite spielt
-die ganze Begegnung mit Oliver durch — hingehen, ansprechen, Dialog,
-Companion-Aktivierung, Mitlaufen.
+Geschwindigkeiten, Bremsweg, Bodenkontakt und Kameraposition.
+
+Der zweite spielt **das ganze Kapitel** mit simulierter Eingabe durch: zur
+Bürotür laufen, Oliver ansprechen, die Strecke ablaufen, alle vier Gespräche
+mitnehmen, an der Dönerbude ankommen. Er misst dabei die Gehzeit und wie gut
+Oliver mithält. Weil er die Strecke wirklich abläuft, dauert er ungefähr so
+lange wie das Kapitel selbst — rund vier Minuten.
 
 ## Projektstruktur
 

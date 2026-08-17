@@ -62,26 +62,49 @@ Andockpunkte wie die Spielfigur.
 
 ## Umgebung
 
-### Alexanderplatz-Kulisse
+### Straßenzug Berlin-Mitte
 | | |
 | --- | --- |
 | **Zweck** | Wiedererkennbares Berlin statt grauer Blöcke |
-| **Szene** | `chapters/berlin/berlin_start.tscn` |
+| **Szene** | `chapters/berlin/berlin_chapter.tscn` |
 | **Typ** | Modulare Gebäude, Bodenmaterialien, Straßenmöbel |
 | **Stil** | Stilisiert, warme Farben, starke Silhouetten |
 | **Animation** | Dezente Bewegung: Fahnen, Blätter, ferne Bahnen |
 | **Platzhalter** | CSG-Blöcke, Laternen aus Zylinder und Box |
 | **Priorität** | IMPORTANT |
 
-Die Komposition (Achse zum Fernsehturm, querende Gleise) sollte beim Austausch
-erhalten bleiben — sie trägt die Führung zu Oliver.
+Fünf Abschnitte mit vier Ecken. Beim Austausch erhalten bleiben sollten: die
+Fahrbahnbreite von 24 m (schmalere Straßen liegen komplett im Schatten und
+wirken bedrückend statt nostalgisch), die Blickachsen nach Norden mit dem
+Fernsehturm, und dass die Häuserblöcke gleichzeitig die Begrenzung sind.
 
-**Oliver braucht einen Hauseingang.** Er steht derzeit frei auf dem Platz. Wer
-wartet, lehnt an einer Tür, unter einem Vordach, in einer Nische — nicht mitten
-im Nichts. Der Eingang sollte an der Achse liegen, damit die Blickführung
-erhalten bleibt, und tief genug sein, dass er darin erkennbar *wartet*.
-Praktischer Nebeneffekt: eine Nische gibt der Gesprächskamera einen Hintergrund
-statt leerer Fläche.
+### Bürohaus mit Eingang
+| | |
+| --- | --- |
+| **Zweck** | Oliver *wartet* dort — an einer Tür, nicht auf freier Fläche |
+| **Szene** | `chapters/berlin/berlin_chapter.tscn` → `OfficeEntrance` |
+| **Typ** | Fassade mit Eingangsnische, Tür, Vordach, Klingelschild |
+| **Stil** | Berliner Altbau oder nüchternes Bürohaus, warm beleuchtet |
+| **Animation** | Keine nötig; später evtl. Oliver an die Wand gelehnt |
+| **Platzhalter** | Nische aus Blöcken, dunkle Türplatte, orangefarbenes Vordach |
+| **Priorität** | IMPORTANT |
+
+Die Nische gibt der Gesprächskamera zugleich einen Hintergrund statt leerer
+Fläche — beim Austausch bitte erhalten.
+
+### Dönerbude
+| | |
+| --- | --- |
+| **Zweck** | Ziel des Spaziergangs und Schauplatz des Dart-Minispiels |
+| **Szene** | `chapters/berlin/berlin_chapter.tscn` → `Doenerbude` |
+| **Typ** | Kiosk mit Tresen, Leuchtschild, Dönerspieß, Stehtischen |
+| **Stil** | Warm, leicht überzeichnet, spätabendlich leuchtend |
+| **Animation** | Drehender Spieß, flackerndes Leuchtschild |
+| **Platzhalter** | Roter Block mit Vordach, Tresenbrett, gelbes Schild |
+| **Priorität** | IMPORTANT |
+
+Die Dartscheibe für Stage 4 gehört an diese Bude — beim Entwurf Platz dafür
+einplanen (Seitenwand oder überdachter Bereich daneben).
 
 ### COVID-Requisiten
 | | |
