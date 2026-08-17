@@ -48,7 +48,16 @@ godot --headless --path . --export-release "macOS" "build/Our Story.zip"
 
 Erfordert die Export-Vorlagen der passenden Godot-Version. Der Build ist
 ad-hoc signiert, aber nicht von Apple beglaubigt — beim ersten Start meldet
-macOS deshalb einen unbekannten Entwickler.
+macOS deshalb einen unbekannten Entwickler; Freigabe über
+*Systemeinstellungen → Datenschutz & Sicherheit → Dennoch öffnen*.
+
+**Stolperfalle beim arm64-Export:** Godots offizielle `macos.zip`-Vorlage
+enthält nur ein Universal-Binary (`godot_macos_release.universal`). Die
+Voreinstellung `binary_format/architecture="arm64"` bricht deshalb mit
+*„Requested template binary godot_macos_release.arm64 not found"* ab. Zwei
+Wege: entweder auf `"universal"` stellen (Ergebnis rund doppelt so groß, läuft
+auch auf Intel-Macs), oder den arm64-Teil aus dem Universal-Binary
+herausschneiden und als `godot_macos_release.arm64` in die Vorlage packen.
 
 ## Prüflauf ohne Editor
 
