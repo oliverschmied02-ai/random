@@ -4,18 +4,20 @@ extends SceneTree
 ##
 ##   godot --headless --path . --script res://tools/headless_figur_check.gd
 ##
-## The real models do not exist yet — they come out of Ready Player Me. What
-## can be established today is the slot they will drop into:
+## Both halves are covered, and which one applies depends on what is actually
+## in `actors/models/`:
 ##
-##   1. with no model file, both actors keep their placeholder and the game
-##      behaves exactly as before
-##   2. with a model file, it is mounted, turned to face forward and scaled to
-##      the intended height, and the placeholder disappears
+##   1. no model file — the actor keeps its placeholder and the game behaves
+##      exactly as before
+##   2. model file present — it is mounted, turned to face forward, scaled to
+##      the intended height, its arms come out of the T-pose, and the
+##      placeholder disappears
 ##
-## The stand-in for (2) is built here and saved to `user://` — a mannequin of
-## boxes, deliberately the wrong size (2.4 m), so the scaling has something to
-## correct. Building the fixture in the check rather than committing one keeps
-## the repository free of assets nobody will ever look at.
+## Case (2) is checked twice: once against whatever real models are in the
+## repository, and once against a stand-in built here and saved to `user://` —
+## a mannequin of boxes, deliberately the wrong size (2.4 m), so the scaling has
+## something to correct. The fixture is built rather than committed to keep the
+## repository free of assets nobody will ever look at.
 
 ## Wie groß der Prüfling gebaut wird — bewusst zu groß.
 const PROBE_HOEHE := 2.4
@@ -83,24 +85,50 @@ func _rueckfall_pruefen() -> void:
 			continue
 		_expect(not figur.modell_pfad.is_empty(),
 			"%s names the model it is waiting for" % paar[0])
-		_expect(figur.modell == null,
-			"%s has no model yet — the file is not in the repository" % paar[0])
-		var platzhalter := figur.get_node_or_null("Platzhalter") as Node3D
-		_expect(platzhalter != null and platzhalter.visible,
-			"%s keeps its placeholder until the model arrives" % paar[0])
 
-	_note("Wartet auf: %s" % ", ".join(_erwartete_dateien(kapitel)))
+		var platzhalter := figur.get_node_or_null("Platzhalter") as Node3D
+		if ResourceLoader.exists(figur.modell_pfad):
+			_echte_figur_pruefen(paar[0] as String, figur, platzhalter)
+		else:
+			_expect(figur.modell == null,
+				"%s has no model — the file is not in the repository" % paar[0])
+			_expect(platzhalter != null and platzhalter.visible,
+				"%s keeps its placeholder until the model arrives" % paar[0])
+			_note("%s wartet noch auf %s" % [paar[0], figur.modell_pfad])
+
 	kapitel.queue_free()
 	await physics_frame
 
 
-func _erwartete_dateien(kapitel: Node3D) -> PackedStringArray:
-	var pfade := PackedStringArray()
-	for zweig in ["Player", "Oliver"]:
-		var figur := kapitel.get_node_or_null("%s/Visual" % zweig) as Figur
-		if figur != null:
-			pfade.append(figur.modell_pfad)
-	return pfade
+## Eine Figur, für die tatsächlich ein Modell im Projekt liegt.
+func _echte_figur_pruefen(name: String, figur: Figur, platzhalter: Node3D) -> void:
+	if figur.modell == null:
+		_fail("%s has a model file but it did not load" % name)
+		return
+
+	var hoehe := figur.gemessene_hoehe()
+	_expect(absf(hoehe - figur.zielhoehe) < 0.03,
+		"%s stands %.2f m tall as intended (%.2f m)" % [name, hoehe, figur.zielhoehe])
+	_expect(platzhalter != null and not platzhalter.visible,
+		"%s hides its placeholder now that the model is there" % name)
+
+	var skelett := figur.skelett_finden()
+	_expect(skelett != null, "%s brings a skeleton for the animations to come" % name)
+	if skelett == null:
+		return
+	_expect(skelett.find_bone("Hips") >= 0 and skelett.find_bone("LeftUpLeg") >= 0,
+		"%s uses the expected bone names" % name)
+	_note("%s: %d Knochen, %.2f m" % [name, skelett.get_bone_count(), hoehe])
+
+	# Die Arme müssen unterhalb der Schultern hängen, sonst steht die Figur
+	# weiter in der T-Pose, in der sie gebaut wurde.
+	var schulter := skelett.find_bone("LeftArm")
+	var hand := skelett.find_bone("LeftHand")
+	if schulter >= 0 and hand >= 0:
+		var oben := skelett.get_bone_global_pose(schulter).origin.y
+		var unten := skelett.get_bone_global_pose(hand).origin.y
+		_expect(unten < oben - 0.2,
+			"%s lets its arms hang: hand %.2f m below the shoulder" % [name, oben - unten])
 
 
 func _modell_pruefen() -> void:

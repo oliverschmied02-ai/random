@@ -4,10 +4,10 @@ Hierher gehören die beiden Personenmodelle. Sobald sie hier liegen, tauchen sie
 im Spiel auf — es ist keine Code- oder Szenenänderung nötig, die Kapseln
 verschwinden von selbst.
 
-| Datei | Figur | Höhe im Spiel |
-| --- | --- | --- |
-| `anne.glb` | Spielfigur (`actors/player/player.tscn` → `Visual`) | 1,72 m |
-| `oliver.glb` | Begleiter (`actors/companion/companion.tscn` → `Visual`) | 1,82 m |
+| Datei | Figur | Höhe im Spiel | Stand |
+| --- | --- | --- | --- |
+| `anne.glb` | Spielfigur (`actors/player/player.tscn` → `Visual`) | 1,72 m | fehlt noch |
+| `oliver.glb` | Begleiter (`actors/companion/companion.tscn` → `Visual`) | 1,82 m | **da** — 90 273 Dreiecke, 73 Knochen, 1,81 m |
 
 Die Dateinamen müssen genau so lauten. Die Größe der Datei ist egal: das Modell
 wird gemessen und auf die Höhe in der Tabelle skaliert (`Figur.zielhoehe`).
@@ -44,6 +44,24 @@ lizenzrechtlich nur in der Unreal Engine verwendet werden.
   Modell selbst um 180°. Läuft es rückwärts, ist `blickrichtung_drehen` am
   Knoten `Visual` der Schalter.
 * Keine Animationen nötig — die kommen getrennt.
+
+## Größe
+
+Ein Modell wiegt schwer: Olivers Datei bringt 15 MB mit, im fertigen Spiel
+werden daraus rund 18 MB. Zwei Vorkehrungen dagegen:
+
+* **Texturen auf 512 Pixel** begrenzt (`process/size_limit` in den
+  `.import`-Dateien der ausgepackten Bilder). Aus vier Metern Entfernung — und
+  weiter kommt die Kamera nie heran — ist von 1024 nichts zu sehen; es spart
+  rund 10 MB.
+* **Notfalls das Netz halbieren.** `npx gltfpack -i modell.glb -o klein.glb
+  -noq -si 0.5` macht aus 90 000 Dreiecken 45 000, und selbst in einer
+  Gesichts-Nahaufnahme ist der Unterschied nicht zu erkennen. Das `-noq` ist
+  Pflicht: Godot 4.5 kann `KHR_mesh_quantization` **nicht** lesen und weigert
+  sich, eine so gepackte Datei zu importieren.
+
+Trotzdem bleibt die fertige App mit echten Figuren über 30 MB und passt damit
+nicht mehr durch den Chat — sie muss über das Repository kommen.
 
 ## Wenn etwas nicht stimmt
 

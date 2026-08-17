@@ -57,6 +57,17 @@ baut sich dafür einen 2,40 m großen Prüfling und verlangt 1,75 m ± 2 cm.
 Erwartet werden `actors/models/anne.glb` (1,72 m) und `oliver.glb` (1,82 m);
 die Anleitung dazu steht in `actors/models/README.md`.
 
+**Oliver ist da** (2026-08-17): 90 273 Dreiecke, 73 Knochen im Mixamo-Schema,
+1,81 m, T-Pose, keine Animationen. Er steht im Kapitel, in richtiger Größe und
+Blickrichtung; Anne ist noch eine Kapsel. Weil es noch keine Animationen gibt,
+nimmt die Figur beim Aufbau die Arme aus der T-Pose herunter — eine ruhige
+Haltung ist das Mindeste, bevor jemand mit ausgestreckten Armen durch Berlin
+gleitet.
+
+Damit wächst der fertige Build von 29 auf 47 MB und passt nicht mehr durch den
+Chat. Texturen sind bereits auf 512 Pixel begrenzt (spart 10 MB, aus
+Spielentfernung nicht zu sehen); mehr geht nur über das Netz der Figur.
+
 ### Projektgerüst
 * `project.godot` mit Forward+ Renderer, 60 Hz fester Physik-Tick, 1920×1080
 * Input-Map vollständig über Actions (nie harte Keycodes):
