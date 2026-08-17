@@ -38,7 +38,7 @@ extends Node3D
 @export_range(-85.0, 0.0, 1.0) var pitch_min_degrees: float = -55.0
 ## Highest pitch — positive means the camera drops and looks up.
 @export_range(0.0, 60.0, 1.0) var pitch_max_degrees: float = 22.0
-## Capture the mouse on start. Escape releases it, clicking recaptures.
+## Capture the mouse on start. The pause menu releases it; clicking recaptures.
 @export var capture_mouse: bool = true
 
 @export_group("Auto Align")
@@ -105,8 +105,6 @@ func _ready() -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 		_mouse_delta += (event as InputEventMouseMotion).relative
-	elif event.is_action_pressed(&"pause"):
-		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	elif event is InputEventMouseButton and (event as InputEventMouseButton).pressed:
 		if capture_mouse:
 			Input.mouse_mode = Input.MOUSE_MODE_CAPTURED

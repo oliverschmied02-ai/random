@@ -9,9 +9,11 @@ das wichtige Momente unserer Beziehung als spielbare Szenen nacherzählt.
 "Vaccination Darts"). Weitere Kapitel sind konzeptionell vorgesehen, werden
 aber bewusst noch nicht gebaut.
 
-**Stand:** Stage 4 — Kapitel 1 ist von Anfang bis Ende spielbar. Oliver vor
+**Stand:** Stage 5 — Kapitel 1 ist von Anfang bis Ende erzählt. Oliver vor
 seiner Bürotür abholen, zu zweit durch die Stadt laufen (zwei Gespräche
-unterwegs), an der Dönerbude ankommen und dort *Vaccination Darts* spielen.
+unterwegs, dazu drei optionale Erinnerungen am Weg), an der Dönerbude ankommen,
+dort *Vaccination Darts* spielen — und danach ein Schlussbild, in dem die
+beiden miteinander reden, gefolgt vom Abspann.
 Ausschließlich Platzhalter-Geometrie, alle Dialoge sind Platzhaltertexte.
 
 ## Starten
@@ -27,8 +29,9 @@ godot --path .        # oder das Projekt im Editor öffnen und F5 drücken
 | Gehen | WASD | linker Stick |
 | Kamera | Maus | rechter Stick |
 | Sprinten | Shift | rechter Trigger |
+| Ansehen / Ansprechen | E | A |
 | Werfen (Minispiel) | linke Maustaste | A |
-| Maus freigeben | Escape | — |
+| Pause | Escape | — |
 | Einstellmenü | F1 | — |
 | Debug-Overlay | F3 | — |
 
@@ -68,6 +71,7 @@ herausschneiden und als `godot_macos_release.arm64` in die Vorlage packen.
 godot --headless --path . --script res://tools/headless_check.gd
 godot --headless --path . --script res://tools/headless_darts_check.gd
 godot --headless --path . --script res://tools/headless_chapter_check.gd
+godot --headless --path . --script res://tools/headless_ending_check.gd
 ```
 
 Der erste fährt die Figur über Bahn, Treppe und Rampe und prüft
@@ -83,16 +87,21 @@ mitnehmen, an der Dönerbude ankommen. Er misst dabei die Gehzeit und wie gut
 Oliver mithält. Weil er die Strecke wirklich abläuft, dauert er ungefähr so
 lange wie das Kapitel selbst — rund vier Minuten.
 
+Der vierte nimmt sich die beiden Enden vor: er spricht jede Erinnerung am Weg
+an und prüft, dass sie redet und die Steuerung zurückgibt, gewinnt danach eine
+Runde und misst das Schlussbild nach — beide auf ihren Marken, einander
+zugewandt, ganz im Bild.
+
 ## Projektstruktur
 
 ```
 actors/player/     Spielfigur (CharacterBody3D + Controller)
 actors/companion/  Begleitfigur
 camera/            Third-Person-Kamerarig
-systems/           Wiederverwendbare Systeme (Interaktion, Dialog)
+systems/           Wiederverwendbare Systeme (Interaktion, Dialog, Bewegung)
 chapters/berlin/   Kapitel 1: Szene, Ablauf, Dialogtexte
 scenes/            Testfläche zum Beurteilen der Bewegung
-ui/                Oberfläche (Ziel, Hinweis, Dialog, Debug, Einstellungen)
+ui/                Oberfläche (Ziel, Hinweis, Dialog, Pause, Abspann, Debug, Einstellungen)
 tools/             Entwicklungswerkzeuge (headless Prüfläufe)
 ```
 

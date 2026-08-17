@@ -12,8 +12,14 @@ extends Node3D
 ##   3. auf dem Platz am Desinfektionsspender — ebenso
 ##   4. Ankunft an der Dönerbude, danach das Dart-Minispiel
 ##
+##   5. das Minispiel gewonnen → Abschlussszene und Abspann
+##
 ## Die drei Stationen unterwegs sind Area3D-Knoten unter `Triggers`. Eine
 ## Station hinzuzufügen heißt: Area3D in die Szene, Zeile in `_STATIONEN`.
+##
+## Daneben liegen unter `Erinnerungen` optionale Fundstücke: Dinge, die niemand
+## sehen muss. Sie halten den Weg nicht an, sondern warten darauf, angesprochen
+## zu werden — deshalb Interactable statt Trigger.
 
 signal kapitel_abgeschlossen
 
@@ -36,6 +42,13 @@ const _STATIONEN := [
 	},
 ]
 
+## Optionale Fundstücke am Weg: Knoten unter `Erinnerungen`, dazu der Text.
+const _ERINNERUNGEN := [
+	{"node": "ErinnerungSchild", "lines": BerlinDialogue.ERINNERUNG_SCHILD},
+	{"node": "ErinnerungBank", "lines": BerlinDialogue.ERINNERUNG_BANK},
+	{"node": "ErinnerungFahrrad", "lines": BerlinDialogue.ERINNERUNG_FAHRRAD},
+]
+
 ## Wie weit die Kamera fürs Gespräch zur Seite schwenkt. Genau hinter der
 ## Spielerin verdeckt sie Oliver komplett; seitlich stehen beide im Bild.
 @export_range(0.0, 90.0, 5.0) var gespraechswinkel_grad: float = 48.0
@@ -43,12 +56,31 @@ const _STATIONEN := [
 ## Spielerin stellt, bevor der Dialog trotzdem beginnt.
 @export_range(0.0, 6.0, 0.5) var aufstell_wartezeit: float = 2.5
 
+@export_group("Abschluss")
+## Sekunden zwischen dem letzten Treffer und dem Beginn der Abschlussszene.
+## Konfetti und Banner brauchen einen Moment, bevor etwas Neues anfängt.
+@export_range(0.0, 6.0, 0.1) var abschluss_vorlauf: float = 2.2
+## Dauer der Umstellung: beide drehen sich zueinander, die Kamera fährt hin.
+@export_range(0.5, 6.0, 0.1) var abschluss_fahrt: float = 2.0
+## Wie weit über dem Boden die Abschlusskamera zielt. Etwa Hüfthöhe, nicht
+## Kopfhöhe: das Bild zielt in die Mitte der beiden Gestalten, sonst stehen sie
+## in der unteren Hälfte und die Dialogbox schneidet ihnen die Füße ab.
+@export_range(0.5, 2.5, 0.05) var abschluss_blickhoehe: float = 0.8
+## Bildwinkel des Schlussbilds. Die Minispielkamera steht auf 27° — ein
+## Teleobjektiv, das aus fünf Metern die Scheibe füllt. Aus zwei Metern passen
+## damit keine zwei Menschen ins Bild; der Abschluss braucht einen weiteren Blick.
+@export_range(25.0, 90.0, 1.0) var abschluss_bildwinkel: float = 50.0
+
 @onready var _player: Player = $Player
 @onready var _camera: ThirdPersonCamera = $ThirdPersonCamera
 @onready var _oliver: Companion = $Oliver
 @onready var _dialogue: DialogueBox = $UI/DialogueBox
 @onready var _darts: DartsGame = $DartsGame
 @onready var _objective = $UI/ObjectiveLabel
+@onready var _abspann = $UI/ChapterEnd
+@onready var _platz_anne: Marker3D = $Abschluss/Anne
+@onready var _platz_oliver: Marker3D = $Abschluss/Oliver
+@onready var _abschluss_kamera: Marker3D = $Abschluss/Kamera
 
 var _szene_laeuft: bool = false
 
@@ -63,6 +95,13 @@ func _ready() -> void:
 			push_warning("Kapitel Berlin: Trigger '%s' fehlt." % station["node"])
 			continue
 		area.body_entered.connect(_on_station_betreten.bind(station, area))
+
+	for fundstueck in _ERINNERUNGEN:
+		var punkt := get_node_or_null("Erinnerungen/%s" % fundstueck["node"]) as Interactable
+		if punkt == null:
+			push_warning("Kapitel Berlin: Erinnerung '%s' fehlt." % fundstueck["node"])
+			continue
+		punkt.interacted.connect(_on_erinnerung.bind(fundstueck["lines"]))
 
 	_objective.show_objective("Oliver von der Arbeit abholen")
 
@@ -89,6 +128,21 @@ func _on_station_betreten(body: Node3D, station: Dictionary, area: Area3D) -> vo
 
 	_oliver.activate()
 	_objective.show_objective(station["ziel"])
+
+
+## Ein Fundstück am Weg. Bewusst viel leichter als eine Station: niemand wird
+## umgestellt, die Kamera bleibt, wo sie ist. Nur die Steuerung ruht kurz, damit
+## die Spielerin nicht mitten im Satz weiterläuft.
+func _on_erinnerung(_interactor: Node3D, lines: Array) -> void:
+	if _szene_laeuft:
+		return
+	_szene_laeuft = true
+	_player.input_enabled = false
+
+	await _dialogue.play(lines)
+
+	_player.input_enabled = true
+	_szene_laeuft = false
 
 
 ## Übergang in das Minispiel: beide gehen an die Scheibe, die Kamera fährt
@@ -131,7 +185,63 @@ func _gehe_zu(tween: Tween, figur: Node3D, ziel: Vector3) -> void:
 
 
 func _auf_runde_geschafft(_punkte: int) -> void:
+	await _abschluss_szene()
 	kapitel_abgeschlossen.emit()
+
+
+## Der Abschluss: das Minispiel tritt ab, beide drehen sich zueinander, die
+## Kamera geht auf Augenhöhe daneben, sie reden, dann der Abspann.
+##
+## Die Reihenfolge ist der ganze Trick. Erst wenn das Minispiel die Kamera
+## losgelassen hat, darf die Fahrt beginnen; erst wenn beide stehen, darf
+## geredet werden. Alles gleichzeitig sähe aus wie ein Umschnitt mitten im Satz.
+func _abschluss_szene() -> void:
+	await get_tree().create_timer(abschluss_vorlauf).timeout
+	_darts.abschluss_uebernehmen()
+
+	var kamera := _darts.kamera
+	var von := kamera.global_transform
+	var nach := _abschluss_lage()
+
+	var tween := create_tween().set_parallel(true)
+	tween.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	_stelle_gegenueber(tween, _player, _platz_anne.global_position, _platz_oliver.global_position)
+	_stelle_gegenueber(tween, _oliver, _platz_oliver.global_position, _platz_anne.global_position)
+	tween.tween_method(
+		func(anteil: float) -> void:
+			kamera.global_transform = von.interpolate_with(nach, anteil),
+		0.0, 1.0, abschluss_fahrt
+	)
+	tween.tween_property(kamera, ^"fov", abschluss_bildwinkel, abschluss_fahrt)
+	await tween.finished
+
+	await _dialogue.play(BerlinDialogue.ABSCHLUSS)
+	await _abspann.zeige("KAPITEL 1", "BERLIN — 2020")
+
+
+## Wohin die Abschlusskamera schaut: auf die Mitte zwischen beiden, auf
+## Kopfhöhe. Aus den Marker-Positionen gerechnet und nicht aus den Figuren,
+## damit die Lage schon feststeht, während die beiden noch unterwegs sind.
+func _abschluss_lage() -> Transform3D:
+	var mitte := (_platz_anne.global_position + _platz_oliver.global_position) * 0.5
+	mitte.y = minf(_platz_anne.global_position.y, _platz_oliver.global_position.y)
+	mitte.y += abschluss_blickhoehe
+	var lage := Transform3D(Basis.IDENTITY, _abschluss_kamera.global_position)
+	return lage.looking_at(mitte, Vector3.UP)
+
+
+## Schiebt eine Figur auf ihren Platz und dreht sie dabei zur anderen.
+func _stelle_gegenueber(tween: Tween, figur: Node3D, platz: Vector3, gegenueber: Vector3) -> void:
+	var ziel := Vector3(platz.x, figur.global_position.y, platz.z)
+	tween.tween_property(figur, ^"global_position", ziel, abschluss_fahrt)
+
+	var hin := gegenueber - platz
+	hin.y = 0.0
+	if hin.length() > 0.01:
+		hin = hin.normalized()
+		tween.tween_property(
+			figur, ^"rotation:y", atan2(-hin.x, -hin.z), abschluss_fahrt
+		)
 
 
 ## Der gemeinsame Ablauf jeder Gesprächsszene: Steuerung abgeben, Oliver

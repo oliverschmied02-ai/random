@@ -54,6 +54,9 @@ enum State {
 @export_range(1.0, 60.0, 0.5) var acceleration: float = 14.0
 @export_range(1.0, 60.0, 0.5) var braking: float = 20.0
 @export_range(1.0, 40.0, 0.5) var turn_responsiveness: float = 10.0
+## Höchste Stufe, die der Begleiter im Gehen nimmt — dieselbe Mechanik wie bei
+## der Spielerin, sonst bleibt er an jedem Bordstein stehen.
+@export_range(0.0, 0.8, 0.01) var max_step_height: float = 0.4
 
 ## Read by the animation layer later, same contract as the player.
 var current_speed: float = 0.0
@@ -112,6 +115,7 @@ func _physics_process(delta: float) -> void:
 
 	_apply_movement(move_direction, wanted_speed, delta)
 	_apply_gravity(delta)
+	StepClimber.versuche(self, max_step_height, delta)
 	move_and_slide()
 	_face(move_direction, delta)
 

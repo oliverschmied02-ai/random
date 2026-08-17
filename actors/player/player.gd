@@ -48,7 +48,7 @@ signal stopped_moving
 @export_range(0.5, 3.0, 0.05) var fall_gravity_multiplier: float = 1.35
 ## Tallest obstacle the character steps over without breaking stride — kerbs,
 ## stair treads, thresholds. Godot's CharacterBody3D has no built-in step
-## climbing, so anything above zero here is done by `_try_step_up()`.
+## climbing, so anything above zero here is handled by `StepClimber`.
 ## Set to 0.0 to disable step climbing entirely.
 @export_range(0.0, 0.8, 0.01) var max_step_height: float = 0.4
 ## Speed below which the character counts as standing still (m/s).
@@ -81,7 +81,7 @@ func _physics_process(delta: float) -> void:
 	_update_target_speed(input_direction, delta)
 	_apply_horizontal_movement(input_direction, delta)
 	_apply_gravity(delta)
-	_try_step_up(delta)
+	StepClimber.versuche(self, max_step_height, delta)
 	move_and_slide()
 	_update_facing(input_direction, delta)
 	_update_state()
@@ -149,62 +149,6 @@ func _apply_gravity(delta: float) -> void:
 	if velocity.y < 0.0:
 		pull *= fall_gravity_multiplier
 	velocity.y -= pull * delta
-
-
-## Lifts the character onto low obstacles that would otherwise stop it dead.
-##
-## Godot's `move_and_slide()` treats a stair tread as a wall: the capsule's
-## rounded bottom only clears a few centimetres, so an ordinary 18 cm step
-## blocks the character completely. This probes ahead — is the path blocked at
-## foot level but free one step higher, and is there something level to stand
-## on up there? — and if so raises the body by exactly the step height. The
-## horizontal movement itself is still left to `move_and_slide()`.
-func _try_step_up(delta: float) -> void:
-	if max_step_height <= 0.0 or not _is_grounded_for_stepping():
-		return
-
-	var direction := Vector3(velocity.x, 0.0, velocity.z)
-	if direction.length_squared() < 0.000001:
-		return
-	# Probe a fixed minimum distance ahead. One frame of movement can be a few
-	# millimetres — less than the physics safe margin — so probing by the raw
-	# per-frame motion would never register the obstacle we are standing against.
-	var motion := direction.normalized() * maxf(direction.length() * delta, 0.1)
-	if not test_move(global_transform, motion):
-		return  # nothing in the way
-
-	var lift := Vector3.UP * max_step_height
-	if test_move(global_transform, lift):
-		return  # no headroom to step up into
-	var lifted := global_transform.translated(lift)
-	if test_move(lifted, motion):
-		return  # still blocked one step higher — a real wall, not a step
-
-	var landing := KinematicCollision3D.new()
-	var probe_depth := max_step_height + 0.05
-	if not test_move(lifted.translated(motion), Vector3.DOWN * probe_depth, landing):
-		return  # nothing to land on — a gap, not a step
-	if landing.get_normal().angle_to(Vector3.UP) > floor_max_angle:
-		return  # the surface up there is too steep to stand on
-
-	var rise := max_step_height + landing.get_travel().y
-	if rise > 0.001:
-		# A hair of extra height so the horizontal move clears the edge cleanly.
-		global_position.y += rise + 0.005
-
-
-## Whether the character may step up right now.
-##
-## `is_on_floor()` alone is not enough: a capsule that has ridden partway up a
-## step edge rests on a corner, and Godot classifies that steep contact as a
-## wall. The character would then be denied the very step-up that frees it and
-## would hang on the edge forever. Ground within a short reach below counts too.
-func _is_grounded_for_stepping() -> bool:
-	if is_on_floor():
-		return true
-	if velocity.y > 0.1:
-		return false  # rising — not a stuck-on-an-edge situation
-	return test_move(global_transform, Vector3.DOWN * (max_step_height * 0.5))
 
 
 func _update_facing(input_direction: Vector3, delta: float) -> void:

@@ -1,4 +1,4 @@
-[gd_scene load_steps=27 format=3]
+[gd_scene load_steps=30 format=3]
 
 [ext_resource type="Script" path="res://chapters/berlin/chapter_berlin.gd" id="1_chapter"]
 [ext_resource type="PackedScene" path="res://actors/player/player.tscn" id="2_player"]
@@ -10,6 +10,9 @@
 [ext_resource type="PackedScene" path="res://ui/debug_overlay.tscn" id="8_overlay"]
 [ext_resource type="PackedScene" path="res://ui/tuning_panel.tscn" id="9_tuning"]
 [ext_resource type="PackedScene" path="res://chapters/berlin/darts/darts_game.tscn" id="10_darts"]
+[ext_resource type="PackedScene" path="res://systems/interaction/memory_point.tscn" id="11_memory"]
+[ext_resource type="PackedScene" path="res://ui/chapter_end.tscn" id="12_ende"]
+[ext_resource type="PackedScene" path="res://ui/pause_menu.tscn" id="13_pause"]
 
 [sub_resource type="ProceduralSkyMaterial" id="Sky_mat"]
 sky_top_color = Color(0.454902, 0.588235, 0.717647, 1)
@@ -541,6 +544,69 @@ collision_mask = 2
 [node name="Shape" type="CollisionShape3D" parent="Triggers/TriggerDoener"]
 shape = SubResource("Shape_TriggerDoener")
 
+[node name="Erinnerungen" type="Node3D" parent="."]
+
+[node name="AbstandsSchild" type="CSGBox3D" parent="Erinnerungen"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.93, 1.9, -5)
+size = Vector3(0.1, 0.6, 0.8)
+material = SubResource("Mat_sign")
+
+[node name="ErinnerungSchild" parent="Erinnerungen" instance=ExtResource("11_memory")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11, 0.9, -5)
+
+[node name="Fahrrad" type="Node3D" parent="Erinnerungen"]
+
+[node name="Hinterrad" type="CSGCylinder3D" parent="Erinnerungen/Fahrrad"]
+transform = Transform3D(0, 1, 0, -1, 0, 0, 0, 0, 1, 122, 0.34, -160.6)
+radius = 0.34
+height = 0.06
+sides = 12
+material = SubResource("Mat_dark")
+
+[node name="Vorderrad" type="CSGCylinder3D" parent="Erinnerungen/Fahrrad"]
+transform = Transform3D(0, 1, 0, -1, 0, 0, 0, 0, 1, 122, 0.34, -161.8)
+radius = 0.34
+height = 0.06
+sides = 12
+material = SubResource("Mat_dark")
+
+[node name="Oberrohr" type="CSGBox3D" parent="Erinnerungen/Fahrrad"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 122, 0.78, -161.25)
+size = Vector3(0.06, 0.06, 1.05)
+material = SubResource("Mat_metal")
+
+[node name="Sattelrohr" type="CSGBox3D" parent="Erinnerungen/Fahrrad"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 122, 0.56, -160.72)
+size = Vector3(0.06, 0.5, 0.06)
+material = SubResource("Mat_metal")
+
+[node name="Gabel" type="CSGBox3D" parent="Erinnerungen/Fahrrad"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 122, 0.62, -161.78)
+size = Vector3(0.05, 0.62, 0.05)
+material = SubResource("Mat_metal")
+
+[node name="Lenker" type="CSGBox3D" parent="Erinnerungen/Fahrrad"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 122, 0.93, -161.78)
+size = Vector3(0.5, 0.05, 0.05)
+material = SubResource("Mat_metal")
+
+[node name="ErinnerungFahrrad" parent="Erinnerungen" instance=ExtResource("11_memory")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 122.9, 0.9, -161.2)
+
+[node name="ErinnerungBank" parent="Erinnerungen" instance=ExtResource("11_memory")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 68.2, 0.9, -90)
+
+[node name="Abschluss" type="Node3D" parent="."]
+
+[node name="Anne" type="Marker3D" parent="Abschluss"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 131, 0.2, -240.4)
+
+[node name="Oliver" type="Marker3D" parent="Abschluss"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 132.6, 0.25, -240.4)
+
+[node name="Kamera" type="Marker3D" parent="Abschluss"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 133.1, 1.6, -237)
+
 [node name="Player" parent="." instance=ExtResource("2_player")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.2, 12)
 
@@ -562,3 +628,7 @@ transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 13.6, 0.25, -9)
 [node name="DebugOverlay" parent="UI" instance=ExtResource("8_overlay")]
 
 [node name="TuningPanel" parent="UI" instance=ExtResource("9_tuning")]
+
+[node name="ChapterEnd" parent="UI" instance=ExtResource("12_ende")]
+
+[node name="PauseMenu" parent="UI" instance=ExtResource("13_pause")]

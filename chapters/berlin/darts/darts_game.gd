@@ -75,6 +75,10 @@ var _wackeln: float = 0.0
 
 
 func _ready() -> void:
+	# Das Minispiel steht von Anfang an in der Szene, seine Anzeige darf aber
+	# erst mit ihm auftauchen — sonst liegen Wurfzähler und Punktestand schon
+	# während des Spaziergangs über dem Bild.
+	_hud.visible = false
 	_hud.setze_idealzone(0.5 - idealzone, 0.5 + idealzone)
 	# Die Ruhelage der Kamera einmal ausrechnen; die Fahrt blendet dorthin.
 	kamera.look_at_from_position(kamera.global_position, _mitte.global_position, Vector3.UP)
@@ -87,6 +91,7 @@ func _ready() -> void:
 ## beginnt — normalerweise die Verfolgerkamera der Spielerin.
 func starten(von_kamera: Camera3D = null) -> void:
 	_neue_runde()
+	_hud.visible = true
 	_hud.verstecke_banner()
 	set_process(true)
 	set_process_unhandled_input(true)
@@ -164,6 +169,18 @@ func _laden(delta: float) -> void:
 	_hud.setze_kraft(_kraft, true)
 
 
+## Übergibt die Szene an den Abschluss: Anzeige weg, Eingaben aus, Kamera frei.
+##
+## Vor allem das Kamerawackeln muss enden — es schreibt jeden Frame die Position
+## der Kamera neu und würde jede Fahrt, die das Kapitel danach fährt, überschreiben.
+func abschluss_uebernehmen() -> void:
+	zustand = Zustand.INAKTIV
+	_wackeln = 0.0
+	set_process(false)
+	set_process_unhandled_input(false)
+	_hud.visible = false
+
+
 ## Weltposition, auf die das Fadenkreuz zeigt.
 func ziel_punkt() -> Vector3:
 	return _mitte.global_position + Vector3(_ziel.x, _ziel.y, 0.0)
@@ -231,7 +248,7 @@ func _runde_beenden() -> void:
 	if punkte >= DartsConfig.ZIELPUNKTZAHL:
 		_konfetti.restart()
 		_hud.zeige_banner(
-			"KAPITEL ABGESCHLOSSEN",
+			"GESCHAFFT",
 			"%d Punkte. Oliver ist beeindruckt und wird es nie zugeben." % punkte
 		)
 		runde_geschafft.emit(punkte)

@@ -110,12 +110,37 @@ einplanen (Seitenwand oder überdachter Bereich daneben).
 | | |
 | --- | --- |
 | **Zweck** | Die Zeit sofort lesbar machen |
-| **Szene** | `chapters/berlin/berlin_start.tscn` und die Route in Stage 3 |
+| **Szene** | `chapters/berlin/berlin_chapter.tscn`, entlang der ganzen Route |
 | **Typ** | Props: Desinfektionsspender, Abstandsschilder, Absperrband, Masken |
 | **Stil** | Leicht überzeichnet, nostalgisch-absurd, nicht bedrückend |
 | **Animation** | Keine nötig |
 | **Platzhalter** | Orange Schilderplatte, geschlossene Café-Front mit Markise |
 | **Priorität** | IMPORTANT |
+
+### Erinnerungen am Weg
+| | |
+| --- | --- |
+| **Zweck** | Drei Fundstücke, die niemand sehen muss — Beiwerk mit Insidern |
+| **Szene** | `chapters/berlin/berlin_chapter.tscn` → `Erinnerungen` |
+| **Typ** | Abstandsschild an der Wand, Parkbank, Fahrrad ohne Sattel |
+| **Stil** | Beiläufig, kein Ausrufezeichen — man muss sie übersehen können |
+| **Animation** | Keine nötig |
+| **Platzhalter** | Gelbe Schilderplatte, Sitzblock, Fahrrad aus Zylindern und Stäben |
+| **Priorität** | POLISH |
+
+Die Positionen sind Vorschläge; überzeugender wären Orte, an denen ihr wirklich
+wart. Verschieben heißt: Knoten unter `Erinnerungen` bewegen, sonst nichts.
+
+### Schlussbild an der Bude
+| | |
+| --- | --- |
+| **Zweck** | Der letzte Blick des Kapitels — die beiden im Gespräch |
+| **Szene** | `chapters/berlin/berlin_chapter.tscn` → `Abschluss` |
+| **Typ** | Kadrage: Marken für beide Figuren und die Kamera |
+| **Stil** | Spätabendlich, warmes Budenlicht von der Seite |
+| **Animation** | Später: echtes Hingehen statt Gleiten, Zuhör-Posen |
+| **Platzhalter** | Zwei Marken 1,6 m auseinander, Kamera 3,6 m davor bei 50° |
+| **Priorität** | POLISH |
 
 ---
 

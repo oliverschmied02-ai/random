@@ -11,8 +11,7 @@ extends RefCounted
 ##
 ##     {"speaker": "OLIVER", "text": "Hey."}
 ##
-## `speaker` steht in der Kopfzeile der Dialogbox. `SIE` ist ein Platzhalter —
-## sobald der echte Name feststeht, hier ersetzen, sonst nirgends.
+## `speaker` steht in der Kopfzeile der Dialogbox.
 ##
 ## **Alle Texte sind Platzhalter.** Sie treffen die gewünschte Tonlage, damit
 ## sich Länge und Tempo beurteilen lassen, aber die echten Erinnerungen und
@@ -20,37 +19,67 @@ extends RefCounted
 
 ## Vor Olivers Bürotür: das Abholen nach Feierabend.
 const ABHOLEN: Array[Dictionary] = [
-	{"speaker": "SIE", "text": "Hey. Feierabend?"},
+	{"speaker": "ANNE", "text": "Hey. Feierabend?"},
 	{"speaker": "OLIVER", "text": "Hey. Endlich."},
 	{"speaker": "OLIVER", "text": "Ich sitze seit heute früh da drin und habe mit genau null Menschen geredet."},
-	{"speaker": "SIE", "text": "Willkommen in 2020."},
+	{"speaker": "ANNE", "text": "Willkommen in 2020."},
 	{"speaker": "OLIVER", "text": "Wollen wir ein Stück laufen?"},
-	{"speaker": "SIE", "text": "Klar. Ich hab sowieso nichts vor. Keiner hat was vor."},
+	{"speaker": "ANNE", "text": "Klar. Ich hab sowieso nichts vor. Keiner hat was vor."},
 ]
 
 ## Unterwegs, am geschlossenen Café.
 const UNTERWEGS_CAFE: Array[Dictionary] = [
-	{"speaker": "SIE", "text": "Da wollten wir doch eigentlich hin."},
+	{"speaker": "ANNE", "text": "Da wollten wir doch eigentlich hin."},
 	{"speaker": "OLIVER", "text": "Da wollten wir seit drei Wochen hin."},
-	{"speaker": "SIE", "text": "Zu. Wie alles."},
+	{"speaker": "ANNE", "text": "Zu. Wie alles."},
 	{"speaker": "OLIVER", "text": "Dafür kennen wir inzwischen jede Parkbank in Mitte mit Vornamen."},
 ]
 
 ## Unterwegs, am Desinfektionsspender auf dem Platz.
 const UNTERWEGS_PLATZ: Array[Dictionary] = [
 	{"speaker": "OLIVER", "text": "Guck mal. Die Dinger standen wirklich an jeder Ecke."},
-	{"speaker": "SIE", "text": "Ich hatte den ganzen Frühling Hände wie Schmirgelpapier."},
+	{"speaker": "ANNE", "text": "Ich hatte den ganzen Frühling Hände wie Schmirgelpapier."},
 	{"speaker": "OLIVER", "text": "Zwei Meter Abstand, hieß es."},
-	{"speaker": "SIE", "text": "Du läufst gerade seit zwanzig Minuten neben mir."},
+	{"speaker": "ANNE", "text": "Du läufst gerade seit zwanzig Minuten neben mir."},
 	{"speaker": "OLIVER", "text": "Ich weiß."},
 ]
 
 ## Ankunft an der Dönerbude — vorläufiger Abschluss von Kapitel 1.
 const ANKUNFT_DOENER: Array[Dictionary] = [
 	{"speaker": "OLIVER", "text": "Da vorne. Siehst du das?"},
-	{"speaker": "SIE", "text": "Die Dönerbude?"},
+	{"speaker": "ANNE", "text": "Die Dönerbude?"},
 	{"speaker": "OLIVER", "text": "Die Dönerbude."},
-	{"speaker": "SIE", "text": "Es ist halb elf."},
+	{"speaker": "ANNE", "text": "Es ist halb elf."},
 	{"speaker": "OLIVER", "text": "Perfekte Uhrzeit. Und die haben hinten eine Dartscheibe."},
-	{"speaker": "SIE", "text": "Das wird ja immer besser."},
+	{"speaker": "ANNE", "text": "Das wird ja immer besser."},
+]
+
+## Abschluss nach dem gewonnenen Minispiel. Hier stehen später die echten Sätze.
+const ABSCHLUSS: Array[Dictionary] = [
+	{"speaker": "OLIVER", "text": "Fünf von fünf. Das war Anfängerglück."},
+	{"speaker": "ANNE", "text": "Das war Können."},
+	{"speaker": "OLIVER", "text": "Das war Anfängerglück, das aussah wie Können."},
+	{"speaker": "ANNE", "text": "Es ist kurz vor Mitternacht und wir stehen an einer Dönerbude."},
+	{"speaker": "OLIVER", "text": "Ich weiß."},
+	{"speaker": "ANNE", "text": "Ich auch."},
+]
+
+
+# --- Optionale Erinnerungen am Weg ----------------------------------------
+#
+# Kurze Fundstücke, die niemand sehen muss. Genau hierhin gehören später eure
+# Insider — je knapper, desto besser.
+
+const ERINNERUNG_SCHILD: Array[Dictionary] = [
+	{"speaker": "ANNE", "text": "Anderthalb Meter. Das Schild hing damals an jeder zweiten Wand."},
+]
+
+const ERINNERUNG_FAHRRAD: Array[Dictionary] = [
+	{"speaker": "ANNE", "text": "Ein Fahrrad ohne Sattel, angeschlossen mit zwei Schlössern."},
+	{"speaker": "ANNE", "text": "Berlin."},
+]
+
+const ERINNERUNG_BANK: Array[Dictionary] = [
+	{"speaker": "ANNE", "text": "Auf so einer haben wir mal zwei Stunden gesessen."},
+	{"speaker": "ANNE", "text": "Es war viel zu kalt dafür."},
 ]

@@ -2,11 +2,12 @@
 
 **Spiel:** Our Story — Kapitel 1: Berlin
 **Engine:** Godot 4.5 (GDScript)
-**Aktuelle Stufe:** Stage 4 — Vaccination Darts (implementiert, wartet auf
-Probespielen). Stage 1 bis 3 abgenommen.
+**Aktuelle Stufe:** Stage 5 — Abschluss, Pausenmenü und Erinnerungen
+(implementiert, wartet auf Probespielen). Stage 1 bis 4 abgenommen.
 
-**Kapitel 1 ist damit von Anfang bis Ende spielbar:** abholen, laufen,
-ankommen, werfen, gewinnen.
+**Kapitel 1 ist damit von Anfang bis Ende erzählt:** abholen, laufen, ankommen,
+werfen, gewinnen — und danach ein Schlussbild, in dem die beiden miteinander
+reden, gefolgt vom Abspann.
 
 ---
 
@@ -28,7 +29,9 @@ ankommen, werfen, gewinnen.
 * Framerate-unabhängige Drehung, die bei hohem Tempo etwas träger wird
 * **Stufen-Steigen** bis 0,4 m — Godots `CharacterBody3D` bringt das nicht mit;
   ohne diese Ergänzung blockiert bereits eine 18-cm-Treppenstufe die Figur
-  vollständig (siehe „Gelöste Probleme")
+  vollständig (siehe „Gelöste Probleme"). Liegt als eigener Baustein in
+  `systems/motion/step_climber.gd`, weil Spielerin **und** Begleiter ihn
+  brauchen und GDScript keine Mehrfachvererbung kennt
 * Signale `started_moving` / `stopped_moving` für die spätere Animationsschicht
 
 ### Kamera (`camera/`)
@@ -81,7 +84,7 @@ sie weiß nicht, *was* passiert — das bleibt beim Kapitelskript. Der
 hat. Dieselbe Komponente trägt später Café, Desinfektionsspender und Fahrrad.
 
 ### Kapitelablauf (`chapters/berlin/chapter_berlin.gd`)
-Vier Stationen, als lesbare Abfolge geschrieben statt als Zustandsautomat:
+Fünf Abschnitte, als lesbare Abfolge geschrieben statt als Zustandsautomat:
 Abholen an der Bürotür (auf Tastendruck), zwei Gespräche unterwegs und die
 Ankunft an der Dönerbude (lösen beim Betreten aus, sie sind Teil der Geschichte
 und keine optionalen Fundstücke).
@@ -93,6 +96,38 @@ hängengeblieben ist, wäre schlimmer als eine unsaubere Bildaufteilung.
 
 Eine Station ergänzt man mit einem Area3D in der Szene und einer Zeile in
 `_STATIONEN`.
+
+### Erinnerungen am Weg (`systems/interaction/memory_point.tscn`)
+Drei optionale Fundstücke, die niemand sehen muss: ein Abstandsschild an der
+Bürostraße, eine Parkbank an der Café-Straße, ein Fahrrad ohne Sattel an der
+letzten Geraden. Sie halten den Weg nicht an, sondern warten darauf,
+angesprochen zu werden — deshalb `Interactable` statt Auslösefläche.
+
+Der Ablauf ist bewusst viel leichter als bei einer Station: niemand wird
+umgestellt, die Kamera bleibt stehen, nur die Steuerung ruht für die Dauer der
+ein bis zwei Sätze. Ein weiteres Fundstück ergänzt man mit einer Instanz von
+`memory_point.tscn` unter `Erinnerungen` und einer Zeile in `_ERINNERUNGEN`.
+
+### Abschluss des Kapitels
+Nach der gewonnenen Runde tritt das Minispiel ab (`abschluss_uebernehmen()`:
+Anzeige weg, Eingaben aus, Kamerawackeln beendet), beide Figuren gehen auf ihre
+Marken unter `Abschluss` und drehen sich zueinander, die Kamera fährt daneben
+und weitet ihren Bildwinkel von 27° auf 50°. Dann reden sie, dann kommt der
+Abspann (`ui/chapter_end.tscn`): abblenden, Titel stehen lassen, leiser Hinweis
+auf das Menü.
+
+Die Reihenfolge ist der ganze Trick — erst wenn das Minispiel die Kamera
+losgelassen hat, darf die Fahrt beginnen; erst wenn beide stehen, darf geredet
+werden.
+
+Kadrage und Zeiten stehen als Werte am Kapitelknoten (`abschluss_vorlauf`,
+`abschluss_fahrt`, `abschluss_blickhoehe`, `abschluss_bildwinkel`), die Marken
+für beide Figuren und die Kamera als Marker3D in der Szene.
+
+### Pausenmenü (`ui/pause_menu.gd`)
+Escape hält das Spiel an und gibt dabei die Maus frei; *Weiter* und
+*Spiel beenden*. Vorher gab Escape nur die Maus frei — praktisch beim
+Entwickeln, aber für jemanden, der einfach kurz weg muss, kein Verhalten.
 
 ### Dialog (`systems/dialogue/`)
 `DialogueBox` spielt eine Liste aus `{"speaker", "text"}` ab, mit
@@ -115,7 +150,8 @@ Versatz sorgt dafür, dass er neben der Spur läuft statt exakt darin.
 
 Holt bei Abstand bis 5,4 m/s auf — gemessen *entlang der Spur*, nicht Luftlinie,
 sonst wirkt er hinter einer Ecke näher als er ist. Dreht sich im Stehen zur
-Spielerin. Bewusst keine autonome KI.
+Spielerin. Steigt Stufen wie die Spielerin (derselbe `StepClimber`). Bewusst
+keine autonome KI.
 
 ### Minispiel Vaccination Darts (`chapters/berlin/darts/`)
 Fünf Würfe, Zielpunktzahl 60, beides in `darts_config.gd` — im Spielcode steht
@@ -199,10 +235,10 @@ wie das Kapitel selbst, rund zwei Minuten.
 
 | Messung | Wert |
 | --- | --- |
-| Gesamtdauer | 126 s (2,1 min) |
+| Gesamtdauer | 128 s (2,1 min) |
 | davon Laufen | 106 s |
 | davon Dialoge | 12 s |
-| Von Oliver mitgelaufene Strecke | 343 m |
+| Von Oliver mitgelaufene Strecke | 354 m |
 | Größter Rückstand von Oliver | 2,5 m |
 | Ausgelöste Gespräche | 4 von 4 |
 
@@ -211,7 +247,25 @@ Höchstgeschwindigkeit. Wer die Zeilen wirklich liest, braucht dafür eher eine
 Minute — die Gesamtdauer landet damit bei etwa 2,5 bis 3 Minuten, also im
 angepeilten Bereich.
 
-Der Prüflauf ersetzt **kein** Probespielen. Er belegt, dass die Werte
+Dazu der Prüflauf für die beiden Enden des Kapitels:
+
+```bash
+godot --headless --path . --script res://tools/headless_ending_check.gd
+```
+
+Er spricht jedes Fundstück am Weg an und prüft, dass es redet und die Steuerung
+zurückgibt; danach gewinnt er eine Runde und misst das Schlussbild nach: beide
+auf ihren Marken (< 0,35 m), einander zugewandt (Blickübereinstimmung > 0,9),
+Kamera auf ihrer Marke und auf die Mitte gerichtet — und beide **ganz** im Bild,
+von den Füßen bis über den Kopf.
+
+Und der Dart-Prüflauf:
+
+```bash
+godot --headless --path . --script res://tools/headless_darts_check.gd
+```
+
+Die Prüfläufe ersetzen **kein** Probespielen. Sie belegen, dass die Werte
 stimmen — nicht, dass sich die Bewegung gut anfühlt.
 
 ---
@@ -265,6 +319,20 @@ noch, wenn die Figur sich von der Kamera *weg* bewegt
 **Fernsehturm hinter der Sichtweite.** Die Kamera war auf 500 m Sichtweite
 begrenzt, der Turm steht bei 700 m — er wurde schlicht weggeschnitten.
 
+**Die Dart-Anzeige lag von Anfang an über dem Bild.** Wurfzähler und
+Punktestand gehören zum Minispiel, das aber von Beginn an in der Szene steht —
+also stand seine Anzeige schon während des Spaziergangs über der Zielangabe.
+Aufgefallen ist es erst auf einem Prüfbild, nicht im Code. Die Anzeige taucht
+jetzt mit dem Minispiel auf und verschwindet mit ihm.
+
+**Das Schlussbild zeigte zwei angeschnittene Oberkörper.** Die Minispielkamera
+steht auf 27° Bildwinkel — ein Teleobjektiv, das aus fünf Metern die Scheibe
+füllt. Aus zwei Metern passen damit keine zwei Menschen ins Bild. Der Abschluss
+weitet den Bildwinkel auf 50°, geht auf knapp vier Meter zurück und zielt auf
+Hüft- statt Kopfhöhe, sonst stehen beide in der unteren Bildhälfte und die
+Dialogbox schneidet ihnen die Füße ab. Der Prüflauf misst das jetzt mit: er
+verlangt Füße, Mitte und Kopf beider Figuren im Sichtkegel.
+
 **Transponierte Transforms.** Godot serialisiert `Transform3D` in `.tscn`
 zeilenweise, nicht spaltenweise. Dadurch stiegen die Rampen zur falschen Seite
 (die Figur lief unten durch) und die Sonne leuchtete nach oben.
@@ -285,7 +353,6 @@ zeilenweise, nicht spaltenweise. Dadurch stiegen die Rampen zur falschen Seite
   Nachbessern.
 * Die 45°-Rampe liegt exakt auf Godots Grenzwinkel — ob sie begehbar ist, ist
   Zufall. Sie steht als Grenzfall-Test dort, nicht als Zusicherung.
-* `pause` gibt bisher nur die Maus frei; es gibt kein Pausenmenü.
 * Der Companion kollidiert nicht mit der Spielerin (eigene Physik-Ebene). Das
   garantiert, dass er nie im Weg steht, sieht aber beim Durchlaufen komisch
   aus. Bewusste Wahl für diese Stufe, bei echten Figuren neu zu bewerten.
@@ -293,22 +360,25 @@ zeilenweise, nicht spaltenweise. Dadurch stiegen die Rampen zur falschen Seite
   Strecke, hat aber eine Grenze: läuft man weiter als die gespeicherte Spur
   reicht (rund 67 m), schneidet er die Kurve. Beim Gehen und Sprinten auf
   dieser Strecke tritt das nicht auf.
-* Der Companion hat kein Stufen-Steigen wie die Spielerin. Auf der ebenen
-  Strecke egal, bei Treppen in späteren Abschnitten nachzurüsten.
 * Der Dialog wartet auf Tastendruck, ohne Zeitautomatik und ohne Ton.
-* Nach dem gewonnenen Minispiel bleibt das Bild auf dem Banner stehen. Ein
-  Abspann oder eine Rückkehr ins Menü gibt es noch nicht.
-* Die Figuren stehen beim Werfen bewusst außerhalb des Bildausschnitts: bei
-  diesem engen Bildwinkel wird alles nah an der Kamera riesig. Eine
-  Reaktionseinstellung auf die beiden gehört in den Feinschliff.
+* Nach dem Abspann bleibt der Titel stehen. Eine Rückkehr ins Menü oder ein
+  zweites Kapitel gibt es noch nicht — Escape öffnet das Pausenmenü, dort
+  lässt sich das Spiel beenden.
+* Die Figuren stehen **beim Werfen** weiter außerhalb des Bildausschnitts; erst
+  der Abschluss zeigt sie. Eine Reaktion zwischen den Würfen gehört in den
+  Feinschliff.
 * Die Farben der Partikel konnte ich hier nicht abschließend beurteilen — die
   Prüfbilder entstehen mit Software-Rendering, nicht mit dem Renderer, den das
   fertige Spiel verwendet.
 * Die zwei Gespräche unterwegs lösen beim Betreten aus. Läuft man versehentlich
   während eines laufenden Gesprächs in den nächsten Auslöser, wird dieser
   übersprungen. Auf der linearen Strecke praktisch ausgeschlossen.
-* Es gibt noch keine optionalen Erinnerungspunkte zum Ansprechen — die
-  `Interactable`-Komponente trägt sie, angelegt ist bisher nur Oliver.
+* Die drei Erinnerungen lassen sich beliebig oft ansprechen. Für kurze
+  Fundstücke ist das richtig; sobald dort echte Sätze stehen, ist `one_shot`
+  am Knoten die Stellschraube.
+* Der Abschluss versetzt beide Figuren mit abgeschalteter Physik auf ihre
+  Marken — sie gleiten dorthin, statt zu gehen. Ohne Animationen fällt das
+  nicht auf, mit echten Figuren muss daraus ein Weg werden.
 
 ## Bekannte Fehler
 
@@ -319,13 +389,42 @@ Probleme" beschrieben.
 
 ## Nächste sinnvolle Schritte
 
-Stage 1 ist abgenommen: die Bewegung fühlt sich gut an, die Startwerte bleiben
-wie sie sind. Als nächstes steht **Stage 2 — Meeting Oliver** an, sobald
-ausdrücklich beauftragt.
+Stage 1 bis 4 sind abgenommen. Stage 5 (Abschluss, Pausenmenü, Erinnerungen)
+liegt zum Probespielen bereit; die echten Dialogtexte sind ausdrücklich
+zurückgestellt.
 
-Falls das Fahrgefühl später doch noch nachjustiert werden soll — über **F1** im
-laufenden Spiel, dieselben Werte stehen im Editor unter `Player` und
-`ThirdPersonCamera`:
+### Beim Probespielen von Stage 5 zu beurteilen
+
+* Trägt das Schlussbild? Stehen die beiden gut zueinander, ist der Abstand
+  richtig, kommt der Umschnitt zu früh oder zu spät?
+  Stellschrauben am Knoten `BerlinChapter`: `abschluss_vorlauf` (2,2 s bis der
+  Umbau beginnt), `abschluss_fahrt` (2,0 s Kamerafahrt), `abschluss_bildwinkel`
+  (50°), `abschluss_blickhoehe` (0,8 m). Die Marken für beide Figuren und die
+  Kamera stehen als Marker3D unter `Abschluss`.
+* Steht der Abspann lange genug? (`ui/chapter_end.tscn`: `verdunkeln_dauer`,
+  `titel_dauer`, `stehen_lassen`)
+* Findet man die drei Erinnerungen am Weg — oder läuft man an allen vorbei?
+  Sollen es mehr sein, weniger, andere Orte?
+* Stört das Pausenmenü an irgendeiner Stelle, an der es nicht stören darf?
+
+### Danach
+
+**Die echten Texte.** Alle Dialoge sind Platzhalter in der beabsichtigten
+Tonlage. `chapters/berlin/dialogue_lines.gd` enthält ausschließlich Inhalt —
+Sätze umschreiben, ergänzen oder streichen ist gefahrlos. Die drei Erinnerungen
+sind der offensichtliche Ort für Insider.
+
+**Feinschliff (Stage 6).** Echte Modelle und Animationen, Berliner Kulisse statt
+Blöcke, Ton und Musik, Kameraübergänge, Pacing, Dialogtiming. Dazu die
+gesammelten Punkte: eine Reaktion zwischen den Würfen, ein echter Weg statt des
+Gleitens auf die Abschlussmarken.
+
+Nicht begonnen und bewusst nicht vorbereitet: spätere Kapitel.
+
+### Falls das Fahrgefühl nachjustiert werden soll
+
+Über **F1** im laufenden Spiel, dieselben Werte stehen im Editor unter `Player`
+und `ThirdPersonCamera`:
 
 | Empfindung | Stellschraube |
 | --- | --- |
@@ -337,48 +436,12 @@ laufenden Spiel, dieselben Werte stehen im Editor unter `Player` und
 | Kamera zu nah / zu weit | `SpringArm3D > spring_length` (4,2) |
 | Kamera dreht sich ungefragt | `auto_align_enabled` / `auto_align_rate` |
 
-### Rückmeldung aus dem Probespielen (2026-08-17)
-
-Stage 2 spielt sich gut, Oliver ist ohne Suchen zu finden — die Blickführung
-funktioniert also. Offener Wunsch: **Oliver soll an einem Hauseingang warten**
-statt frei auf dem Platz zu stehen. Als Kulissenarbeit in
-`ASSET_REQUIREMENTS.md` vermerkt.
-
-### Noch zu beurteilen
+### Offen aus früheren Runden
 
 * Stimmt der Abstand, in dem der Hinweis „Ansprechen" erscheint?
 * Ist das Dialogtempo richtig — Schreibgeschwindigkeit, Zeilenlänge?
 * Sitzt der Kamerawinkel im Gespräch gut? (`gespraechswinkel_grad`, 48°)
-* Läuft Oliver angenehm mit, oder klebt er / bleibt er zurück?
-  Regler dafür stehen unter F1 im Abschnitt *Begleiter*.
-
-### Beim Probespielen von Stage 3 zu beurteilen
-
-* Stimmt die Gehzeit? Zielvorgabe waren 2–3 Minuten.
-* Sitzen die zwei Gespräche unterwegs an den richtigen Stellen, oder kommen
-  sie zu früh / zu spät?
-* Verliert man unterwegs die Orientierung, oder führt die Straße von selbst?
-* Läuft Oliver um die Ecken angenehm mit?
-* Trägt der Ablauf Abholen → Laufen → Ankommen, oder fehlt dazwischen etwas?
-
-### Beim Probespielen von Stage 4 zu beurteilen
-
-* Ist der Wurf verständlich, ohne dass es jemand erklärt?
-* Ist die Idealzone auf dem Kraftbalken breit genug?
-* Trifft man gut genug, um Spaß zu haben — oder zu leicht, um stolz zu sein?
-* Passt die Kamerafahrt von der Bude auf die Scheibe?
-* Ist der Übergang „Ankunft → Minispiel" flüssig, oder ruckelt das Hinstellen
-  der beiden Figuren?
-
-Stellschrauben stehen am Knoten `DartsGame` im Inspector: `wurf_tempo`
-(flachere Bahn = weniger Wirkung von Ladefehlern), `kraft_einfluss`,
-`idealzone`, `maus_empfindlichkeit`, `kamerafahrt`.
-
-### Danach: Stage 5 und 6 — Feinschliff
-
-Echte Modelle und Animationen, Berliner Kulisse statt Blöcke, Ton und Musik,
-Kameraübergänge, Pacing, Dialogtiming. Dazu die gesammelten Punkte: Oliver an
-den Hauseingang, optionale Erinnerungspunkte unterwegs, Stufen-Steigen für den
-Begleiter, eine Reaktionseinstellung beim Gewinn.
-
-Nicht begonnen und bewusst nicht vorbereitet: spätere Kapitel.
+* Ist der Wurf verständlich, ohne dass es jemand erklärt? Ist die Idealzone
+  breit genug, trifft man gut genug für Stolz statt Langeweile?
+* Stimmt die Gehzeit von 2–3 Minuten, sitzen die Gespräche an den richtigen
+  Stellen?
