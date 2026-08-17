@@ -47,6 +47,13 @@ Die Regler ändern nur die laufende Sitzung — dauerhaft werden Werte, indem si
 in `actors/player/player.gd` bzw. `camera/third_person_camera.gd` als neue
 Standardwerte eingetragen werden.
 
+## Fertige App herunterladen
+
+Die gebaute Mac-Version liegt im Repository unter `download/OurStory-macOS.zip`
+— seit die echten Figurenmodelle dabei sind, ist sie zu groß, um sie zu
+verschicken. Entpacken, `Our Story.app` doppelklicken; beim ersten Start
+*Systemeinstellungen → Datenschutz & Sicherheit → Dennoch öffnen*.
+
 ## Fertige Version bauen
 
 ```bash
