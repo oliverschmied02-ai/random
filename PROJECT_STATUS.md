@@ -57,11 +57,12 @@ baut sich dafür einen 2,40 m großen Prüfling und verlangt 1,75 m ± 2 cm.
 Erwartet werden `actors/models/anne.glb` (1,72 m) und `oliver.glb` (1,82 m);
 die Anleitung dazu steht in `actors/models/README.md`.
 
-**Oliver ist da** (2026-08-17): 90 273 Dreiecke, 73 Knochen im Mixamo-Schema,
-1,81 m, T-Pose, keine Animationen. Er steht im Kapitel, in richtiger Größe und
-Blickrichtung; Anne ist noch eine Kapsel. Beim Aufbau nimmt die Figur die Arme
-aus der T-Pose herunter — diese Haltung ist zugleich die Ruhelage des
-Gangwerks.
+**Beide Modelle sind da** (2026-08-17): je 73 Knochen im Mixamo-Schema, keine
+Animationen — Oliver 1,81 m im dunklen Anzug, Anne 1,74 m in weißem Oberteil
+und Jeans. Beide stehen im Kapitel, in richtiger Größe und Blickrichtung, und
+gehen mit dem Gangwerk. Beim Aufbau nimmt die Figur die Arme aus der T-Pose
+herunter — diese Haltung ist zugleich die Ruhelage des Gangwerks. Es gibt
+keine Kapseln mehr im Spiel; als Rückfallebene bleiben sie in den Szenen.
 
 ### Prozedurales Gangwerk (`systems/figur/gangwerk.gd`)
 Die Modelle bringen keine Animationen mit, und eine Figur, die starr durch

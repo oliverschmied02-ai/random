@@ -6,7 +6,7 @@ verschwinden von selbst.
 
 | Datei | Figur | Höhe im Spiel | Stand |
 | --- | --- | --- | --- |
-| `anne.glb` | Spielfigur (`actors/player/player.tscn` → `Visual`) | 1,72 m | fehlt noch |
+| `anne.glb` | Spielfigur (`actors/player/player.tscn` → `Visual`) | 1,72 m | **da** — 73 Knochen, 1,74 m |
 | `oliver.glb` | Begleiter (`actors/companion/companion.tscn` → `Visual`) | 1,82 m | **da** — 90 273 Dreiecke, 73 Knochen, 1,81 m |
 
 Die Dateinamen müssen genau so lauten. Die Größe der Datei ist egal: das Modell
@@ -82,9 +82,13 @@ einer, bleibt die Figur starr und eine Warnung sagt welcher.
 Für echte Bewegungen ist **Mixamo** geplant (kostenlos mit Adobe-Konto,
 royaltyfrei). Zwei Dinge dazu:
 
-* Mixamo liefert **FBX**; Godot liest das nicht ohne Weiteres. Der einfachste
-  Weg: FBX in Blender öffnen und als `.glb` exportieren — oder ein Werkzeug wie
-  `fbx2gltf`. Die fertige Animations-`.glb` kommt dann als eigene Datei hierher.
+* Mixamo liefert **FBX**; Godot 4.5 liest das direkt (eingebauter
+  ufbx-Importeur). Die Datei kommt als eigene Animationsdatei hierher — der
+  Avatar selbst bleibt die `.glb`.
+* Wichtig: FBX oder GLB macht nichts animiert. Ob sich etwas bewegt, hängt
+  davon ab, ob Animationsspuren **in der Datei stecken** — Avatar-Generatoren
+  exportieren in beiden Formaten dieselbe starre T-Pose. Die Bewegung wählt
+  man bei Mixamo aus, und erst dessen Download enthält sie.
 * Der Dienst wird von Adobe nicht mehr gepflegt und hatte 2025 längere
   Ausfälle. Wenn er wegbricht, kommen die Bewegungen aus einer freien
   Mocap-Sammlung; das Rig entscheidet, nicht der Anbieter.
