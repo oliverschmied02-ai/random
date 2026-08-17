@@ -26,7 +26,29 @@ godot --path .        # oder das Projekt im Editor öffnen und F5 drücken
 | Kamera | Maus | rechter Stick |
 | Sprinten | Shift | rechter Trigger |
 | Maus freigeben | Escape | — |
+| Einstellmenü | F1 | — |
 | Debug-Overlay | F3 | — |
+
+## Einstellmenü
+
+**F1** öffnet im laufenden Spiel ein Menü mit Schiebereglern für Tempo,
+Beschleunigung, Bremskraft, Drehung und Kamera. Änderungen wirken sofort.
+*Werte kopieren* legt die aktuellen Einstellungen als Text in die
+Zwischenablage. Damit lässt sich das Fahrgefühl ohne Godot-Editor abstimmen.
+
+Die Regler ändern nur die laufende Sitzung — dauerhaft werden Werte, indem sie
+in `actors/player/player.gd` bzw. `camera/third_person_camera.gd` als neue
+Standardwerte eingetragen werden.
+
+## Fertige Version bauen
+
+```bash
+godot --headless --path . --export-release "macOS" "build/Our Story.zip"
+```
+
+Erfordert die Export-Vorlagen der passenden Godot-Version. Der Build ist
+ad-hoc signiert, aber nicht von Apple beglaubigt — beim ersten Start meldet
+macOS deshalb einen unbekannten Entwickler.
 
 ## Prüflauf ohne Editor
 

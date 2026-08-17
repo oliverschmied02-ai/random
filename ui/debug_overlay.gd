@@ -40,7 +40,7 @@ func _resolve_references() -> void:
 
 func _build_text() -> String:
 	var lines: PackedStringArray = []
-	lines.append("F3  debug overlay")
+	lines.append("F1  Einstellungen   F3  Anzeige aus")
 	lines.append("%d fps" % Engine.get_frames_per_second())
 
 	if _player != null:

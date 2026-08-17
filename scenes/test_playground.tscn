@@ -1,8 +1,9 @@
-[gd_scene load_steps=12 format=3]
+[gd_scene load_steps=13 format=3]
 
 [ext_resource type="PackedScene" path="res://actors/player/player.tscn" id="1_player"]
 [ext_resource type="PackedScene" path="res://camera/third_person_camera.tscn" id="2_camera"]
 [ext_resource type="PackedScene" path="res://ui/debug_overlay.tscn" id="3_overlay"]
+[ext_resource type="PackedScene" path="res://ui/tuning_panel.tscn" id="4_tuning"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_sky"]
 sky_top_color = Color(0.435294, 0.560784, 0.694118, 1)
@@ -259,3 +260,5 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.1, 0)
 [node name="ThirdPersonCamera" parent="." instance=ExtResource("2_camera")]
 
 [node name="DebugOverlay" parent="." instance=ExtResource("3_overlay")]
+
+[node name="TuningPanel" parent="." instance=ExtResource("4_tuning")]

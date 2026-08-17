@@ -49,6 +49,14 @@ Bewusst diagnostisch, nicht hübsch:
 F3 blendet fps, Geschwindigkeit, Spitzenwert, Bodenkontakt, Position und
 Kameraabstand ein.
 
+### Einstellmenü (`ui/tuning_panel.gd`)
+F1 öffnet im laufenden Spiel Schieberegler für alle Fühl-Werte. Damit lässt
+sich das Fahrgefühl ohne Godot-Editor abstimmen — wichtig, weil das Beurteilen
+der Bewegung am Rechner passieren muss, an dem gespielt wird.
+*Werte kopieren* legt die Einstellungen als Text in die Zwischenablage,
+*Zurücksetzen* stellt die Startwerte wieder her.
+Einen weiteren Regler ergänzt man mit einer Zeile in der Liste `ROWS`.
+
 ---
 
 ## Start
@@ -59,7 +67,13 @@ godot --path .          # oder Projekt im Editor öffnen und F5
 
 Steuerung: WASD / linker Stick, Maus / rechter Stick für die Kamera,
 Shift / rechter Trigger zum Sprinten, Escape gibt die Maus frei
-(Klick fängt sie wieder ein), F3 für das Overlay.
+(Klick fängt sie wieder ein), **F1** öffnet die Einstellungen, F3 das Overlay.
+
+Alternativ als fertige App bauen — dafür werden die Export-Vorlagen benötigt:
+
+```bash
+godot --headless --path . --export-release "macOS" "build/Our Story.zip"
+```
 
 ---
 
@@ -131,8 +145,9 @@ Probleme" beschrieben.
 ## Nächste sinnvolle Schritte
 
 **Zuerst: Probespielen.** Stage 1 gilt erst als fertig, wenn sich das Laufen
-gut anfühlt. Alle Fühl-Werte sind exportiert und im Inspector einstellbar,
-auch während das Spiel läuft. Erfahrungsgemäß zuerst zu prüfen:
+gut anfühlt. Am schnellsten geht das über **F1** im laufenden Spiel; dieselben
+Werte stehen im Editor unter den Knoten `Player` und `ThirdPersonCamera`.
+Erfahrungsgemäß zuerst zu prüfen:
 
 | Empfindung | Stellschraube |
 | --- | --- |
