@@ -119,7 +119,47 @@ einplanen (Seitenwand oder überdachter Bereich daneben).
 
 ---
 
+## Minispiel
+
+### Impfspritze
+| | |
+| --- | --- |
+| **Zweck** | Das Wurfgeschoss — der Witz des Minispiels |
+| **Szene** | `chapters/berlin/darts/syringe.tscn` |
+| **Typ** | Cartoon-Requisit |
+| **Stil** | Überzeichnet, freundlich, keinesfalls medizinisch-nüchtern |
+| **Animation** | Leichtes Zittern des Kolbens im Flug wäre ein netter Zusatz |
+| **Platzhalter** | Zylinder mit Serum, Nadel und Kolben aus Grundkörpern |
+| **Priorität** | IMPORTANT |
+
+### Dartscheibe an der Bude
+| | |
+| --- | --- |
+| **Zweck** | Ziel des Minispiels |
+| **Szene** | `chapters/berlin/darts/darts_game.tscn` → `Scheibe` |
+| **Typ** | Scheibe mit Holzrückwand und Lampe |
+| **Stil** | Abgenutzt, Kneipenecke, warm beleuchtet |
+| **Animation** | Keine nötig |
+| **Platzhalter** | Sechs Ringe aus Zylindern auf einem Holzbrett |
+| **Priorität** | POLISH |
+
+Die Ringradien in `darts_config.gd` und die Ringe in der Szene müssen
+zusammenpassen — wer die Optik ändert, ändert die Wertung mit.
+
+---
+
 ## Ton
+
+### Minispiel-Klänge
+| | |
+| --- | --- |
+| **Zweck** | Der Einschlag muss sich befriedigend anfühlen |
+| **Szene** | `chapters/berlin/darts/` |
+| **Typ** | Einschlag, Aufladen, Volltreffer, Erfolgsmusik |
+| **Stil** | Trocken, satt, mit einem Augenzwinkern |
+| **Animation** | — |
+| **Platzhalter** | Keiner — es gibt bisher keinen Ton |
+| **Priorität** | IMPORTANT |
 
 ### Footstep Sounds
 | | |

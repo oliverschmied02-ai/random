@@ -10,7 +10,7 @@ extends Node3D
 ##   1. Oliver vor seiner Bürotür abholen (Ansprechen mit E)
 ##   2. am geschlossenen Café — löst beim Vorbeigehen aus
 ##   3. auf dem Platz am Desinfektionsspender — ebenso
-##   4. Ankunft an der Dönerbude, vorläufiges Kapitelende
+##   4. Ankunft an der Dönerbude, danach das Dart-Minispiel
 ##
 ## Die drei Stationen unterwegs sind Area3D-Knoten unter `Triggers`. Eine
 ## Station hinzuzufügen heißt: Area3D in die Szene, Zeile in `_STATIONEN`.
@@ -32,7 +32,7 @@ const _STATIONEN := [
 	{
 		"node": "TriggerDoener",
 		"lines": BerlinDialogue.ANKUNFT_DOENER,
-		"ziel": "Kapitel 1 — Fortsetzung folgt",
+		"ziel": "",
 	},
 ]
 
@@ -47,6 +47,7 @@ const _STATIONEN := [
 @onready var _camera: ThirdPersonCamera = $ThirdPersonCamera
 @onready var _oliver: Companion = $Oliver
 @onready var _dialogue: DialogueBox = $UI/DialogueBox
+@onready var _darts: DartsGame = $DartsGame
 @onready var _objective = $UI/ObjectiveLabel
 
 var _szene_laeuft: bool = false
@@ -82,10 +83,55 @@ func _on_station_betreten(body: Node3D, station: Dictionary, area: Area3D) -> vo
 
 	await _spiele_szene(station["lines"])
 
+	if station["node"] == "TriggerDoener":
+		await _minispiel_starten()
+		return
+
 	_oliver.activate()
 	_objective.show_objective(station["ziel"])
-	if station["node"] == "TriggerDoener":
-		kapitel_abgeschlossen.emit()
+
+
+## Übergang in das Minispiel: beide gehen an die Scheibe, die Kamera fährt
+## hinüber, danach hat das Minispiel die Kontrolle.
+func _minispiel_starten() -> void:
+	# Die Gesprächsszene gibt die Steuerung am Ende zurück — fürs Minispiel
+	# muss sie gleich wieder weg, sonst läuft die Figur beim Zielen davon.
+	_player.input_enabled = false
+	_objective.clear()
+	await _figuren_an_die_scheibe()
+	_darts.runde_geschafft.connect(_auf_runde_geschafft, CONNECT_ONE_SHOT)
+	_darts.starten(_camera.camera)
+
+
+## Schiebt Spielerin und Oliver auf ihre Plätze. Die Physik wird dafür kurz
+## abgeschaltet: sonst arbeiten Schwerkraft und `move_and_slide()` gegen die
+## Bewegung, und beide zittern auf dem Weg.
+func _figuren_an_die_scheibe() -> void:
+	_oliver.hold()
+	_player.set_physics_process(false)
+	_oliver.set_physics_process(false)
+
+	var tween := create_tween().set_parallel(true)
+	tween.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	_gehe_zu(tween, _player, _darts.spieler_platz.global_position)
+	_gehe_zu(tween, _oliver, _darts.oliver_platz.global_position)
+	await tween.finished
+
+
+## Bewegt eine Figur zu `ziel` und dreht sie dabei zur Scheibe.
+func _gehe_zu(tween: Tween, figur: Node3D, ziel: Vector3) -> void:
+	tween.tween_property(figur, ^"global_position", ziel, 1.5)
+	var zur_scheibe := _darts.ziel_punkt() - ziel
+	zur_scheibe.y = 0.0
+	if zur_scheibe.length() > 0.01:
+		zur_scheibe = zur_scheibe.normalized()
+		tween.tween_property(
+			figur, ^"rotation:y", atan2(-zur_scheibe.x, -zur_scheibe.z), 1.5
+		)
+
+
+func _auf_runde_geschafft(_punkte: int) -> void:
+	kapitel_abgeschlossen.emit()
 
 
 ## Der gemeinsame Ablauf jeder Gesprächsszene: Steuerung abgeben, Oliver

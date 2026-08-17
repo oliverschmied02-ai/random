@@ -34,6 +34,7 @@ var _player: Player
 var _oliver: Companion
 var _dialogue: DialogueBox
 var _camera: ThirdPersonCamera
+var _darts: DartsGame
 
 var _frames: int = 0
 var _walking_frames: int = 0
@@ -58,6 +59,7 @@ func _initialize() -> void:
 	_oliver = _root.get_node_or_null("Oliver") as Companion
 	_dialogue = _root.get_node_or_null("UI/DialogueBox") as DialogueBox
 	_camera = _root.get_node_or_null("ThirdPersonCamera") as ThirdPersonCamera
+	_darts = _root.get_node_or_null("DartsGame") as DartsGame
 	if _player == null or _oliver == null or _dialogue == null or _camera == null:
 		_fail("chapter scene is missing Player, Oliver, DialogueBox or camera")
 	# Positionen werden erst im ersten Physikschritt gelesen: in _initialize
@@ -86,6 +88,12 @@ func _physics_process(_delta: float) -> bool:
 		if _frames % 14 == 0:
 			_send_action(&"interact")
 		return false
+
+	# Das Kapitel mündet in das Minispiel; sobald das übernimmt, ist der
+	# Spaziergang gelaufen und die Steuerung bleibt planmäßig abgegeben.
+	if _darts != null and _darts.zustand != DartsGame.Zustand.INAKTIV:
+		_finish()
+		return true
 
 	if _picked_up and _dialogues_seen == 0 and _frames - _pickup_frame > 180:
 		_fail("talking to Oliver did not start the conversation")
@@ -157,6 +165,8 @@ func _finish() -> void:
 		"all four conversations played (pickup + 2 en route + arrival): saw %d"
 			% _dialogues_seen)
 	_expect(_oliver.state != Companion.State.IDLE, "Oliver joined the walk")
+	_expect(_darts != null and _darts.zustand != DartsGame.Zustand.INAKTIV,
+		"arriving at the kebab shop hands over to the dart mini-game")
 	_expect(_oliver_travelled > 250.0,
 		"Oliver walked the route himself: %.0f m" % _oliver_travelled)
 	_expect(_max_gap < 25.0,

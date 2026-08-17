@@ -9,10 +9,10 @@ das wichtige Momente unserer Beziehung als spielbare Szenen nacherzählt.
 "Vaccination Darts"). Weitere Kapitel sind konzeptionell vorgesehen, werden
 aber bewusst noch nicht gebaut.
 
-**Stand:** Stage 3 — Berlin Route. Oliver vor seiner Bürotür abholen, zu zweit
-durch die Stadt laufen (zwei Gespräche unterwegs) und an einer Dönerbude
-ankommen, wo später das Dart-Minispiel stattfindet. Ausschließlich
-Platzhalter-Geometrie, alle Dialoge sind Platzhaltertexte.
+**Stand:** Stage 4 — Kapitel 1 ist von Anfang bis Ende spielbar. Oliver vor
+seiner Bürotür abholen, zu zweit durch die Stadt laufen (zwei Gespräche
+unterwegs), an der Dönerbude ankommen und dort *Vaccination Darts* spielen.
+Ausschließlich Platzhalter-Geometrie, alle Dialoge sind Platzhaltertexte.
 
 ## Starten
 
@@ -27,6 +27,7 @@ godot --path .        # oder das Projekt im Editor öffnen und F5 drücken
 | Gehen | WASD | linker Stick |
 | Kamera | Maus | rechter Stick |
 | Sprinten | Shift | rechter Trigger |
+| Werfen (Minispiel) | linke Maustaste | A |
 | Maus freigeben | Escape | — |
 | Einstellmenü | F1 | — |
 | Debug-Overlay | F3 | — |
@@ -65,13 +66,18 @@ herausschneiden und als `godot_macos_release.arm64` in die Vorlage packen.
 
 ```bash
 godot --headless --path . --script res://tools/headless_check.gd
+godot --headless --path . --script res://tools/headless_darts_check.gd
 godot --headless --path . --script res://tools/headless_chapter_check.gd
 ```
 
 Der erste fährt die Figur über Bahn, Treppe und Rampe und prüft
 Geschwindigkeiten, Bremsweg, Bodenkontakt und Kameraposition.
 
-Der zweite spielt **das ganze Kapitel** mit simulierter Eingabe durch: zur
+Der zweite wirft mit fest vorgegebenen Ziel- und Kraftwerten auf die
+Dartscheibe und prüft Wertung, Rundenende, Wiederholung und die Zusicherung,
+dass die Wurfkraft nur die Höhe des Treffers verändert.
+
+Der dritte spielt **das ganze Kapitel** mit simulierter Eingabe durch: zur
 Bürotür laufen, Oliver ansprechen, die Strecke ablaufen, alle vier Gespräche
 mitnehmen, an der Dönerbude ankommen. Er misst dabei die Gehzeit und wie gut
 Oliver mithält. Weil er die Strecke wirklich abläuft, dauert er ungefähr so

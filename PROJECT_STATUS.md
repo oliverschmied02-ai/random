@@ -2,8 +2,11 @@
 
 **Spiel:** Our Story — Kapitel 1: Berlin
 **Engine:** Godot 4.5 (GDScript)
-**Aktuelle Stufe:** Stage 3 — Berlin Route (implementiert, wartet auf
-Probespielen). Stage 1 und 2 abgenommen.
+**Aktuelle Stufe:** Stage 4 — Vaccination Darts (implementiert, wartet auf
+Probespielen). Stage 1 bis 3 abgenommen.
+
+**Kapitel 1 ist damit von Anfang bis Ende spielbar:** abholen, laufen,
+ankommen, werfen, gewinnen.
 
 ---
 
@@ -114,6 +117,30 @@ Holt bei Abstand bis 5,4 m/s auf — gemessen *entlang der Spur*, nicht Luftlini
 sonst wirkt er hinter einer Ecke näher als er ist. Dreht sich im Stehen zur
 Spielerin. Bewusst keine autonome KI.
 
+### Minispiel Vaccination Darts (`chapters/berlin/darts/`)
+Fünf Würfe, Zielpunktzahl 60, beides in `darts_config.gd` — im Spielcode steht
+keine dieser Zahlen ein zweites Mal.
+
+Ablauf eines Wurfs: mit der Maus zielen, Taste halten, im grünen Bereich des
+Kraftbalkens loslassen. Zwei Entscheidungen prägen das Gefühl:
+
+* Das Fadenkreuz bewegt sich in der **Ebene der Scheibe**, nicht über den
+  Bildschirm. Dadurch ist das Zielen unabhängig von Auflösung und Bildwinkel.
+* Die Wurfkraft wirkt **nur auf die Höhe**, nie auf die Seite. Das folgt daraus,
+  dass die ganze Anfangsgeschwindigkeit skaliert wird: waagerechter Weg und
+  Flugzeit ändern sich gegenläufig und heben sich exakt auf. Der Prüflauf misst
+  0,0000 m seitliche Abweichung zwischen vollem und leerem Ladebalken. Zwei
+  getrennte, verständliche Fehlerquellen statt einer diffusen.
+
+Die Wertung ist absichtlich gutmütig: sechs Ringe von 5 bis 50 Punkten, und
+selbst der schlechteste Ladestand landet noch im 15-Punkte-Ring. Wer die
+Scheibe trifft, schafft die 60 also praktisch immer — Scheitern erfordert
+Danebenzielen und wird mit einer freundlichen Zeile und sofortigem Neustart
+quittiert.
+
+Rückmeldung: Einschlagpartikel, aufsteigende Punktzahl, Kamerawackeln (stärker
+ab 25 Punkten), Konfetti und Banner beim Gewinn.
+
 ### Einstellmenü (`ui/tuning_panel.gd`)
 F1 öffnet im laufenden Spiel Schieberegler für alle Fühl-Werte. Damit lässt
 sich das Fahrgefühl ohne Godot-Editor abstimmen — wichtig, weil das Beurteilen
@@ -202,6 +229,13 @@ und `is_on_floor()` allein genügt nicht als Bedingung — verkeilt auf einer
 Stufenkante meldet Godot „Wand", was das Stufen-Steigen genau dann abschaltet,
 wenn es die Figur befreien müsste.
 
+**Ein perfekt gezielter Wurf traf die Mitte nicht.** Die Flugbahn wurde
+schrittweise aufsummiert, und dabei sammelt sich in jedem Schritt ein halber
+Schwerkraftschritt Fehler an — bei 60 Hz landet der Wurf rund drei Zentimeter
+zu tief. Bei einem Innenring von 2,4 cm ist das der Unterschied zwischen
+Volltreffer und Nebenring. Die Bahn wird jetzt geschlossen ausgewertet: der
+Einschlagpunkt steht schon beim Abwurf fest und ist unabhängig von der Bildrate.
+
 **Der Begleiter pendelte 20 Sekunden lang vor der Bürotür.** Er steuert einen
 seitlich versetzten Punkt neben der Fußspur an, „erreicht" wurde aber am Punkt
 *ohne* Versatz gemessen — den erreicht er nie, also hakte die Spur nie weiter.
@@ -262,8 +296,14 @@ zeilenweise, nicht spaltenweise. Dadurch stiegen die Rampen zur falschen Seite
 * Der Companion hat kein Stufen-Steigen wie die Spielerin. Auf der ebenen
   Strecke egal, bei Treppen in späteren Abschnitten nachzurüsten.
 * Der Dialog wartet auf Tastendruck, ohne Zeitautomatik und ohne Ton.
-* An der Dönerbude endet der Inhalt mit „Fortsetzung folgt". Das Dart-Minispiel
-  ist Stage 4.
+* Nach dem gewonnenen Minispiel bleibt das Bild auf dem Banner stehen. Ein
+  Abspann oder eine Rückkehr ins Menü gibt es noch nicht.
+* Die Figuren stehen beim Werfen bewusst außerhalb des Bildausschnitts: bei
+  diesem engen Bildwinkel wird alles nah an der Kamera riesig. Eine
+  Reaktionseinstellung auf die beiden gehört in den Feinschliff.
+* Die Farben der Partikel konnte ich hier nicht abschließend beurteilen — die
+  Prüfbilder entstehen mit Software-Rendering, nicht mit dem Renderer, den das
+  fertige Spiel verwendet.
 * Die zwei Gespräche unterwegs lösen beim Betreten aus. Läuft man versehentlich
   während eines laufenden Gesprächs in den nächsten Auslöser, wird dieser
   übersprungen. Auf der linearen Strecke praktisch ausgeschlossen.
@@ -321,13 +361,24 @@ statt frei auf dem Platz zu stehen. Als Kulissenarbeit in
 * Läuft Oliver um die Ecken angenehm mit?
 * Trägt der Ablauf Abholen → Laufen → Ankommen, oder fehlt dazwischen etwas?
 
-### Stage 4 — Vaccination Darts (geplant, nicht begonnen)
+### Beim Probespielen von Stage 4 zu beurteilen
 
-Übergang an der Dönerbude, Dartscheibe, Spritzen-Projektil, Zielen, Wurfkraft,
-Wertung, Wiederholung, Erfolgszustand. Das Kapitelskript sendet dafür bereits
-`kapitel_abgeschlossen`.
+* Ist der Wurf verständlich, ohne dass es jemand erklärt?
+* Ist die Idealzone auf dem Kraftbalken breit genug?
+* Trifft man gut genug, um Spaß zu haben — oder zu leicht, um stolz zu sein?
+* Passt die Kamerafahrt von der Bude auf die Scheibe?
+* Ist der Übergang „Ankunft → Minispiel" flüssig, oder ruckelt das Hinstellen
+  der beiden Figuren?
 
-Danach Stage 5 (echte Modelle, Animationen, Kulisse) und Stage 6 (Ton, Musik,
-Feinschliff).
+Stellschrauben stehen am Knoten `DartsGame` im Inspector: `wurf_tempo`
+(flachere Bahn = weniger Wirkung von Ladefehlern), `kraft_einfluss`,
+`idealzone`, `maus_empfindlichkeit`, `kamerafahrt`.
+
+### Danach: Stage 5 und 6 — Feinschliff
+
+Echte Modelle und Animationen, Berliner Kulisse statt Blöcke, Ton und Musik,
+Kameraübergänge, Pacing, Dialogtiming. Dazu die gesammelten Punkte: Oliver an
+den Hauseingang, optionale Erinnerungspunkte unterwegs, Stufen-Steigen für den
+Begleiter, eine Reaktionseinstellung beim Gewinn.
 
 Nicht begonnen und bewusst nicht vorbereitet: spätere Kapitel.
