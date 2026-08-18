@@ -142,7 +142,7 @@ func _materialien_anlegen() -> void:
 		&"ladenschild": _mat(Color(0.42, 0.18, 0.16), 0.7),
 		&"gitter": _mat(Color(0.14, 0.15, 0.17), 0.5),
 		&"markierung": _mat(Color(0.75, 0.74, 0.70), 0.9),
-		&"gleisbett": _foto_mat("schotter", Color(0.3, 0.3, 0.32), 0.8, 1.6),
+		&"gleisbett": _foto_mat("schotter", Color(0.45, 0.45, 0.48), 0.8, 1.6),
 		&"birne": _mat(Color(1.0, 0.75, 0.4), 0.5, Color(1.0, 0.62, 0.25), 3.2),
 		&"dach": _mat(Color(0.16, 0.16, 0.18), 0.9),
 		&"schornstein": _mat(Color(0.42, 0.33, 0.28), 0.95),
@@ -270,7 +270,7 @@ func _boden_umfaerben() -> void:
 		return
 	# Pfützen und Risse stecken im gebackenen Asphaltsatz — die Rauheitskarte
 	# macht die nassen Stellen spiegelglatt, dort greifen die Reflexionen.
-	boden.material = _foto_mat("asphalt", Color(0.55, 0.57, 0.62), 0.09, 1.0)
+	boden.material = _foto_mat("asphalt", Color(0.4, 0.41, 0.45), 0.09, 1.0)
 
 
 func _fassaden_bauen() -> void:
