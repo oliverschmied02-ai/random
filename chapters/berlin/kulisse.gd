@@ -167,6 +167,11 @@ func _materialien_anlegen() -> void:
 		&"stern": _mat(Color(0.0, 0.0, 0.0), 1.0, Color(0.85, 0.88, 1.0), 1.2),
 		&"ampel_rot": _mat(Color(0.3, 0.02, 0.02), 0.4, Color(1.0, 0.08, 0.05), 3.0),
 	}
+	# Schotter ist matt — die Foto-Rauheitskarte von Gravel022 ist zu glatt,
+	# im Streifwinkel spiegelte das ganze Gleisbett wie nasses Glas.
+	var bett := _materialien[&"gleisbett"] as StandardMaterial3D
+	bett.roughness_texture = null
+	bett.roughness = 0.97
 
 
 func _mat(farbe: Color, rauheit: float, leuchten: Color = Color.BLACK, staerke: float = 0.0) -> StandardMaterial3D:
