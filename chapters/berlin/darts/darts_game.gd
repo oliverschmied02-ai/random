@@ -48,6 +48,8 @@ enum Zustand { INAKTIV, ZIELEN, LADEN, FLUG, RUNDENENDE }
 @export_range(0.5, 6.0, 0.1) var pause_nach_runde: float = 2.4
 ## Sekunden für die Kamerafahrt von der Spielkamera auf die Scheibe.
 @export_range(0.0, 4.0, 0.1) var kamerafahrt: float = 1.3
+## Sekunden für die Einblendung „Impfspritzen werfen" vor der ersten Runde.
+@export_range(0.0, 6.0, 0.1) var intro_dauer: float = 2.6
 
 const _SYRINGE := preload("res://chapters/berlin/darts/syringe.tscn")
 
@@ -57,6 +59,7 @@ const _SYRINGE := preload("res://chapters/berlin/darts/syringe.tscn")
 @onready var _mitte: Marker3D = $Scheibe/Mitte
 @onready var _wurf_punkt: Marker3D = $WurfPunkt
 @onready var _treffer: Node3D = $Treffer
+@onready var _vorrat: Node3D = $Vorrat
 @onready var _einschlag: CPUParticles3D = $Einschlag
 @onready var _konfetti: CPUParticles3D = $Konfetti
 @onready var _hud = $DartsHud
@@ -89,6 +92,9 @@ func _ready() -> void:
 	_kamera_ruhe = kamera.global_transform
 	set_process(false)
 	set_process_unhandled_input(false)
+	# Die Spritzen liegen schon beim Ankommen auf der Tonne bereit — der
+	# Vorrat gehört zum Schauplatz, nicht erst zum gestarteten Spiel.
+	_vorrat_fuellen()
 
 
 ## Startet das Minispiel. `von_kamera` ist die Kamera, von der aus die Fahrt
@@ -109,9 +115,9 @@ func starten(von_kamera: Camera3D = null) -> void:
 		var fahrt := create_tween()
 		fahrt.tween_method(_kamera_blenden, 0.0, 1.0, kamerafahrt) \
 			.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN_OUT)
-		fahrt.tween_callback(func() -> void: zustand = Zustand.ZIELEN)
+		fahrt.tween_callback(_intro_zeigen)
 	else:
-		zustand = Zustand.ZIELEN
+		_intro_zeigen()
 
 
 ## Blendet von der festgehaltenen Startlage zur Ruhelage. Von der jeweils
@@ -119,6 +125,21 @@ func starten(von_kamera: Camera3D = null) -> void:
 ## eine geführte Fahrt.
 func _kamera_blenden(anteil: float) -> void:
 	kamera.global_transform = _fahrt_start.interpolate_with(_kamera_ruhe, anteil)
+
+
+## Kurze Einblendung, was hier gleich passiert — danach beginnt das Zielen.
+func _intro_zeigen() -> void:
+	if intro_dauer <= 0.0:
+		zustand = Zustand.ZIELEN
+		return
+	_hud.zeige_banner(
+		"IMPFSPRITZEN WERFEN",
+		"Fünf Spritzen, %d Punkte. Taste halten, im grünen Bereich loslassen."
+			% DartsConfig.ZIELPUNKTZAHL
+	)
+	await get_tree().create_timer(intro_dauer).timeout
+	_hud.verstecke_banner()
+	zustand = Zustand.ZIELEN
 
 
 func _process(delta: float) -> void:
@@ -202,6 +223,10 @@ func _werfen() -> void:
 	_ladeklang.stop()
 	_hud.setze_kraft(0.0, false)
 	_hud.setze_fadenkreuz(Vector2.ZERO, false)
+
+	# Eine Spritze vom Vorrat auf der Tonne nehmen — die fliegt jetzt.
+	if _vorrat.get_child_count() > 0:
+		_vorrat.get_child(_vorrat.get_child_count() - 1).queue_free()
 
 	var spritze: Syringe = _SYRINGE.instantiate()
 	_treffer.add_child(spritze)
@@ -292,8 +317,22 @@ func _neue_runde() -> void:
 	_ziel = Vector2.ZERO
 	for spritze in _treffer.get_children():
 		spritze.queue_free()
+	_vorrat_fuellen()
 	_hud.setze_wurf(wurf_nummer, DartsConfig.WUERFE_PRO_RUNDE)
 	_hud.setze_punkte(punkte, DartsConfig.ZIELPUNKTZAHL)
+
+
+## Legt für jeden Wurf der Runde eine Spritze auf die Stehtonne neben dem
+## Wurfpunkt — leicht aufgefächert, wie hingelegt statt einsortiert.
+func _vorrat_fuellen() -> void:
+	for alt in _vorrat.get_children():
+		alt.queue_free()
+	for i in DartsConfig.WUERFE_PRO_RUNDE:
+		var spritze := _SYRINGE.instantiate() as Node3D
+		_vorrat.add_child(spritze)
+		var mitte := i - (DartsConfig.WUERFE_PRO_RUNDE - 1) * 0.5
+		spritze.position = Vector3(mitte * 0.075, 0.034, mitte * 0.03)
+		spritze.rotation = Vector3(0.0, -PI * 0.5 + mitte * 0.14, 0.0)
 
 
 func _kamera_wackeln_anwenden(delta: float) -> void:

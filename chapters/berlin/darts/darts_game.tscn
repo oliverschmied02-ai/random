@@ -150,6 +150,9 @@ far = 2500.0
 
 [node name="Treffer" type="Node3D" parent="."]
 
+[node name="Vorrat" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 131, 1.1, -239)
+
 [node name="Einschlag" type="CPUParticles3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 132, 1.73, -243.8)
 emitting = false

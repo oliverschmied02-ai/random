@@ -15,9 +15,12 @@ Pfützen, Laternen (warmweiß und Natriumdampf-orange, eine flackert), Mond und
 Sterne, Tram-Oberleitung, geparkte Autos, Ampeln, Mülleimer, Gullys, Plakate,
 Schornsteine und Antennen auf den Dächern, der Fernsehturm als Silhouette. Von Anfang bis Ende erzählt, mit Titel und Ton. Oliver vor
 seiner Bürotür abholen, zu zweit durch die Stadt laufen (zwei Gespräche
-unterwegs, dazu drei optionale Erinnerungen am Weg), an der Dönerbude ankommen,
-dort *Vaccination Darts* spielen — und danach ein Schlussbild, in dem die
-beiden miteinander reden, gefolgt vom Abspann.
+unterwegs, dazu drei optionale Erinnerungen am Weg), an der Dönerbude ankommen
+(offener Verkaufsraum mit Verkäufer hinterm Tresen und drehendem Dönerspieß),
+dort *Vaccination Darts* spielen — die Spritzen liegen auf der Stehtonne
+bereit, bleiben in der Scheibe stecken, und vorher steht kurz „IMPFSPRITZEN
+WERFEN" im Bild — und danach ein Schlussbild, in dem die beiden miteinander
+reden, gefolgt vom Abspann.
 Ausschließlich Platzhalter-Geometrie, alle Dialoge sind Platzhaltertexte, aller
 Ton ist synthetisch erzeugt.
 

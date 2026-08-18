@@ -5,10 +5,8 @@ extends SceneTree
 const ORTE := [
 	{"name": "start", "pos": Vector3(0, 1.6, 10), "gier": 0.0, "neig": 0.02},
 	{"name": "tramstrasse", "pos": Vector3(16, 1.7, -55), "gier": -PI / 2, "neig": 0.03},
-	{"name": "leg3", "pos": Vector3(60, 1.7, -88), "gier": PI, "neig": 0.02},
-	{"name": "ampel", "pos": Vector3(70.8, 1.7, -124), "gier": 0.0, "neig": 0.02},
-	{"name": "platz", "pos": Vector3(126, 2.0, -181), "gier": 0.43, "neig": 0.02},
-	{"name": "bude", "pos": Vector3(127, 1.7, -230), "gier": 0.71, "neig": 0.0},
+	{"name": "bude_front", "pos": Vector3(127.5, 1.6, -233.5), "gier": 0.85, "neig": -0.03},
+	{"name": "vorrat", "pos": Vector3(130.3, 1.5, -240.6), "gier": -2.72, "neig": -0.15},
 ]
 
 

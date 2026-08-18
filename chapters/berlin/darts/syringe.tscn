@@ -1,67 +1,132 @@
-[gd_scene load_steps=8 format=3]
+[gd_scene load_steps=15 format=3]
 
 [ext_resource type="Script" path="res://chapters/berlin/darts/syringe.gd" id="1_syringe"]
 
 [sub_resource type="StandardMaterial3D" id="Mat_glas"]
-albedo_color = Color(0.905882, 0.945098, 0.972549, 1)
-roughness = 0.25
-metallic = 0.1
+transparency = 1
+albedo_color = Color(0.88, 0.93, 0.97, 0.3)
+roughness = 0.08
+metallic = 0.05
 
 [sub_resource type="StandardMaterial3D" id="Mat_serum"]
-albedo_color = Color(0.988235, 0.760784, 0.298039, 1)
-roughness = 0.35
+albedo_color = Color(0.988235, 0.72, 0.25, 1)
+roughness = 0.3
 emission_enabled = true
-emission = Color(0.988235, 0.760784, 0.298039, 1)
-emission_energy_multiplier = 0.35
+emission = Color(0.988235, 0.72, 0.25, 1)
+emission_energy_multiplier = 0.5
 
 [sub_resource type="StandardMaterial3D" id="Mat_metall"]
-albedo_color = Color(0.780392, 0.796078, 0.827451, 1)
-metallic = 0.8
-roughness = 0.25
+albedo_color = Color(0.82, 0.84, 0.87, 1)
+metallic = 0.9
+roughness = 0.2
 
-[sub_resource type="CylinderMesh" id="Mesh_koerper"]
-material = SubResource("Mat_glas")
-top_radius = 0.035
-bottom_radius = 0.035
-height = 0.16
+[sub_resource type="StandardMaterial3D" id="Mat_plastik"]
+albedo_color = Color(0.93, 0.94, 0.96, 1)
+roughness = 0.5
+
+[sub_resource type="StandardMaterial3D" id="Mat_gummi"]
+albedo_color = Color(0.24, 0.25, 0.28, 1)
+roughness = 0.9
+
+[sub_resource type="StandardMaterial3D" id="Mat_hub"]
+albedo_color = Color(0.93, 0.52, 0.14, 1)
+roughness = 0.5
+
+[sub_resource type="CylinderMesh" id="Mesh_nadel"]
+material = SubResource("Mat_metall")
+top_radius = 0.0015
+bottom_radius = 0.004
+height = 0.13
+radial_segments = 8
+rings = 1
+
+[sub_resource type="CylinderMesh" id="Mesh_hub"]
+material = SubResource("Mat_hub")
+top_radius = 0.009
+bottom_radius = 0.018
+height = 0.035
 radial_segments = 12
+rings = 1
+
+[sub_resource type="CylinderMesh" id="Mesh_zylinder"]
+material = SubResource("Mat_glas")
+top_radius = 0.034
+bottom_radius = 0.034
+height = 0.17
+radial_segments = 14
 rings = 1
 
 [sub_resource type="CylinderMesh" id="Mesh_serum"]
 material = SubResource("Mat_serum")
 top_radius = 0.028
 bottom_radius = 0.028
-height = 0.1
+height = 0.12
 radial_segments = 12
 rings = 1
 
-[sub_resource type="CylinderMesh" id="Mesh_nadel"]
-material = SubResource("Mat_metall")
-top_radius = 0.006
-bottom_radius = 0.002
-height = 0.11
-radial_segments = 6
+[sub_resource type="CylinderMesh" id="Mesh_stopfen"]
+material = SubResource("Mat_gummi")
+top_radius = 0.029
+bottom_radius = 0.029
+height = 0.022
+radial_segments = 12
 rings = 1
 
-[sub_resource type="BoxMesh" id="Mesh_kolben"]
-material = SubResource("Mat_metall")
-size = Vector3(0.09, 0.012, 0.09)
+[sub_resource type="CylinderMesh" id="Mesh_flansch"]
+material = SubResource("Mat_plastik")
+top_radius = 0.058
+bottom_radius = 0.058
+height = 0.012
+radial_segments = 14
+rings = 1
+
+[sub_resource type="CylinderMesh" id="Mesh_stange"]
+material = SubResource("Mat_plastik")
+top_radius = 0.011
+bottom_radius = 0.011
+height = 0.09
+radial_segments = 8
+rings = 1
+
+[sub_resource type="CylinderMesh" id="Mesh_daumen"]
+material = SubResource("Mat_plastik")
+top_radius = 0.027
+bottom_radius = 0.027
+height = 0.012
+radial_segments = 12
+rings = 1
 
 [node name="Syringe" type="Node3D"]
 script = ExtResource("1_syringe")
 
-[node name="Koerper" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, 0, 0, 0.03)
-mesh = SubResource("Mesh_koerper")
-
-[node name="Serum" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, 0, 0, 0.05)
-mesh = SubResource("Mesh_serum")
-
 [node name="Nadel" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, 0, 0, -0.09)
+transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, 0, 0, -0.12)
 mesh = SubResource("Mesh_nadel")
 
-[node name="Kolben" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, 0, 0, 0.115)
-mesh = SubResource("Mesh_kolben")
+[node name="Hub" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, 0, 0, -0.038)
+mesh = SubResource("Mesh_hub")
+
+[node name="Zylinder" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, 0, 0, 0.045)
+mesh = SubResource("Mesh_zylinder")
+
+[node name="Serum" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, 0, 0, 0.015)
+mesh = SubResource("Mesh_serum")
+
+[node name="Stopfen" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, 0, 0, 0.086)
+mesh = SubResource("Mesh_stopfen")
+
+[node name="Flansch" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, 0, 0, 0.131)
+mesh = SubResource("Mesh_flansch")
+
+[node name="Stange" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, 0, 0, 0.178)
+mesh = SubResource("Mesh_stange")
+
+[node name="Daumenplatte" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, 0, 0, 0.228)
+mesh = SubResource("Mesh_daumen")

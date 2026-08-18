@@ -132,7 +132,7 @@ Fläche — beim Austausch bitte erhalten.
 | **Typ** | Kiosk mit Tresen, Leuchtschild, Dönerspieß, Stehtischen |
 | **Stil** | Warm, leicht überzeichnet, spätabendlich leuchtend |
 | **Animation** | Drehender Spieß, flackerndes Leuchtschild |
-| **Platzhalter** | Roter Block mit Vordach, Tresenbrett, gelbes Schild |
+| **Platzhalter** | Offener Verkaufsraum (Rückwand, Seiten, Dach), Tresen, drehender Schichten-Spieß vor glühendem Heizelement, Verkäufer (Olivers Modell mit Schürze und Papiermütze), Lichterkette |
 | **Priorität** | IMPORTANT |
 
 Die Dartscheibe für Stage 4 gehört an diese Bude — beim Entwurf Platz dafür
@@ -186,7 +186,7 @@ wart. Verschieben heißt: Knoten unter `Erinnerungen` bewegen, sonst nichts.
 | **Typ** | Cartoon-Requisit |
 | **Stil** | Überzeichnet, freundlich, keinesfalls medizinisch-nüchtern |
 | **Animation** | Leichtes Zittern des Kolbens im Flug wäre ein netter Zusatz |
-| **Platzhalter** | Zylinder mit Serum, Nadel und Kolben aus Grundkörpern |
+| **Platzhalter** | Erkennbare Spritze aus Grundkörpern: durchsichtiger Glaszylinder, oranges Serum, Gummistopfen, Fingerflansch, Kolbenstange, Kanüle mit Ansatz |
 | **Priorität** | IMPORTANT |
 
 ### Dartscheibe an der Bude

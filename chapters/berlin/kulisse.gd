@@ -80,6 +80,7 @@ const GULLYS: Array = [
 var _stapel: Dictionary = {}
 var _materialien: Dictionary = {}
 var _flacker: Array = []
+var _spiess_dreher: Node3D
 
 
 func _ready() -> void:
@@ -107,6 +108,8 @@ func _ready() -> void:
 ## Sinusmischungen — unregelmäßig genug, dass kein Muster auffällt, und ohne
 ## Zufall, damit jeder Prüflauf dasselbe sieht.
 func _process(_delta: float) -> void:
+	if _spiess_dreher != null:
+		_spiess_dreher.rotate_y(_delta * 0.9)
 	var t := Time.get_ticks_msec() / 1000.0
 	for eintrag in _flacker:
 		var faktor: float = eintrag["ruhe"] + eintrag["hub"] * (
@@ -642,7 +645,9 @@ func _doenerbude_beleben() -> void:
 		})
 	var spiess := bude.get_node_or_null("Spiess") as CSGBox3D
 	if spiess != null:
-		spiess.material = _mat(Color(0.62, 0.42, 0.24), 0.6, Color(0.9, 0.5, 0.2), 0.5)
+		# Der Klotz-Platzhalter weicht einem echten Spieß am selben Ort.
+		spiess.visible = false
+		_spiess_bauen(spiess.position)
 
 	_schrift("DÖNER", Vector3(122.0, 3.86, -237.4), 0.0, Color(0.5, 0.1, 0.08), 260)
 	_schrift("IMBISS · SPÄTKAUF", Vector3(122.0, 3.32, -237.4), 0.0, Color(0.32, 0.09, 0.08), 84)
@@ -656,6 +661,69 @@ func _doenerbude_beleben() -> void:
 		licht.light_energy = 3.4
 		licht.omni_range = 15.0
 		licht.shadow_enabled = true
+
+
+## Ein Dönerspieß, wie er hinter jedem Tresen steht: Teller, Stange, der
+## Fleischkegel in Schichten (er dreht sich langsam) und dahinter das rot
+## glühende Heizelement an der Seitenwand.
+func _spiess_bauen(stelle: Vector3) -> void:
+	var fuss := Vector3(stelle.x, 0.0, stelle.z)
+	var metall := _mat(Color(0.72, 0.74, 0.78), 0.35)
+	metall.metallic = 0.8
+
+	var teller := MeshInstance3D.new()
+	var teller_form := CylinderMesh.new()
+	teller_form.top_radius = 0.3
+	teller_form.bottom_radius = 0.3
+	teller_form.height = 0.03
+	teller_form.material = metall
+	teller.mesh = teller_form
+	teller.position = fuss + Vector3(0, 1.02, 0)
+	add_child(teller)
+
+	var stange := MeshInstance3D.new()
+	var stangen_form := CylinderMesh.new()
+	stangen_form.top_radius = 0.012
+	stangen_form.bottom_radius = 0.012
+	stangen_form.height = 1.7
+	stangen_form.material = metall
+	stange.mesh = stangen_form
+	stange.position = fuss + Vector3(0, 1.85, 0)
+	add_child(stange)
+
+	# Der Kegel dreht sich um die Stange — deshalb hängen die Schichten an
+	# einem eigenen Drehknoten auf der Spießachse.
+	_spiess_dreher = Node3D.new()
+	_spiess_dreher.position = fuss
+	add_child(_spiess_dreher)
+	var fleisch := _mat(Color(0.52, 0.33, 0.17), 0.62, Color(0.85, 0.42, 0.14), 0.3)
+	var radien := [0.13, 0.2, 0.25, 0.27, 0.26, 0.21, 0.14]
+	for i in radien.size():
+		var schicht := MeshInstance3D.new()
+		var form := CylinderMesh.new()
+		form.top_radius = radien[i] * 0.94
+		form.bottom_radius = radien[i]
+		form.height = 0.165
+		form.material = fleisch
+		schicht.mesh = form
+		schicht.position = Vector3(0, 1.22 + i * 0.16, 0)
+		_spiess_dreher.add_child(schicht)
+
+	var heizung := MeshInstance3D.new()
+	var heiz_form := BoxMesh.new()
+	heiz_form.size = Vector3(0.08, 1.2, 0.42)
+	heiz_form.material = _mat(Color(0.3, 0.1, 0.06), 0.6, Color(1.0, 0.32, 0.08), 1.8)
+	heizung.mesh = heiz_form
+	heizung.position = fuss + Vector3(-0.45, 1.75, 0)
+	add_child(heizung)
+
+	var glut := OmniLight3D.new()
+	glut.position = fuss + Vector3(-0.3, 1.75, 0)
+	glut.light_color = Color(1.0, 0.45, 0.2)
+	glut.light_energy = 1.3
+	glut.omni_range = 2.6
+	glut.omni_attenuation = 1.5
+	add_child(glut)
 
 
 func _cafe_beschildern() -> void:

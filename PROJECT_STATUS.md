@@ -4,8 +4,10 @@
 **Engine:** Godot 4.5 (GDScript)
 **Aktuelle Stufe:** Stage 7 — Berlin bei Nacht, zweiter Durchgang: die
 Realismus-Liste (Oberflächen, nasser Asphalt, Dächer, Fenstertiefe, Himmel,
-Oberleitung, Straßenleben, Plakate, lebendiges Licht) ist umgesetzt und wartet
-auf Probespielen. Stage 1 bis 4 abgenommen, Stage 5 und 6 ausgeliefert.
+Oberleitung, Straßenleben, Plakate, lebendiges Licht) ist umgesetzt, dazu der
+Feinschliff an der Bude (Verkaufsraum, Verkäufer, drehender Spieß) und am
+Minispiel (erkennbare Spritzen, Vorrat auf der Tonne, Einblendung). Wartet auf
+Probespielen. Stage 1 bis 4 abgenommen, Stage 5 und 6 ausgeliefert.
 
 **Kapitel 1 ist damit von Anfang bis Ende erzählt:** abholen, laufen, ankommen,
 werfen, gewinnen — und danach ein Schlussbild, in dem die beiden miteinander
@@ -54,8 +56,14 @@ mit ihrer 8-cm-Bordsteinkante, für die das Stufen-Steigen gebaut wurde.
   die Prüfbilder hier nicht zeigen, das muss das Probespielen beurteilen.
 * **Schauplätze:** Büroeingang mit warmem Licht und „BÜRO"-Schild; Café mit
   „CAFÉ"-Schriftzug und schiefem Zettel „WEGEN CORONA GESCHLOSSEN";
-  Dönerbude mit leuchtendem Schild, „DÖNER"-Schriftzug und Lichterkette;
   Fernsehturm mit erleuchteter Kugel und rotem Blinklicht als Silhouette.
+* **Die Dönerbude ist jetzt ein Laden, kein Klotz:** offener Verkaufsraum mit
+  Rückwand, Seitenwänden und Dach, warm erleuchtet. Hinter dem Tresen steht
+  **ein Verkäufer** (Olivers Modell, verkleidet: dunkler getöntes Haar, weiße
+  Schürze, Papiermütze — die Mütze hängt am Kopfknochen und dreht mit), der
+  von seiner Arbeit aufsieht und Anne ansieht, sobald sie nah ist. Neben ihm
+  dreht sich ein **Dönerspieß** in Schichten vor dem rot glühenden
+  Heizelement. Dazu leuchtendes Schild, „DÖNER"-Schriftzug, Lichterkette.
 * Alle Kleinteile (Quader, Kugeln und Zylinder, inzwischen einige zehntausend)
   liegen in gut zwei Dutzend MultiMeshes — ein Zeichenaufruf je Materialgruppe.
 
@@ -333,6 +341,19 @@ quittiert.
 
 Rückmeldung: Einschlagpartikel, aufsteigende Punktzahl, Kamerawackeln (stärker
 ab 25 Punkten), Konfetti und Banner beim Gewinn.
+
+Seit dem Feinschliff-Durchgang sieht man auch, **womit** man wirft:
+
+* Die Spritze ist ein richtiges Requisit — Glaszylinder mit orangem Serum,
+  Gummistopfen, Fingerflansch, Kolbenstange mit Daumenplatte, Kanüle mit
+  orangem Ansatz. Geworfene Spritzen **bleiben in der Scheibe stecken** und
+  sind als Spritzen zu erkennen.
+* Vor der Runde liegen die fünf Spritzen aufgefächert **auf der Stehtonne**
+  neben dem Wurfpunkt; jeder Wurf nimmt eine weg, jede neue Runde legt sie
+  zurück. Sie liegen schon beim Ankommen da — der Vorrat gehört zum
+  Schauplatz, nicht erst zum gestarteten Spiel.
+* Nach der Kamerafahrt steht kurz **„IMPFSPRITZEN WERFEN"** samt Anleitung im
+  Bild (`intro_dauer`, 2,6 s), erst danach beginnt das Zielen.
 
 ### Einstellmenü (`ui/tuning_panel.gd`)
 F1 öffnet im laufenden Spiel Schieberegler für alle Fühl-Werte. Damit lässt
