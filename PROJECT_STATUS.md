@@ -26,11 +26,15 @@ Namen, jede Runde sieht gleich aus). Die Blöcke selbst und damit Kollision,
 Route und Zeiten bleiben unangetastet; einzige Ausnahme sind die Gehwegplatten
 mit ihrer 8-cm-Bordsteinkante, für die das Stufen-Steigen gebaut wurde.
 
-* **Oberflächen statt glatter Farben:** alle großen Flächen (Fassaden, Sockel,
-  Gehwege, Fahrbahn, Gleisbett) tragen prozedurale Rauschtexturen — Putzkörnung,
-  Betonflecken, Asphaltnarben — als Albedo-Variation **und** als Normal Map,
-  triplanar gemappt, also ohne UV-Arbeit. Erzeugt beim Laden aus
-  `FastNoiseLite`, keine Bilddateien.
+* **Gebackene PBR-Materialsätze** statt Laufzeit-Rauschen: fünf Sätze
+  (`putz`, `asphalt`, `beton_platten`, `beton_rau`, `schotter`) mit je
+  Albedo, Normal-Map und Rauheitskarte in 1024², nahtlos kachelbar,
+  triplanar gemappt. Erzeugt von `tools/make_textures.py` (FFT-Rauschsynthese,
+  Voronoi-Rissnetze, Pfützen in der Rauheitskarte, Schmutzfahnen am Sockel,
+  Schottersteine als Zellen) — keine Fremddaten. Echte Foto-Sets (ambientCG,
+  CC0) können die Dateien unter `assets/texturen/` eins zu eins ersetzen;
+  die üblichen Quellen sind aus dieser Umgebung nicht erreichbar (Netzfilter),
+  darum gebacken statt geladen.
 * **Fassaden:** Sockel, Fensterraster, Gesimse, Stuckband, vereinzelt Balkone;
   jede Wand in einem eigenen Berliner Altbauton. Fenster haben jetzt **Tiefe**:
   dunkle Laibung, darin die zurückgesetzte Scheibe, davor der Rahmen als vier
@@ -43,17 +47,22 @@ mit ihrer 8-cm-Bordsteinkante, für die das Stufen-Steigen gebaut wurde.
 * **Straßenraum:** nasser dunkler Asphalt mit Pfützenflecken (unterschiedliche
   Rauheit — die Pfützen spiegeln die Lichter), Gehwegplatten mit Fugen alle
   1,6 m, Gullydeckel, gestrichelte Mittelstreifen, Gleisbett unter den
-  Tramschienen samt **Oberleitung** mit Quertragwerken, sieben geparkte Autos,
-  Poller, Verteilerkästen, zwei Ampeln, orange Berliner Mülleimer an den
-  Laternenmasten, zwei Litfaßsäulen mit angeklebten Plakatresten.
+  Tramschienen samt **Oberleitung** mit Quertragwerken, sieben geparkte Autos
+  (mit Stoßstangen, Kennzeichen, Rück- und Frontleuchten, Spiegeln und
+  Radkappen), Poller, Verteilerkästen, zwei Ampeln, orange Berliner Mülleimer
+  mit Deckel an den Laternenmasten, zwei Litfaßsäulen mit Plakatresten.
 * **Nacht:** dunkler Himmel mit warmem Horizontrest, **Mond und 220 Sterne**,
   bläuliches Mondlicht mit weichen Schatten, zehn brennende Laternen —
   abwechselnd warmweiß und orangenes Natriumdampflicht. **Laterne 5 flackert**
   mit gelegentlichen Aussetzern, das Dönerschild brummt leise im Takt. Ein
   schwaches Fülllicht an der Kamera hält die Gesichter zwischen den Laternen
-  lesbar. Für die fertige App (Forward+): Screen-Space-Reflexionen auf den
-  nassen Flächen und volumetrischer Nebel um die Lichtkegel — beides können
-  die Prüfbilder hier nicht zeigen, das muss das Probespielen beurteilen.
+  lesbar. Jede Laterne hat einen **sichtbaren Lichtkegel** (additiver Kegel,
+  läuft auf jedem Renderer). Dazu eine dezente **Vignette**
+  (`ui/vignette.gdshader`) und Farbkorrektur (Kontrast 1,06 / Sättigung 1,08).
+  Nur in der fertigen App (Forward+): **SDFGI** (Licht prallt von Wänden ab),
+  Screen-Space-Reflexionen auf den nassen Flächen und volumetrischer Nebel —
+  all das können die Prüfbilder hier nicht zeigen, das muss das Probespielen
+  beurteilen.
 * **Schauplätze:** Büroeingang mit warmem Licht und „BÜRO"-Schild; Café mit
   „CAFÉ"-Schriftzug und schiefem Zettel „WEGEN CORONA GESCHLOSSEN";
   Fernsehturm mit erleuchteter Kugel und rotem Blinklicht als Silhouette.
@@ -541,12 +550,17 @@ zeilenweise, nicht spaltenweise. Dadurch stiegen die Rampen zur falschen Seite
 ## Aktuelle Grenzen
 
 * Die Kulisse bleibt Kastenarchitektur mit aufgesetzten Details — die
-  Rauschtexturen sind prozedural, keine fotografierten Materialien; es gibt
-  keine echten Balkongeländer und keine Menschen außer den beiden. Der
-  nächtliche Look trägt das; bei Tageslicht würde es kahl wirken.
-* Screen-Space-Reflexionen und volumetrischer Nebel wirken nur im
+  PBR-Texturen sind gebacken (Rauschsynthese), keine Fotografien; es gibt
+  keine echten Balkongeländer und keine Menschen außer den beiden und dem
+  Dönermann. Der nächtliche Look trägt das; bei Tageslicht würde es kahl
+  wirken. Wer Foto-Material will: ambientCG-1K-Sets (CC0) herunterladen und
+  die Dateien unter `assets/texturen/<satz>/` ersetzen — gleiche Namen,
+  fertig. Die Quellen sind aus dieser Arbeitsumgebung nicht erreichbar.
+* SDFGI, Screen-Space-Reflexionen und volumetrischer Nebel wirken nur im
   Forward+-Renderer der fertigen App — die Prüfbilder hier entstehen im
-  Kompatibilitätsrenderer und zeigen beides nicht.
+  Kompatibilitätsrenderer und zeigen sie nicht. SDFGI kostet spürbar
+  Leistung; ruckelt es auf dem Mac, ist `sdfgi_enabled` im Environment der
+  erste Schalter zum Ausprobieren.
 * Das Gangwerk bleibt Platzhalter-Bewegung: glaubwürdig in Spiel- und
   Gesprächsentfernung, aber ohne echtes Fersen-Ballen-Abrollen, ohne
   Fingergesten, ohne Mimik. Aufgenommene Animationen (Mixamo aufs vorhandene

@@ -1,4 +1,4 @@
-[gd_scene load_steps=34 format=3]
+[gd_scene load_steps=36 format=3]
 
 [ext_resource type="Script" path="res://chapters/berlin/chapter_berlin.gd" id="1_chapter"]
 [ext_resource type="PackedScene" path="res://actors/player/player.tscn" id="2_player"]
@@ -17,6 +17,7 @@
 [ext_resource type="AudioStream" path="res://audio/bude_summen.wav" id="15_summen"]
 [ext_resource type="Script" path="res://chapters/berlin/kulisse.gd" id="16_kulisse"]
 [ext_resource type="Script" path="res://chapters/berlin/verkaeufer.gd" id="20_verkaeufer"]
+[ext_resource type="Shader" path="res://ui/vignette.gdshader" id="21_vignette"]
 
 [sub_resource type="ProceduralSkyMaterial" id="Sky_mat"]
 sky_top_color = Color(0.012, 0.02, 0.05, 1)
@@ -40,6 +41,13 @@ tonemap_white = 6.0
 ssao_enabled = true
 ssao_radius = 2.0
 ssao_intensity = 1.4
+sdfgi_enabled = true
+sdfgi_bounce_feedback = 0.3
+sdfgi_cascades = 4
+sdfgi_max_distance = 220.0
+adjustment_enabled = true
+adjustment_contrast = 1.06
+adjustment_saturation = 1.08
 ssr_enabled = true
 ssr_max_steps = 48
 ssr_fade_in = 0.2
@@ -62,6 +70,9 @@ volumetric_fog_density = 0.012
 volumetric_fog_albedo = Color(0.6, 0.65, 0.8, 1)
 volumetric_fog_anisotropy = 0.55
 volumetric_fog_length = 110.0
+
+[sub_resource type="ShaderMaterial" id="Mat_vignette"]
+shader = ExtResource("21_vignette")
 
 [sub_resource type="StandardMaterial3D" id="Mat_paving"]
 albedo_color = Color(0.505882, 0.494118, 0.470588, 1)
@@ -696,6 +707,18 @@ transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 13.6, 0.25, -9)
 [node name="DartsGame" parent="." instance=ExtResource("10_darts")]
 
 [node name="UI" type="Node" parent="."]
+
+[node name="Vignette" type="CanvasLayer" parent="UI"]
+layer = 0
+
+[node name="Abdunkler" type="ColorRect" parent="UI/Vignette"]
+material = SubResource("Mat_vignette")
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
 
 [node name="ObjectiveLabel" parent="UI" instance=ExtResource("6_objective")]
 

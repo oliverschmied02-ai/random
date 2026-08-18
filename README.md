@@ -9,11 +9,14 @@ das wichtige Momente unserer Beziehung als spielbare Szenen nacherzählt.
 "Vaccination Darts"). Weitere Kapitel sind konzeptionell vorgesehen, werden
 aber bewusst noch nicht gebaut.
 
-**Stand:** Stage 7 — Kapitel 1 spielt abends in Berlin: Nachtfassaden mit
-Putzkörnung und erleuchteten Fenstern in dunklen Laibungen, nasser Asphalt mit
-Pfützen, Laternen (warmweiß und Natriumdampf-orange, eine flackert), Mond und
-Sterne, Tram-Oberleitung, geparkte Autos, Ampeln, Mülleimer, Gullys, Plakate,
-Schornsteine und Antennen auf den Dächern, der Fernsehturm als Silhouette. Von Anfang bis Ende erzählt, mit Titel und Ton. Oliver vor
+**Stand:** Stage 7 — Kapitel 1 spielt abends in Berlin: Fassaden, Straßen und
+Gehwege tragen gebackene PBR-Materialsätze (Albedo + Normal + Rauheit, aus
+`tools/make_textures.py`), nasser Asphalt mit Pfützen und Rissen, erleuchtete
+Fenster in dunklen Laibungen, Laternen mit sichtbaren Lichtkegeln (warmweiß
+und Natriumdampf-orange, eine flackert), Mond und Sterne, Tram-Oberleitung,
+detaillierte geparkte Autos, Ampeln, Mülleimer, Gullys, Plakate, Dächer mit
+Schornsteinen und Antennen, der Fernsehturm als Silhouette. Dazu Vignette,
+Farbkorrektur und — in der fertigen App — SDFGI, Reflexionen und Nebel. Von Anfang bis Ende erzählt, mit Titel und Ton. Oliver vor
 seiner Bürotür abholen, zu zweit durch die Stadt laufen (zwei Gespräche
 unterwegs, dazu drei optionale Erinnerungen am Weg), an der Dönerbude ankommen
 (offener Verkaufsraum mit Verkäufer hinterm Tresen und drehendem Dönerspieß),

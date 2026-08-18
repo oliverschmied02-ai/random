@@ -136,13 +136,13 @@ func _materialien_anlegen() -> void:
 		&"glas_hell2": _mat(Color(0.88, 0.78, 0.55), 0.6, Color(1.0, 0.85, 0.55), 1.5),
 		&"glas_tv": _mat(Color(0.5, 0.6, 0.8), 0.6, Color(0.55, 0.7, 1.2), 1.7),
 		&"vorhang": _mat(Color(0.38, 0.26, 0.17), 0.9),
-		&"sockel": _rauschmat(Color(0.30, 0.29, 0.28), 0.95, 8.0, 0.7, 0.35),
+		&"sockel": _foto_mat("beton_rau", Color(0.64, 0.62, 0.59), 0.3, 1.2),
 		&"tuer": _mat(Color(0.23, 0.17, 0.13), 0.7),
 		&"laden": _mat(Color(0.36, 0.37, 0.39), 0.5),
 		&"ladenschild": _mat(Color(0.42, 0.18, 0.16), 0.7),
 		&"gitter": _mat(Color(0.14, 0.15, 0.17), 0.5),
 		&"markierung": _mat(Color(0.75, 0.74, 0.70), 0.9),
-		&"gleisbett": _rauschmat(Color(0.10, 0.10, 0.11), 1.0, 10.0, 0.75, 0.3),
+		&"gleisbett": _foto_mat("schotter", Color(0.3, 0.3, 0.32), 0.8, 1.6),
 		&"birne": _mat(Color(1.0, 0.75, 0.4), 0.5, Color(1.0, 0.62, 0.25), 3.2),
 		&"dach": _mat(Color(0.16, 0.16, 0.18), 0.9),
 		&"schornstein": _mat(Color(0.42, 0.33, 0.28), 0.95),
@@ -153,6 +153,12 @@ func _materialien_anlegen() -> void:
 		&"auto": _mat(Color(0.10, 0.11, 0.13), 0.35),
 		&"auto_hell": _mat(Color(0.28, 0.29, 0.32), 0.4),
 		&"rad": _mat(Color(0.05, 0.05, 0.05), 0.9),
+		&"radkappe": _mat(Color(0.52, 0.54, 0.58), 0.35),
+		&"stossstange": _mat(Color(0.15, 0.16, 0.17), 0.55),
+		&"kennzeichen": _mat(Color(0.82, 0.83, 0.78), 0.4),
+		&"ruecklicht": _mat(Color(0.35, 0.04, 0.04), 0.3, Color(0.9, 0.1, 0.08), 0.4),
+		&"frontlicht": _mat(Color(0.6, 0.63, 0.66), 0.2),
+		&"muell_deckel": _mat(Color(0.5, 0.21, 0.05), 0.6),
 		&"gully": _mat(Color(0.09, 0.09, 0.10), 0.7),
 		&"poller": _mat(Color(0.18, 0.19, 0.21), 0.6),
 		&"plakat_a": _mat(Color(0.74, 0.71, 0.63), 0.9),
@@ -174,43 +180,21 @@ func _mat(farbe: Color, rauheit: float, leuchten: Color = Color.BLACK, staerke: 
 	return m
 
 
-## Ein Material mit Oberfläche: Rauschen in Helligkeit und Relief, triplanar
-## auf die Geometrie gelegt — kein UV-Zuschnitt, funktioniert auf jedem Kasten.
-## `koernung` ist die Größe des Musters (höher = feiner), `boden` die dunkelste
-## Stelle des Helligkeitsrauschens, `relief` die Stärke der Normal-Map.
-func _rauschmat(farbe: Color, rauheit: float, koernung: float, boden: float, relief: float) -> StandardMaterial3D:
-	var m := _mat(farbe, rauheit)
-	var rauschen := FastNoiseLite.new()
-	rauschen.noise_type = FastNoiseLite.TYPE_SIMPLEX
-	rauschen.frequency = 0.02 * koernung
-	rauschen.seed = int(koernung * 1000.0 + boden * 100.0)
-
-	var verlauf := Gradient.new()
-	verlauf.set_color(0, Color(boden, boden, boden))
-	verlauf.set_color(1, Color.WHITE)
-
-	var helligkeit := NoiseTexture2D.new()
-	helligkeit.noise = rauschen
-	helligkeit.seamless = true
-	helligkeit.width = 256
-	helligkeit.height = 256
-	helligkeit.color_ramp = verlauf
-	m.albedo_texture = helligkeit
-
-	if relief > 0.0:
-		var huegel := NoiseTexture2D.new()
-		huegel.noise = rauschen
-		huegel.seamless = true
-		huegel.width = 256
-		huegel.height = 256
-		huegel.as_normal_map = true
-		huegel.bump_strength = 4.0
-		m.normal_enabled = true
-		m.normal_texture = huegel
-		m.normal_scale = relief
-
+## Ein Material aus einem gebackenen Textursatz (assets/texturen/<satz>):
+## Albedo (mit dem Farbton multipliziert), Normal-Map und Rauheitskarte,
+## triplanar gemappt — die Kastengeometrie braucht dafür keine UV-Arbeit.
+## `masstab` in Wiederholungen je Meter (0.22 ≈ alle 4,5 m).
+func _foto_mat(satz: String, ton: Color, masstab: float = 0.22, relief: float = 1.0) -> StandardMaterial3D:
+	var m := StandardMaterial3D.new()
+	m.albedo_color = ton
+	m.albedo_texture = load("res://assets/texturen/%s/albedo.jpg" % satz)
+	m.normal_enabled = true
+	m.normal_texture = load("res://assets/texturen/%s/normal.jpg" % satz)
+	m.normal_scale = relief
+	m.roughness = 1.0
+	m.roughness_texture = load("res://assets/texturen/%s/rauheit.jpg" % satz)
 	m.uv1_triplanar = true
-	m.uv1_scale = Vector3(0.22, 0.22, 0.22)
+	m.uv1_scale = Vector3(masstab, masstab, masstab)
 	return m
 
 
@@ -284,23 +268,9 @@ func _boden_umfaerben() -> void:
 	var boden := get_parent().get_node_or_null("Ground") as CSGBox3D
 	if boden == null:
 		return
-	var nass := _rauschmat(Color(0.14, 0.145, 0.16), 1.0, 6.0, 0.72, 0.25)
-	var pfuetzen := FastNoiseLite.new()
-	pfuetzen.noise_type = FastNoiseLite.TYPE_SIMPLEX
-	pfuetzen.frequency = 0.05
-	pfuetzen.seed = 77
-	var verlauf := Gradient.new()
-	verlauf.add_point(0.45, Color(0.10, 0.10, 0.10))
-	verlauf.set_color(0, Color(0.08, 0.08, 0.08))
-	verlauf.set_color(2, Color(0.9, 0.9, 0.9))
-	var rauheit := NoiseTexture2D.new()
-	rauheit.noise = pfuetzen
-	rauheit.seamless = true
-	rauheit.width = 256
-	rauheit.height = 256
-	rauheit.color_ramp = verlauf
-	nass.roughness_texture = rauheit
-	boden.material = nass
+	# Pfützen und Risse stecken im gebackenen Asphaltsatz — die Rauheitskarte
+	# macht die nassen Stellen spiegelglatt, dort greifen die Reflexionen.
+	boden.material = _foto_mat("asphalt", Color(0.55, 0.57, 0.62), 0.09, 1.0)
 
 
 func _fassaden_bauen() -> void:
@@ -314,7 +284,7 @@ func _fassaden_bauen() -> void:
 		if block == null:
 			continue
 		rng.seed = hash(String(block.name))
-		block.material = _rauschmat(PALETTE[nummer % PALETTE.size()], 0.9, 5.0, 0.8, 0.4)
+		block.material = _foto_mat("putz", PALETTE[nummer % PALETTE.size()], 0.24, 0.8)
 		nummer += 1
 		for richtung in [Vector3.RIGHT, Vector3.LEFT, Vector3.BACK, Vector3.FORWARD]:
 			_fassade(block, richtung, rng)
@@ -450,7 +420,7 @@ func _grund_verboten(stelle: Vector3) -> bool:
 
 
 func _gehwege_bauen() -> void:
-	var material := _rauschmat(Color(0.40, 0.40, 0.42), 0.92, 9.0, 0.8, 0.3)
+	var material := _foto_mat("beton_platten", Color(0.6, 0.6, 0.63), 0.35, 0.6)
 	for feld in GEHWEGE:
 		var masse := Vector3(feld[2] - feld[0], 0.16, feld[3] - feld[1])
 		var mitte := Vector3((feld[0] + feld[2]) * 0.5, 0.0, (feld[1] + feld[3]) * 0.5)
@@ -537,6 +507,7 @@ func _laternen_anzuenden() -> void:
 		licht.omni_range = 15.0
 		licht.omni_attenuation = 1.4
 		add_child(licht)
+		_lichtkegel(licht.position, licht.light_color)
 		if i == 5:
 			glas = glas.duplicate()
 			_flacker.append({
@@ -554,6 +525,30 @@ func _laternen_anzuenden() -> void:
 				_kasten(&"muell",
 					Vector3(mast.position.x + 0.2, 1.1, mast.position.z + 0.08),
 					Vector3(0.34, 0.5, 0.3), 0.3)
+				_kasten(&"muell_deckel",
+					Vector3(mast.position.x + 0.2, 1.38, mast.position.z + 0.08),
+					Vector3(0.38, 0.06, 0.34), 0.3)
+
+
+## Der sichtbare Lichtschein unter einer Laterne: ein additiver, ungeschatteter
+## Kegel — die billige Ausgabe von volumetrischem Nebel, die überall läuft.
+func _lichtkegel(quelle: Vector3, farbe: Color) -> void:
+	var kegel := MeshInstance3D.new()
+	var form := CylinderMesh.new()
+	var hoehe := maxf(quelle.y - 0.3, 1.0)
+	form.top_radius = 0.14
+	form.bottom_radius = 1.7
+	form.height = hoehe
+	var schein := StandardMaterial3D.new()
+	schein.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	schein.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
+	schein.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	schein.albedo_color = Color(farbe.r, farbe.g, farbe.b, 0.045)
+	form.material = schein
+	kegel.mesh = form
+	kegel.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	kegel.position = Vector3(quelle.x, 0.3 + hoehe * 0.5, quelle.z)
+	add_child(kegel)
 
 
 ## Geparkte Autos: Karosserie, dunkles Glashaus, Räder. Nachts am Straßenrand
@@ -572,10 +567,31 @@ func _autos_parken() -> void:
 			Vector3(1.62, 0.06, 2.35), drehung)
 		for ecke in [Vector3(0.85, 0.32, 1.45), Vector3(-0.85, 0.32, 1.45),
 				Vector3(0.85, 0.32, -1.45), Vector3(-0.85, 0.32, -1.45)]:
+			var rad_basis := Basis(Vector3.UP, drehung) * Basis(Vector3(0, 0, 1), PI * 0.5)
 			_lege(&"rad", Transform3D(
-				Basis(Vector3.UP, drehung) * Basis(Vector3(0, 0, 1), PI * 0.5)
-					* Basis.from_scale(Vector3(0.64, 0.24, 0.64)),
+				rad_basis * Basis.from_scale(Vector3(0.64, 0.24, 0.64)),
 				fuss + ecke.rotated(Vector3.UP, drehung)))
+			_lege(&"radkappe", Transform3D(
+				rad_basis * Basis.from_scale(Vector3(0.3, 0.26, 0.3)),
+				fuss + ecke.rotated(Vector3.UP, drehung)))
+
+		# Was ein Auto von einem Kasten unterscheidet: Stoßstangen,
+		# Kennzeichen, Leuchten, Spiegel.
+		for ende in [1.0, -1.0]:
+			_kasten(&"stossstange",
+				fuss + Vector3(0, 0.3, 2.2 * ende).rotated(Vector3.UP, drehung),
+				Vector3(1.82, 0.16, 0.14), drehung)
+			_kasten(&"kennzeichen",
+				fuss + Vector3(0, 0.44, 2.24 * ende).rotated(Vector3.UP, drehung),
+				Vector3(0.52, 0.11, 0.02), drehung)
+			for seite in [0.6, -0.6]:
+				_kasten(&"ruecklicht" if ende < 0 else &"frontlicht",
+					fuss + Vector3(seite, 0.72, 2.19 * ende).rotated(Vector3.UP, drehung),
+					Vector3(0.3, 0.11, 0.04), drehung)
+		for seite in [0.93, -0.93]:
+			_kasten(gruppe,
+				fuss + Vector3(seite, 1.0, 0.85).rotated(Vector3.UP, drehung),
+				Vector3(0.07, 0.08, 0.16), drehung)
 
 
 ## Poller, Verteilerkästen, eine rote Ampel über leerer Kreuzung, Plakate an
