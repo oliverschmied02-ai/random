@@ -46,10 +46,17 @@ func _los() -> void:
 			_merke("warte auf karte, bild %d" % frist)
 	_merke("karte weg nach %d bildern" % frist)
 	# Oberfläche ausblenden — die Bilder sollen nur die Kulisse zeigen.
+	# „UI" ist ein schlichter Node ohne `visible` — die Kinder ausblenden.
 	for name in ["UI", "HUD", "Debug"]:
 		var schicht := szene.get_node_or_null(name)
-		if schicht:
+		if schicht == null:
+			continue
+		if "visible" in schicht:
 			schicht.visible = false
+			continue
+		for kind in schicht.get_children():
+			if "visible" in kind:
+				kind.visible = false
 	var kam := Camera3D.new()
 	kam.fov = 65.0
 	root.add_child(kam)

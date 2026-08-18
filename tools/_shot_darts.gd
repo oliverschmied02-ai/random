@@ -34,12 +34,21 @@ func _los() -> void:
 		if frist % 10 == 0:
 			_merke("warte auf karte, bild %d" % frist)
 	_merke("karte weg nach %d bildern" % frist)
+	# „UI" ist ein schlichter Node ohne `visible` — die Kinder ausblenden.
 	for name in ["UI", "HUD", "Debug"]:
 		var schicht := szene.get_node_or_null(name)
-		if schicht:
+		if schicht == null:
+			continue
+		if "visible" in schicht:
 			schicht.visible = false
+			continue
+		for kind in schicht.get_children():
+			if "visible" in kind:
+				kind.visible = false
+	_merke("oberflaeche versteckt")
 
 	var darts: DartsGame = szene.get_node("DartsGame")
+	_merke("darts gefunden")
 	darts.kamerafahrt = 0.0
 	darts.starten()
 	_merke("darts gestartet")
