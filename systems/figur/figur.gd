@@ -65,6 +65,17 @@ var _blick: Node3D
 ## Auf welcher Höhe über dem Ziel der Blick landet — Augenhöhe einer Figur.
 var _blick_hoehe: float = 1.55
 
+# Mimik über die Blendshapes des Modells (ARKit-Namen): Blinzeln immer,
+# Kieferbewegung während der eigenen Sprechzeile.
+var _lider: Array = []  # je Eintrag [MeshInstance3D, idx_links, idx_rechts]
+var _kiefer: Array = []  # je Eintrag [MeshInstance3D, idx]
+var _blinzel_uhr: float = 0.0
+var _blinzel_naechste: float = 3.0
+var _sprech_rest: float = 0.0
+var _atem: CPUParticles3D
+var _atem_uhr: float = 0.0
+var _atem_naechste: float = 3.5
+
 
 func _ready() -> void:
 	set_physics_process(false)
@@ -88,6 +99,8 @@ func _ready() -> void:
 	_auf_hoehe_bringen()
 	_arme_senken()
 	_haende_entspannen()
+	_mimik_einrichten()
+	_atem_bauen()
 
 	var platzhalter := get_node_or_null(platzhalter_pfad) as Node3D
 	if platzhalter != null:
@@ -127,6 +140,8 @@ func _physics_process(delta: float) -> void:
 		else Vector3.INF
 	)
 	gangwerk.tick(delta, tempo, gier_rate)
+	_mimik_pflegen(delta)
+	_atem_pflegen(delta)
 
 
 ## Lässt die Figur ein Ziel ansehen — den Gesprächspartner, die Spielerin.
@@ -137,10 +152,106 @@ func schaue_an(ziel: Node3D, hoehe: float = 1.55) -> void:
 	_blick_hoehe = hoehe
 
 
-## Ein kurzes Nicken — beim Beginn der eigenen Sprechzeile.
+## Ein kurzes Nicken — beim Beginn der eigenen Sprechzeile. Dazu bewegt sich
+## der Kiefer für die Dauer der Zeile (grobe Näherung: knapp zwei Sekunden).
 func betone() -> void:
 	if gangwerk != null:
 		gangwerk.betonung = 1.0
+	_sprech_rest = 1.9
+
+
+## Sucht die Blendshapes fürs Blinzeln und Sprechen (ARKit-Namen, wie sie
+## die Avatar-Generatoren exportieren). Fehlen sie, bleibt das Gesicht ruhig.
+func _mimik_einrichten() -> void:
+	for kind in modell.find_children("*", "MeshInstance3D", true, false):
+		var teil := kind as MeshInstance3D
+		if teil == null or teil.mesh == null:
+			continue
+		var links := teil.find_blend_shape_by_name("eyeBlinkLeft")
+		var rechts := teil.find_blend_shape_by_name("eyeBlinkRight")
+		if links >= 0 and rechts >= 0:
+			_lider.append([teil, links, rechts])
+		var kiefer := teil.find_blend_shape_by_name("jawOpen")
+		if kiefer >= 0:
+			_kiefer.append([teil, kiefer])
+
+
+## Blinzeln alle paar Sekunden, Kieferbewegung solange gesprochen wird.
+## Menschen blinzeln etwa alle drei bis sechs Sekunden; ein Lidschlag
+## dauert rund 0,15 s — schnell zu, etwas langsamer auf.
+func _mimik_pflegen(delta: float) -> void:
+	if _lider.is_empty() and _kiefer.is_empty():
+		return
+	_blinzel_uhr += delta
+	var lid := 0.0
+	var seit := _blinzel_uhr - _blinzel_naechste
+	if seit >= 0.0:
+		if seit < 0.06:
+			lid = seit / 0.06
+		elif seit < 0.16:
+			lid = 1.0 - (seit - 0.06) / 0.1
+		else:
+			_blinzel_uhr = 0.0
+			_blinzel_naechste = randf_range(2.6, 5.8)
+	for eintrag in _lider:
+		var teil: MeshInstance3D = eintrag[0]
+		teil.set_blend_shape_value(eintrag[1], lid)
+		teil.set_blend_shape_value(eintrag[2], lid)
+
+	var mund := 0.0
+	if _sprech_rest > 0.0:
+		_sprech_rest -= delta
+		# Unregelmäßiges Öffnen, gegen Ende leiser werdend.
+		var takt := Time.get_ticks_msec() / 1000.0
+		mund = (0.10 + 0.08 * sin(takt * 11.0) + 0.05 * sin(takt * 17.3)) \
+			* clampf(_sprech_rest, 0.0, 1.0)
+		mund = maxf(mund, 0.0)
+	for eintrag in _kiefer:
+		var teil: MeshInstance3D = eintrag[0]
+		teil.set_blend_shape_value(eintrag[1], mund)
+
+
+## Atemdampf: ein kalter Abend, alle paar Sekunden ein kleiner Hauch.
+func _atem_bauen() -> void:
+	_atem = CPUParticles3D.new()
+	_atem.emitting = false
+	_atem.one_shot = true
+	_atem.amount = 5
+	_atem.lifetime = 1.1
+	_atem.explosiveness = 0.7
+	_atem.local_coords = false
+	_atem.direction = Vector3(0, 0.35, -1)
+	_atem.spread = 12.0
+	_atem.gravity = Vector3(0, 0.25, 0)
+	_atem.initial_velocity_min = 0.3
+	_atem.initial_velocity_max = 0.5
+	_atem.scale_amount_min = 0.6
+	_atem.scale_amount_max = 1.4
+	var wolke := SphereMesh.new()
+	wolke.radius = 0.045
+	wolke.height = 0.09
+	var dampf := StandardMaterial3D.new()
+	dampf.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	dampf.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	dampf.vertex_color_use_as_albedo = true
+	wolke.material = dampf
+	var verlauf := Gradient.new()
+	verlauf.set_color(0, Color(0.78, 0.82, 0.9, 0.10))
+	verlauf.set_color(1, Color(0.78, 0.82, 0.9, 0.0))
+	_atem.color_ramp = verlauf
+	_atem.mesh = wolke
+	_atem.position = Vector3(0, maxf(zielhoehe, 1.6) - 0.16, -0.14)
+	add_child(_atem)
+
+
+func _atem_pflegen(delta: float) -> void:
+	if _atem == null:
+		return
+	_atem_uhr += delta
+	if _atem_uhr >= _atem_naechste:
+		_atem_uhr = 0.0
+		_atem_naechste = randf_range(3.0, 4.8)
+		_atem.restart()
 
 
 ## Nimmt den Händen die gespreizte T-Pose: alle Fingerglieder leicht gebeugt,

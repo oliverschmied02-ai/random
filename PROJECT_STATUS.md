@@ -75,8 +75,29 @@ mit ihrer 8-cm-Bordsteinkante, für die das Stufen-Steigen gebaut wurde.
   von seiner Arbeit aufsieht und Anne ansieht, sobald sie nah ist. Neben ihm
   dreht sich ein **Dönerspieß** in Schichten vor dem rot glühenden
   Heizelement. Dazu leuchtendes Schild, „DÖNER"-Schriftzug, Lichterkette.
-* Alle Kleinteile (Quader, Kugeln und Zylinder, inzwischen einige zehntausend)
-  liegen in gut zwei Dutzend MultiMeshes — ein Zeichenaufruf je Materialgruppe.
+* **Leben in der leeren Stadt:** feiner Nieselregen um die Kamera
+  (Streifenpartikel, folgen ihr in `_process`), eine **ferne Tram**, die alle
+  80 Sekunden die Gleisstraße quert (östlich der Wegkreuzung — sie fährt
+  niemandem durchs Bild), ein Flugzeug mit rotem Blinklicht hoch über der
+  Stadt, und **Atemdampf** an allen Figuren (kalter Abend, alle 3–5 s ein
+  Hauch).
+* **Mimik über die Blendshapes der Modelle** (ARKit-Namen): alle Figuren
+  **blinzeln** (alle 2,6–5,8 s, Lidschlag 0,16 s — schnell zu, langsamer
+  auf), und beim Sprechen bewegt sich der **Kiefer** für die Dauer der Zeile
+  (`Figur.betone()` löst beides mit dem Nicken aus). Fehlen die Blendshapes,
+  bleibt das Gesicht einfach ruhig.
+* **Fassaden-Nahbereich:** Balkongeländer aus Handlauf und neun Stäben statt
+  einer Platte, Regenfallrohre an den Fassadenrändern, und **Graffiti-Tags**
+  in Hüfthöhe (drei gebackene Sprühzug-Texturen aus `tools/make_graffiti.py`,
+  auf ~30 % der Erdgeschossfelder zwischen den Fenstern).
+* **Bildveredelung:** Vignette mit animiertem **Filmkorn**
+  (`ui/vignette.gdshader`), **Tiefenschärfe im Schlussbild** (die beiden
+  scharf, Berlin dahinter weich — nur dort, beim Zielen wäre sie eine
+  Zumutung), zwei **ReflectionProbes** (Bude, Gleisstraße) als Ergänzung der
+  Screen-Space-Reflexionen im Forward+-Renderer.
+* Alle Kleinteile (Quader, Kugeln, Zylinder und Flächen, inzwischen einige
+  zehntausend) liegen in gut zwei Dutzend MultiMeshes — ein Zeichenaufruf je
+  Materialgruppe.
 
 Dabei gefunden: **das Café steckte seit Stage 3 komplett in der Hauswand.**
 Beim Begradigen der Blöcke war die Wand über das Café gewandert; auf keinem

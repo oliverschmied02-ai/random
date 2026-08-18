@@ -81,6 +81,10 @@ var _stapel: Dictionary = {}
 var _materialien: Dictionary = {}
 var _flacker: Array = []
 var _spiess_dreher: Node3D
+var _regen: CPUParticles3D
+var _tram: Node3D
+var _flugzeug: Node3D
+var _flugzeug_blink: MeshInstance3D
 
 
 func _ready() -> void:
@@ -101,6 +105,10 @@ func _ready() -> void:
 	_fernsehturm_beleuchten()
 	_litfasssaeulen_stellen()
 	_fuelllicht_anbringen()
+	_regen_bauen()
+	_tram_bauen()
+	_flugzeug_starten()
+	_spiegelsonden_setzen()
 	_stapel_absetzen()
 
 
@@ -111,6 +119,30 @@ func _process(_delta: float) -> void:
 	if _spiess_dreher != null:
 		_spiess_dreher.rotate_y(_delta * 0.9)
 	var t := Time.get_ticks_msec() / 1000.0
+
+	# Der Regen folgt der Kamera — nur dort, wo jemand hinsieht, muss es regnen.
+	if _regen != null:
+		var kamera := get_viewport().get_camera_3d()
+		if kamera != null:
+			var dort := kamera.global_position
+			_regen.global_position = Vector3(dort.x, dort.y + 8.0, dort.z)
+
+	# Die ferne Tram: quert alle 80 Sekunden die Gleisstraße, von Ost nach
+	# West, und bleibt dabei östlich der Wegkreuzung (x > 30).
+	if _tram != null:
+		var takt := fmod(t, 80.0)
+		if takt < 11.5:
+			_tram.visible = true
+			_tram.position.x = 112.0 - 7.0 * takt
+		else:
+			_tram.visible = false
+
+	# Das Flugzeug zieht in gut drei Minuten über die Stadt, Blinklicht im Takt.
+	if _flugzeug != null:
+		var anteil := fmod(t, 200.0) / 200.0
+		_flugzeug.position = Vector3(-400.0, 390.0, -650.0).lerp(
+			Vector3(500.0, 390.0, -250.0), anteil)
+		_flugzeug_blink.visible = fmod(t, 1.2) < 0.15
 	for eintrag in _flacker:
 		var faktor: float = eintrag["ruhe"] + eintrag["hub"] * (
 			0.5 * sin(t * eintrag["takt"]) + 0.3 * sin(t * eintrag["takt"] * 3.7 + 1.3)
@@ -132,8 +164,8 @@ func _materialien_anlegen() -> void:
 		&"rahmen": _mat(Color(0.82, 0.78, 0.70), 0.8),
 		&"laibung": _mat(Color(0.04, 0.045, 0.06), 0.6),
 		&"glas_dunkel": _mat(Color(0.07, 0.09, 0.13), 0.25, Color(0.10, 0.13, 0.20), 0.35),
-		&"glas_hell": _mat(Color(0.85, 0.68, 0.42), 0.6, Color(1.0, 0.72, 0.38), 1.9),
-		&"glas_hell2": _mat(Color(0.88, 0.78, 0.55), 0.6, Color(1.0, 0.85, 0.55), 1.5),
+		&"glas_hell": _mat(Color(0.85, 0.68, 0.42), 0.6, Color(1.0, 0.72, 0.38), 2.2),
+		&"glas_hell2": _mat(Color(0.88, 0.78, 0.55), 0.6, Color(1.0, 0.85, 0.55), 1.8),
 		&"glas_tv": _mat(Color(0.5, 0.6, 0.8), 0.6, Color(0.55, 0.7, 1.2), 1.7),
 		&"vorhang": _mat(Color(0.38, 0.26, 0.17), 0.9),
 		&"sockel": _foto_mat("beton_rau", Color(0.64, 0.62, 0.59), 0.3, 1.2),
@@ -161,6 +193,10 @@ func _materialien_anlegen() -> void:
 		&"muell_deckel": _mat(Color(0.5, 0.21, 0.05), 0.6),
 		&"gully": _mat(Color(0.09, 0.09, 0.10), 0.7),
 		&"poller": _mat(Color(0.18, 0.19, 0.21), 0.6),
+		&"fallrohr": _mat(Color(0.2, 0.21, 0.23), 0.55),
+		&"graffiti_a": _graffiti_mat("a"),
+		&"graffiti_b": _graffiti_mat("b"),
+		&"graffiti_c": _graffiti_mat("c"),
 		&"plakat_a": _mat(Color(0.74, 0.71, 0.63), 0.9),
 		&"plakat_b": _mat(Color(0.60, 0.65, 0.60), 0.9),
 		&"fuge": _mat(Color(0.30, 0.30, 0.32), 0.95),
@@ -206,6 +242,16 @@ func _foto_mat(satz: String, ton: Color, masstab: float = 0.22, relief: float = 
 	return m
 
 
+## Ein Graffiti-Tag (gebacken von tools/make_graffiti.py) als durchsichtige
+## Fläche fürs Erdgeschoss.
+func _graffiti_mat(variante: String) -> StandardMaterial3D:
+	var m := StandardMaterial3D.new()
+	m.albedo_texture = load("res://assets/texturen/graffiti/%s.png" % variante)
+	m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	m.roughness = 0.92
+	return m
+
+
 func _lege(gruppe: StringName, lage: Transform3D) -> void:
 	if not _stapel.has(gruppe):
 		_stapel[gruppe] = []
@@ -216,7 +262,8 @@ func _lege(gruppe: StringName, lage: Transform3D) -> void:
 ## Zylinder sind Einheitskörper und werden je Instanz skaliert.
 func _stapel_absetzen() -> void:
 	var kugelgruppen := [&"birne", &"stern", &"ampel_rot"]
-	var zylindergruppen := [&"gully", &"poller", &"rad", &"antenne"]
+	var zylindergruppen := [&"gully", &"poller", &"rad", &"antenne", &"radkappe", &"fallrohr"]
+	var flaechengruppen := [&"graffiti_a", &"graffiti_b", &"graffiti_c"]
 	for gruppe in _stapel:
 		var mesh: Mesh
 		if gruppe in kugelgruppen:
@@ -230,6 +277,8 @@ func _stapel_absetzen() -> void:
 			rohr.bottom_radius = 0.5
 			rohr.height = 1.0
 			mesh = rohr
+		elif gruppe in flaechengruppen:
+			mesh = QuadMesh.new()
 		else:
 			mesh = BoxMesh.new()
 		var mm := MultiMesh.new()
@@ -351,6 +400,12 @@ func _fassade(block: CSGBox3D, n: Vector3, rng: RandomNumberGenerator) -> void:
 
 	# Sockel und Gesims rahmen die Fassade oben und unten ein.
 	_kasten(&"sockel", ort.call(0.0, unten + 0.55, 0.05), Vector3(breite, 1.1, 0.12), drehung)
+	# Regenfallrohre an den Fassadenrändern — Zink von Traufe bis Sockel.
+	if breite > 12.0:
+		for seite in [-1.0, 1.0]:
+			_zylinder(&"fallrohr",
+				ort.call(seite * (breite * 0.5 - 0.7), (unten + oben) * 0.5, 0.12),
+				0.11, oben - unten - 0.4)
 	_kasten(&"rahmen", ort.call(0.0, oben - 0.22, 0.14), Vector3(breite + 0.25, 0.35, 0.34), drehung)
 	if block.size.y > 9.0:
 		_kasten(&"rahmen", ort.call(0.0, unten + 4.35, 0.07), Vector3(breite, 0.16, 0.16), drehung)
@@ -392,7 +447,13 @@ func _fassade(block: CSGBox3D, n: Vector3, rng: RandomNumberGenerator) -> void:
 
 			if reihe >= 1 and rng.randf() < 0.07:
 				_kasten(&"rahmen", ort.call(u, y - 0.16, 0.42), Vector3(1.7, 0.12, 0.85), drehung)
-				_kasten(&"gitter", ort.call(u, y + 0.32, 0.8), Vector3(1.7, 0.9, 0.06), drehung)
+				# Geländer aus Handlauf und Stäben — eine volle Platte liest
+				# sich als Brett, erst die Lücken machen es zum Balkon.
+				_kasten(&"gitter", ort.call(u, y + 0.78, 0.8), Vector3(1.7, 0.05, 0.05), drehung)
+				for stab in 9:
+					_kasten(&"gitter",
+						ort.call(u - 0.8 + stab * 0.2, y + 0.36, 0.8),
+						Vector3(0.028, 0.8, 0.028), drehung)
 		y += etage
 		reihe += 1
 
@@ -405,6 +466,15 @@ func _fassade(block: CSGBox3D, n: Vector3, rng: RandomNumberGenerator) -> void:
 			continue
 		if i % 6 == 2:
 			_kasten(&"tuer", stelle, Vector3(1.35, 2.5, 0.12), drehung)
+		elif i % 5 == 1 and rng.randf() < 0.3:
+			# Ein verwitterter Tag zwischen den Fenstern — nichts sagt
+			# schneller „Berlin" als besprühter Putz in Hüfthöhe.
+			var tag: StringName = [&"graffiti_a", &"graffiti_b", &"graffiti_c"][rng.randi() % 3]
+			_lege(tag, Transform3D(
+				Basis(Vector3.UP, drehung)
+					* Basis(Vector3(0, 0, 1), rng.randf_range(-0.06, 0.06))
+					* Basis.from_scale(Vector3(rng.randf_range(1.8, 2.6), rng.randf_range(0.9, 1.3), 1.0)),
+				ort.call(u + rng.randf_range(-0.4, 0.4), unten + 1.35, 0.115)))
 		elif i % 7 == 4 and rng.randf() < 0.75:
 			_kasten(&"laden", ort.call(u, unten + 1.28, 0.055), Vector3(3.3, 2.55, 0.1), drehung)
 			_kasten(&"ladenschild", ort.call(u, unten + 2.85, 0.07), Vector3(3.5, 0.55, 0.12), drehung)
@@ -626,6 +696,103 @@ func _ampel(fuss: Vector3) -> void:
 	_kugel(&"ampel_rot", fuss + Vector3(0, 3.32, 0), 0.13)
 	_kasten(&"gitter", fuss + Vector3(0, 2.2, 0), Vector3(0.2, 0.4, 0.2), 0.0)
 	_kugel(&"ampel_rot", fuss + Vector3(0, 2.3, 0), 0.1)
+
+
+## Feiner Nieselregen um die Kamera: Streifenpartikel in einer Box, die in
+## `_process` der Kamera folgt. 2020 war ein nasses Frühjahr, und der nasse
+## Asphalt braucht eine Quelle.
+func _regen_bauen() -> void:
+	_regen = CPUParticles3D.new()
+	_regen.amount = 420
+	_regen.lifetime = 1.5
+	_regen.emission_shape = CPUParticles3D.EMISSION_SHAPE_BOX
+	_regen.emission_box_extents = Vector3(11, 0.5, 11)
+	_regen.direction = Vector3(0.05, -1, 0.04)
+	_regen.spread = 0.0
+	_regen.gravity = Vector3.ZERO
+	_regen.initial_velocity_min = 7.0
+	_regen.initial_velocity_max = 9.0
+	_regen.particle_flag_align_y = true
+	var tropfen := BoxMesh.new()
+	tropfen.size = Vector3(0.01, 0.32, 0.01)
+	var nass := StandardMaterial3D.new()
+	nass.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	nass.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	nass.albedo_color = Color(0.62, 0.7, 0.85, 0.13)
+	tropfen.material = nass
+	_regen.mesh = tropfen
+	_regen.position = Vector3(0, 9, 0)
+	add_child(_regen)
+
+
+## Eine ferne Tram quert die Gleisstraße — weit östlich der Stelle, an der
+## der Spaziergang die Gleise kreuzt, damit sie niemandem durchs Bild fährt.
+func _tram_bauen() -> void:
+	_tram = Node3D.new()
+	var wagen := MeshInstance3D.new()
+	var kasten := BoxMesh.new()
+	kasten.size = Vector3(13.5, 2.5, 2.3)
+	kasten.material = _mat(Color(0.75, 0.72, 0.2), 0.5)
+	wagen.mesh = kasten
+	wagen.position = Vector3(0, 1.6, 0)
+	_tram.add_child(wagen)
+	var fenster := MeshInstance3D.new()
+	var band := BoxMesh.new()
+	band.size = Vector3(12.8, 0.75, 2.34)
+	band.material = _mat(Color(0.95, 0.85, 0.6), 0.4, Color(1.0, 0.85, 0.55), 1.6)
+	fenster.mesh = band
+	fenster.position = Vector3(0, 2.0, 0)
+	_tram.add_child(fenster)
+	var buegel := MeshInstance3D.new()
+	var stab := BoxMesh.new()
+	stab.size = Vector3(0.08, 2.6, 1.4)
+	stab.material = _mat(Color(0.1, 0.1, 0.12), 0.5)
+	buegel.mesh = stab
+	buegel.position = Vector3(-3.5, 4.1, 0)
+	_tram.add_child(buegel)
+	var licht := OmniLight3D.new()
+	licht.light_color = Color(1.0, 0.9, 0.7)
+	licht.light_energy = 2.2
+	licht.omni_range = 9.0
+	licht.position = Vector3(-7.0, 1.3, 0)
+	_tram.add_child(licht)
+	_tram.position = Vector3(120, 0, -55)
+	_tram.visible = false
+	add_child(_tram)
+
+
+## Ein Flugzeug hoch über der Stadt: weißes Dauerlicht, rotes Blinklicht.
+func _flugzeug_starten() -> void:
+	_flugzeug = Node3D.new()
+	var lampe := MeshInstance3D.new()
+	var punkt := SphereMesh.new()
+	punkt.radius = 1.2
+	punkt.height = 2.4
+	punkt.material = _mat(Color(1, 1, 1), 0.5, Color(1.0, 0.98, 0.9), 2.0)
+	lampe.mesh = punkt
+	_flugzeug.add_child(lampe)
+	_flugzeug_blink = MeshInstance3D.new()
+	var blink := SphereMesh.new()
+	blink.radius = 1.0
+	blink.height = 2.0
+	blink.material = _mat(Color(0.4, 0.02, 0.02), 0.5, Color(1.0, 0.1, 0.05), 3.0)
+	_flugzeug_blink.mesh = blink
+	_flugzeug_blink.position = Vector3(0, 0, 3.5)
+	_flugzeug.add_child(_flugzeug_blink)
+	add_child(_flugzeug)
+
+
+## Reflexionssonden für die Stellen, an denen die Kamera lange verweilt —
+## im Forward+-Renderer ergänzen sie die Screen-Space-Reflexionen dort,
+## wo deren Bildschirminformation endet.
+func _spiegelsonden_setzen() -> void:
+	for eintrag in [[Vector3(127, 4, -238), Vector3(30, 12, 26)],
+			[Vector3(16, 5, -55), Vector3(44, 14, 32)]]:
+		var sonde := ReflectionProbe.new()
+		sonde.position = eintrag[0]
+		sonde.size = eintrag[1]
+		sonde.box_projection = true
+		add_child(sonde)
 
 
 ## Mond und ein schwaches Sternfeld. Über einer Stadt sieht man wenige Sterne —

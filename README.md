@@ -15,8 +15,12 @@ Gehwege tragen echte Foto-PBR-Materialien (ambientCG, CC0 — eingebaut über
 Fenster in dunklen Laibungen, Laternen mit sichtbaren Lichtkegeln (warmweiß
 und Natriumdampf-orange, eine flackert), Mond und Sterne, Tram-Oberleitung,
 detaillierte geparkte Autos, Ampeln, Mülleimer, Gullys, Plakate, Dächer mit
-Schornsteinen und Antennen, der Fernsehturm als Silhouette. Dazu Vignette,
-Farbkorrektur und — in der fertigen App — SDFGI, Reflexionen und Nebel. Von Anfang bis Ende erzählt, mit Titel und Ton. Oliver vor
+Schornsteinen und Antennen, der Fernsehturm als Silhouette. Nieselregen folgt
+der Kamera, eine ferne Tram quert die Gleisstraße, ein Flugzeug blinkt am
+Himmel; die Figuren blinzeln, atmen sichtbar und bewegen beim Sprechen den
+Mund. Graffiti, Balkongeländer und Fallrohre an den Fassaden. Dazu Vignette
+mit Filmkorn, Farbkorrektur, Tiefenschärfe im Schlussbild und — in der
+fertigen App — SDFGI, Reflexionen und Nebel. Von Anfang bis Ende erzählt, mit Titel und Ton. Oliver vor
 seiner Bürotür abholen, zu zweit durch die Stadt laufen (zwei Gespräche
 unterwegs, dazu drei optionale Erinnerungen am Weg), an der Dönerbude ankommen
 (offener Verkaufsraum mit Verkäufer hinterm Tresen und drehendem Dönerspieß),

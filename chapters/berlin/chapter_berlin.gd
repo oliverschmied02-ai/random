@@ -240,6 +240,15 @@ func _abschluss_szene() -> void:
 	tween.tween_property(kamera, ^"fov", abschluss_bildwinkel, abschluss_fahrt)
 	await tween.finished
 
+	# Tiefenschärfe fürs Schlussbild: die beiden scharf, Berlin dahinter weich.
+	# Nur hier — beim Zielen im Minispiel wäre Unschärfe eine Zumutung.
+	var blende := CameraAttributesPractical.new()
+	blende.dof_blur_far_enabled = true
+	blende.dof_blur_far_distance = 7.0
+	blende.dof_blur_far_transition = 5.0
+	blende.dof_blur_amount = 0.07
+	kamera.attributes = blende
+
 	_figur_anne.schaue_an(_oliver)
 	await _dialogue.play(BerlinDialogue.ABSCHLUSS)
 	await _karte.abspann("KAPITEL 1", "BERLIN — 2020")
