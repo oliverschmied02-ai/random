@@ -59,11 +59,10 @@ func _haar_faerben() -> void:
 
 
 func _schuerze_umbinden() -> void:
-	_klotz(Vector3(0.0, 1.22, -0.145), Vector3(0.3, 0.34, 0.03))    # Latz
-	_klotz(Vector3(0.0, 0.8, -0.165), Vector3(0.46, 0.52, 0.035))   # Schurz
-	_klotz(Vector3(0.0, 1.055, -0.155), Vector3(0.5, 0.03, 0.03))   # Bindeband
-	_klotz(Vector3(-0.08, 1.45, -0.1), Vector3(0.03, 0.14, 0.02))   # Träger
-	_klotz(Vector3(0.08, 1.45, -0.1), Vector3(0.03, 0.14, 0.02))
+	# Dicht am Körper — ein Fingerbreit Abstand, sonst schwebt der Stoff.
+	_klotz(Vector3(0.0, 1.24, -0.1), Vector3(0.28, 0.32, 0.025))    # Latz
+	_klotz(Vector3(0.0, 0.82, -0.13), Vector3(0.38, 0.5, 0.03))     # Schurz
+	_klotz(Vector3(0.0, 1.06, -0.12), Vector3(0.42, 0.03, 0.028))   # Bindeband
 
 
 func _klotz(mitte: Vector3, masse: Vector3) -> void:

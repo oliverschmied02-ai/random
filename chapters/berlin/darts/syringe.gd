@@ -87,5 +87,6 @@ func _einschlagen() -> void:
 func _stecken_bleiben() -> void:
 	global_position += global_transform.basis.z * 0.09
 	var spitze := global_position - global_transform.basis.z * 0.185
-	rotate_object_local(Vector3.RIGHT, randf_range(0.25, 0.4))
+	rotate_object_local(Vector3.RIGHT, randf_range(0.5, 0.7))
+	rotate_object_local(Vector3.UP, randf_range(-0.18, 0.18))
 	global_position = spitze + global_transform.basis.z * 0.185

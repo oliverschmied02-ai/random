@@ -696,17 +696,20 @@ func _spiess_bauen(stelle: Vector3) -> void:
 	_spiess_dreher = Node3D.new()
 	_spiess_dreher.position = fuss
 	add_child(_spiess_dreher)
-	var fleisch := _mat(Color(0.52, 0.33, 0.17), 0.62, Color(0.85, 0.42, 0.14), 0.3)
-	var radien := [0.13, 0.2, 0.25, 0.27, 0.26, 0.21, 0.14]
-	for i in radien.size():
+	# Gebratenes Braun statt rohem Beige, und ein durchgehendes Profil:
+	# jede Schicht endet mit dem Radius, mit dem die nächste beginnt.
+	var fleisch := _mat(Color(0.4, 0.24, 0.11), 0.68, Color(0.6, 0.28, 0.09), 0.12)
+	var kruste := _mat(Color(0.32, 0.18, 0.08), 0.72, Color(0.55, 0.24, 0.07), 0.12)
+	var radien := [0.1, 0.17, 0.22, 0.25, 0.26, 0.25, 0.22, 0.17, 0.1]
+	for i in radien.size() - 1:
 		var schicht := MeshInstance3D.new()
 		var form := CylinderMesh.new()
-		form.top_radius = radien[i] * 0.94
 		form.bottom_radius = radien[i]
-		form.height = 0.165
-		form.material = fleisch
+		form.top_radius = radien[i + 1]
+		form.height = 0.14
+		form.material = kruste if i % 2 == 0 else fleisch
 		schicht.mesh = form
-		schicht.position = Vector3(0, 1.22 + i * 0.16, 0)
+		schicht.position = Vector3(0, 1.19 + i * 0.14, 0)
 		_spiess_dreher.add_child(schicht)
 
 	var heizung := MeshInstance3D.new()

@@ -47,6 +47,23 @@ func _los() -> void:
 				kind.visible = false
 	_merke("oberflaeche versteckt")
 
+	# Zwei Blicke in den Verkaufsraum: Verkäufer, Spieß, Tresen.
+	var frei := Camera3D.new()
+	frei.fov = 55.0
+	root.add_child(frei)
+	frei.make_current()
+	frei.global_position = Vector3(124.6, 1.7, -234.6)
+	frei.look_at(Vector3(121.7, 1.35, -238.2))
+	for i in 2:
+		await process_frame
+	_schuss("bude_innen")
+	frei.global_position = Vector3(123.6, 1.6, -236.4)
+	frei.look_at(Vector3(121.2, 1.5, -238.4))
+	for i in 2:
+		await process_frame
+	_schuss("bude_nah")
+	frei.queue_free()
+
 	var darts: DartsGame = szene.get_node("DartsGame")
 	_merke("darts gefunden")
 	darts.kamerafahrt = 0.0
