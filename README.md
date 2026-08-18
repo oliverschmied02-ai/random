@@ -9,9 +9,11 @@ das wichtige Momente unserer Beziehung als spielbare Szenen nacherzählt.
 "Vaccination Darts"). Weitere Kapitel sind konzeptionell vorgesehen, werden
 aber bewusst noch nicht gebaut.
 
-**Stand:** Stage 7 — Kapitel 1 spielt jetzt abends in Berlin: Nachtfassaden
-mit erleuchteten Fenstern, Laternen, Gehwege, Schilder, der Fernsehturm als
-Silhouette. Von Anfang bis Ende erzählt, mit Titel und Ton. Oliver vor
+**Stand:** Stage 7 — Kapitel 1 spielt abends in Berlin: Nachtfassaden mit
+Putzkörnung und erleuchteten Fenstern in dunklen Laibungen, nasser Asphalt mit
+Pfützen, Laternen (warmweiß und Natriumdampf-orange, eine flackert), Mond und
+Sterne, Tram-Oberleitung, geparkte Autos, Ampeln, Mülleimer, Gullys, Plakate,
+Schornsteine und Antennen auf den Dächern, der Fernsehturm als Silhouette. Von Anfang bis Ende erzählt, mit Titel und Ton. Oliver vor
 seiner Bürotür abholen, zu zweit durch die Stadt laufen (zwei Gespräche
 unterwegs, dazu drei optionale Erinnerungen am Weg), an der Dönerbude ankommen,
 dort *Vaccination Darts* spielen — und danach ein Schlussbild, in dem die

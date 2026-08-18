@@ -2,21 +2,29 @@ extends Node3D
 
 ## Die Kulisse: macht aus den grauen Blöcken einen Berliner Abend.
 ##
-## Alles hier ist **Anstrich, keine Architektur**: Fassaden, Gehwege, Lichter
-## und Schilder werden beim Laden über die vorhandenen Blöcke gelegt. Die
-## Blöcke selbst — und damit Kollision, Route und alle gemessenen Zeiten —
-## bleiben unangetastet. Einzige Ausnahme: die Gehwege tragen eine 8 cm hohe
-## Platte mit Kollision, genau die Bordsteinkante, für die das Stufen-Steigen
-## gebaut wurde.
+## Alles hier ist **Anstrich, keine Architektur**: Fassaden, Dächer, Gehwege,
+## Lichter, Drähte und Schilder werden beim Laden über die vorhandenen Blöcke
+## gelegt. Die Blöcke selbst — und damit Kollision, Route und alle gemessenen
+## Zeiten — bleiben unangetastet. Einzige Ausnahme: die Gehwege tragen eine
+## 8 cm hohe Platte mit Kollision, genau die Bordsteinkante, für die das
+## Stufen-Steigen gebaut wurde.
 ##
-## Gebaut wird prozedural statt von Hand, aus zwei Gründen: die Fassaden
-## müssen zu den Blöcken passen, auch wenn jemand einen Block verschiebt —
-## sie lesen Lage und Maße zur Laufzeit. Und tausende Fenster von Hand zu
-## setzen wäre Fleißarbeit ohne Urteil. Der Zufall ist gesät (je Wand aus
-## ihrem Namen), damit jede Runde gleich aussieht.
+## Gebaut wird prozedural statt von Hand: die Fassaden lesen Lage und Maße der
+## Blöcke zur Laufzeit, und tausende Fenster von Hand zu setzen wäre
+## Fleißarbeit ohne Urteil. Der Zufall ist gesät (je Wand aus ihrem Namen),
+## damit jede Runde gleich aussieht.
 ##
-## Alle Kleinteile landen in wenigen MultiMeshes — ein Zeichenaufruf je
-## Materialgruppe, egal ob dreihundert oder dreitausend Fenster.
+## Drei Dinge tragen den Realismus:
+##
+## * **Oberflächen statt Farbflächen.** Putz, Asphalt und Beton bekommen
+##   prozedurale Rauschtexturen samt Normal-Maps (Triplanar — kein UV-Zuschnitt
+##   nötig). Nichts verrät „Computer" so sehr wie mathematisch glatte Flächen.
+## * **Nasser Asphalt.** Die Fahrbahn ist stellenweise spiegelnd (fleckige
+##   Rauheit), und Screen-Space-Reflexionen holen Laternen und Leuchtschilder
+##   in die Straße. Sichtbar im Forward+-Renderer, also im fertigen Spiel.
+## * **Kleinzeug in Massen**: Dachaufbauten, Fensterbänke, Vorhänge,
+##   Oberleitungen, Mülleimer, Gullys, Plakate. Alles landet in wenigen
+##   MultiMeshes — ein Zeichenaufruf je Materialgruppe.
 
 ## Anteil erleuchteter Fenster. 2020, halb elf: die meisten sind zu Hause.
 @export_range(0.0, 1.0, 0.01) var fenster_an_anteil: float = 0.14
@@ -54,8 +62,24 @@ const GRUND_FREI: Array = [
 	[47.0, -106.0, 52.0, -94.0],
 ]
 
+## Geparkte Autos: [x, z, Drehung]. 2020 fährt niemand, aber Berliner
+## Straßenränder stehen immer voll.
+const AUTOS: Array = [
+	[-6.6, 2.0, 0.0], [-6.6, -14.0, 0.0], [-6.4, -31.0, 0.0],
+	[66.6, -96.0, 0.0], [66.4, -117.0, 0.0],
+	[135.6, -168.0, 0.0], [135.4, -215.0, 0.0],
+]
+
+## Gullydeckel am Fahrbahnrand: [x, z].
+const GULLYS: Array = [
+	[-7.6, -6.0], [7.6, -26.0], [16.0, -44.6], [30.0, -65.4],
+	[52.6, -88.0], [67.4, -112.0], [56.0, -144.6], [96.0, -125.4],
+	[122.6, -170.0], [137.4, -196.0], [126.0, -232.0],
+]
+
 var _stapel: Dictionary = {}
 var _materialien: Dictionary = {}
+var _flacker: Array = []
 
 
 func _ready() -> void:
@@ -65,7 +89,11 @@ func _ready() -> void:
 	_gehwege_bauen()
 	_markierungen_bauen()
 	_gleisbett_bauen()
+	_oberleitung_spannen()
 	_laternen_anzuenden()
+	_autos_parken()
+	_moeblieren()
+	_himmel_fuellen()
 	_doenerbude_beleben()
 	_cafe_beschildern()
 	_buero_beschildern()
@@ -75,22 +103,60 @@ func _ready() -> void:
 	_stapel_absetzen()
 
 
+## Lebendiges Licht: eine Laterne flackert, das Dönerschild brummt. Reine
+## Sinusmischungen — unregelmäßig genug, dass kein Muster auffällt, und ohne
+## Zufall, damit jeder Prüflauf dasselbe sieht.
+func _process(_delta: float) -> void:
+	var t := Time.get_ticks_msec() / 1000.0
+	for eintrag in _flacker:
+		var faktor: float = eintrag["ruhe"] + eintrag["hub"] * (
+			0.5 * sin(t * eintrag["takt"]) + 0.3 * sin(t * eintrag["takt"] * 3.7 + 1.3)
+		)
+		if eintrag["aussetzer"] and sin(t * 0.83) > 0.996:
+			faktor = 0.1
+		var material: StandardMaterial3D = eintrag["material"]
+		material.emission_energy_multiplier = eintrag["basis"] * clampf(faktor, 0.05, 1.2)
+		var licht: OmniLight3D = eintrag["licht"]
+		if licht != null:
+			licht.light_energy = eintrag["licht_basis"] * clampf(faktor, 0.05, 1.2)
+
+
 # --- Materialien und Sammelbecken -------------------------------------------
 
 
 func _materialien_anlegen() -> void:
 	_materialien = {
 		&"rahmen": _mat(Color(0.82, 0.78, 0.70), 0.8),
+		&"laibung": _mat(Color(0.04, 0.045, 0.06), 0.6),
 		&"glas_dunkel": _mat(Color(0.07, 0.09, 0.13), 0.25, Color(0.10, 0.13, 0.20), 0.35),
 		&"glas_hell": _mat(Color(0.85, 0.68, 0.42), 0.6, Color(1.0, 0.72, 0.38), 1.9),
-		&"sockel": _mat(Color(0.30, 0.29, 0.28), 0.95),
+		&"glas_hell2": _mat(Color(0.88, 0.78, 0.55), 0.6, Color(1.0, 0.85, 0.55), 1.5),
+		&"glas_tv": _mat(Color(0.5, 0.6, 0.8), 0.6, Color(0.55, 0.7, 1.2), 1.7),
+		&"vorhang": _mat(Color(0.38, 0.26, 0.17), 0.9),
+		&"sockel": _rauschmat(Color(0.30, 0.29, 0.28), 0.95, 8.0, 0.7, 0.35),
 		&"tuer": _mat(Color(0.23, 0.17, 0.13), 0.7),
 		&"laden": _mat(Color(0.36, 0.37, 0.39), 0.5),
 		&"ladenschild": _mat(Color(0.42, 0.18, 0.16), 0.7),
 		&"gitter": _mat(Color(0.14, 0.15, 0.17), 0.5),
 		&"markierung": _mat(Color(0.75, 0.74, 0.70), 0.9),
-		&"gleisbett": _mat(Color(0.10, 0.10, 0.11), 1.0),
+		&"gleisbett": _rauschmat(Color(0.10, 0.10, 0.11), 1.0, 10.0, 0.75, 0.3),
 		&"birne": _mat(Color(1.0, 0.75, 0.4), 0.5, Color(1.0, 0.62, 0.25), 3.2),
+		&"dach": _mat(Color(0.16, 0.16, 0.18), 0.9),
+		&"schornstein": _mat(Color(0.42, 0.33, 0.28), 0.95),
+		&"antenne": _mat(Color(0.12, 0.13, 0.15), 0.5),
+		&"draht": _mat(Color(0.05, 0.05, 0.06), 0.6),
+		&"muell": _mat(Color(0.80, 0.34, 0.06), 0.6),
+		&"kasten_grau": _mat(Color(0.44, 0.46, 0.43), 0.8),
+		&"auto": _mat(Color(0.10, 0.11, 0.13), 0.35),
+		&"auto_hell": _mat(Color(0.28, 0.29, 0.32), 0.4),
+		&"rad": _mat(Color(0.05, 0.05, 0.05), 0.9),
+		&"gully": _mat(Color(0.09, 0.09, 0.10), 0.7),
+		&"poller": _mat(Color(0.18, 0.19, 0.21), 0.6),
+		&"plakat_a": _mat(Color(0.74, 0.71, 0.63), 0.9),
+		&"plakat_b": _mat(Color(0.60, 0.65, 0.60), 0.9),
+		&"fuge": _mat(Color(0.30, 0.30, 0.32), 0.95),
+		&"stern": _mat(Color(0.0, 0.0, 0.0), 1.0, Color(0.85, 0.88, 1.0), 1.2),
+		&"ampel_rot": _mat(Color(0.3, 0.02, 0.02), 0.4, Color(1.0, 0.08, 0.05), 3.0),
 	}
 
 
@@ -105,21 +171,70 @@ func _mat(farbe: Color, rauheit: float, leuchten: Color = Color.BLACK, staerke: 
 	return m
 
 
+## Ein Material mit Oberfläche: Rauschen in Helligkeit und Relief, triplanar
+## auf die Geometrie gelegt — kein UV-Zuschnitt, funktioniert auf jedem Kasten.
+## `koernung` ist die Größe des Musters (höher = feiner), `boden` die dunkelste
+## Stelle des Helligkeitsrauschens, `relief` die Stärke der Normal-Map.
+func _rauschmat(farbe: Color, rauheit: float, koernung: float, boden: float, relief: float) -> StandardMaterial3D:
+	var m := _mat(farbe, rauheit)
+	var rauschen := FastNoiseLite.new()
+	rauschen.noise_type = FastNoiseLite.TYPE_SIMPLEX
+	rauschen.frequency = 0.02 * koernung
+	rauschen.seed = int(koernung * 1000.0 + boden * 100.0)
+
+	var verlauf := Gradient.new()
+	verlauf.set_color(0, Color(boden, boden, boden))
+	verlauf.set_color(1, Color.WHITE)
+
+	var helligkeit := NoiseTexture2D.new()
+	helligkeit.noise = rauschen
+	helligkeit.seamless = true
+	helligkeit.width = 256
+	helligkeit.height = 256
+	helligkeit.color_ramp = verlauf
+	m.albedo_texture = helligkeit
+
+	if relief > 0.0:
+		var huegel := NoiseTexture2D.new()
+		huegel.noise = rauschen
+		huegel.seamless = true
+		huegel.width = 256
+		huegel.height = 256
+		huegel.as_normal_map = true
+		huegel.bump_strength = 4.0
+		m.normal_enabled = true
+		m.normal_texture = huegel
+		m.normal_scale = relief
+
+	m.uv1_triplanar = true
+	m.uv1_scale = Vector3(0.22, 0.22, 0.22)
+	return m
+
+
 func _lege(gruppe: StringName, lage: Transform3D) -> void:
 	if not _stapel.has(gruppe):
 		_stapel[gruppe] = []
 	_stapel[gruppe].append(lage)
 
 
-## Baut aus jedem Sammelbecken genau eine MultiMesh-Instanz.
+## Baut aus jedem Sammelbecken genau eine MultiMesh-Instanz. Kugeln und
+## Zylinder sind Einheitskörper und werden je Instanz skaliert.
 func _stapel_absetzen() -> void:
+	var kugelgruppen := [&"birne", &"stern", &"ampel_rot"]
+	var zylindergruppen := [&"gully", &"poller", &"rad", &"antenne"]
 	for gruppe in _stapel:
 		var mesh: Mesh
-		if gruppe == &"birne":
+		if gruppe in kugelgruppen:
 			var kugel := SphereMesh.new()
-			kugel.radius = 0.055
-			kugel.height = 0.11
+			kugel.radius = 0.5
+			kugel.height = 1.0
 			mesh = kugel
+		elif gruppe in zylindergruppen:
+			var rohr := CylinderMesh.new()
+			rohr.top_radius = 0.5
+			rohr.bottom_radius = 0.5
+			rohr.height = 1.0
+			mesh = rohr
 		else:
 			mesh = BoxMesh.new()
 		var mm := MultiMesh.new()
@@ -136,18 +251,53 @@ func _stapel_absetzen() -> void:
 		add_child(traeger)
 
 
-func _kasten(gruppe: StringName, mitte: Vector3, masse: Vector3, drehung: float) -> void:
-	var basis := Basis(Vector3.UP, drehung) * Basis.from_scale(masse)
-	_lege(gruppe, Transform3D(basis, mitte))
+func _kasten(gruppe: StringName, mitte: Vector3, masse: Vector3, drehung: float, rolle: float = 0.0) -> void:
+	var basis := Basis(Vector3.UP, drehung)
+	if not is_zero_approx(rolle):
+		basis = basis * Basis(Vector3(0, 0, 1), rolle)
+	_lege(gruppe, Transform3D(basis * Basis.from_scale(masse), mitte))
 
 
-# --- Fassaden ----------------------------------------------------------------
+func _kugel(gruppe: StringName, mitte: Vector3, durchmesser: float) -> void:
+	_lege(gruppe, Transform3D(Basis.from_scale(Vector3.ONE * durchmesser), mitte))
 
 
+func _zylinder(gruppe: StringName, mitte: Vector3, durchmesser: float, hoehe: float, liegend: float = 0.0) -> void:
+	var basis := Basis.IDENTITY
+	if not is_zero_approx(liegend):
+		basis = Basis(Vector3(0, 0, 1), liegend)
+	_lege(gruppe, Transform3D(
+		basis * Basis.from_scale(Vector3(durchmesser, hoehe, durchmesser)), mitte
+	))
+
+
+# --- Boden und Fassaden -------------------------------------------------------
+
+
+## Nasser Nachtasphalt: dunkel, fleckig rau — wo das Rauschen glatt wird,
+## stehen Pfützen, und dort spiegeln sich die Laternen (im Forward+-Renderer
+## über Screen-Space-Reflexionen, eingeschaltet in der Umgebung der Szene).
 func _boden_umfaerben() -> void:
 	var boden := get_parent().get_node_or_null("Ground") as CSGBox3D
-	if boden != null:
-		boden.material = _mat(Color(0.145, 0.150, 0.165), 1.0)
+	if boden == null:
+		return
+	var nass := _rauschmat(Color(0.14, 0.145, 0.16), 1.0, 6.0, 0.72, 0.25)
+	var pfuetzen := FastNoiseLite.new()
+	pfuetzen.noise_type = FastNoiseLite.TYPE_SIMPLEX
+	pfuetzen.frequency = 0.05
+	pfuetzen.seed = 77
+	var verlauf := Gradient.new()
+	verlauf.add_point(0.45, Color(0.10, 0.10, 0.10))
+	verlauf.set_color(0, Color(0.08, 0.08, 0.08))
+	verlauf.set_color(2, Color(0.9, 0.9, 0.9))
+	var rauheit := NoiseTexture2D.new()
+	rauheit.noise = pfuetzen
+	rauheit.seamless = true
+	rauheit.width = 256
+	rauheit.height = 256
+	rauheit.color_ramp = verlauf
+	nass.roughness_texture = rauheit
+	boden.material = nass
 
 
 func _fassaden_bauen() -> void:
@@ -161,10 +311,40 @@ func _fassaden_bauen() -> void:
 		if block == null:
 			continue
 		rng.seed = hash(String(block.name))
-		block.material = _mat(PALETTE[nummer % PALETTE.size()], 0.9)
+		block.material = _rauschmat(PALETTE[nummer % PALETTE.size()], 0.9, 5.0, 0.8, 0.4)
 		nummer += 1
 		for richtung in [Vector3.RIGHT, Vector3.LEFT, Vector3.BACK, Vector3.FORWARD]:
 			_fassade(block, richtung, rng)
+		_dach_bauen(block, rng)
+
+
+## Die Dachlinie gegen den Nachthimmel: Attika, Schornsteine, Antennen.
+## Genau die Silhouette, die aus einem Kasten ein Haus macht.
+func _dach_bauen(block: CSGBox3D, rng: RandomNumberGenerator) -> void:
+	var oben := block.position.y + block.size.y * 0.5
+	_kasten(&"dach",
+		Vector3(block.position.x, oben + 0.5, block.position.z),
+		Vector3(block.size.x - 1.6, 1.0, block.size.z - 1.6), 0.0)
+
+	var flaeche := maxf(block.size.x, block.size.z)
+	var laengs := Vector3(1, 0, 0) if block.size.x >= block.size.z else Vector3(0, 0, 1)
+	var quer := Vector3(0, 0, 1) if block.size.x >= block.size.z else Vector3(1, 0, 0)
+	var quer_halb := (minf(block.size.x, block.size.z) - 3.0) * 0.5
+
+	var anzahl := int(flaeche / 13.0)
+	for i in anzahl:
+		var u := (rng.randf() - 0.5) * (flaeche - 4.0)
+		var v := (rng.randf() - 0.5) * 2.0 * quer_halb
+		var fusspunkt := block.position + laengs * u + quer * v
+		fusspunkt.y = oben + 1.0
+		if rng.randf() < 0.7:
+			_kasten(&"schornstein", fusspunkt + Vector3.UP * rng.randf_range(0.5, 1.0),
+				Vector3(0.9, 1.6, 0.55), 0.0)
+		else:
+			var hoehe := rng.randf_range(2.2, 3.6)
+			_zylinder(&"antenne", fusspunkt + Vector3.UP * hoehe * 0.5, 0.05, hoehe)
+			_kasten(&"antenne", fusspunkt + Vector3.UP * (hoehe - 0.3),
+				Vector3(1.1, 0.03, 0.03), rng.randf_range(0.0, PI))
 
 
 ## Eine Gebäudeseite: Sockel, Fensterraster, Gesims, unten Türen und Läden.
@@ -194,7 +374,9 @@ func _fassade(block: CSGBox3D, n: Vector3, rng: RandomNumberGenerator) -> void:
 	if block.size.y > 9.0:
 		_kasten(&"rahmen", ort.call(0.0, unten + 4.35, 0.07), Vector3(breite, 0.16, 0.16), drehung)
 
-	# Fensterraster: mittig verteilt, Ränder bleiben frei.
+	# Fensterraster: mittig verteilt, Ränder bleiben frei. Der Rahmen steht
+	# vor der Wand, das Glas liegt dahinter zurückgesetzt in einer dunklen
+	# Laibung — diese drei Zentimeter Tiefe machen aus Aufklebern Fenster.
 	var spalten := int((breite - 3.2) / fenster_raster) + 1
 	var start := -(spalten - 1) * fenster_raster * 0.5
 	var reihe := 0
@@ -202,9 +384,31 @@ func _fassade(block: CSGBox3D, n: Vector3, rng: RandomNumberGenerator) -> void:
 	while y + 1.0 < oben - 0.9:
 		for i in spalten:
 			var u := start + i * fenster_raster
-			_kasten(&"rahmen", ort.call(u, y + 0.8, 0.045), Vector3(1.15, 1.75, 0.07), drehung)
-			var gruppe := &"glas_hell" if rng.randf() < fenster_an_anteil else &"glas_dunkel"
-			_kasten(gruppe, ort.call(u, y + 0.8, 0.06), Vector3(0.95, 1.55, 0.05), drehung)
+			_kasten(&"laibung", ort.call(u, y + 0.8, 0.01), Vector3(1.18, 1.78, 0.05), drehung)
+			# Rahmen als vier Leisten — eine volle Platte würde die
+			# zurückgesetzte Scheibe verdecken. Dazu ein Sprossenkreuz.
+			_kasten(&"rahmen", ort.call(u, y + 1.635, 0.055), Vector3(1.15, 0.08, 0.06), drehung)
+			_kasten(&"rahmen", ort.call(u, y - 0.035, 0.055), Vector3(1.15, 0.08, 0.06), drehung)
+			_kasten(&"rahmen", ort.call(u - 0.535, y + 0.8, 0.055), Vector3(0.08, 1.75, 0.06), drehung)
+			_kasten(&"rahmen", ort.call(u + 0.535, y + 0.8, 0.055), Vector3(0.08, 1.75, 0.06), drehung)
+			_kasten(&"rahmen", ort.call(u, y + 0.8, 0.045), Vector3(0.05, 1.6, 0.04), drehung)
+			_kasten(&"rahmen", ort.call(u, y + 1.05, 0.045), Vector3(1.05, 0.05, 0.04), drehung)
+			_kasten(&"rahmen", ort.call(u, y - 0.14, 0.1), Vector3(1.32, 0.09, 0.2), drehung)
+
+			var los := rng.randf()
+			var gruppe: StringName = &"glas_dunkel"
+			if los < fenster_an_anteil * 0.55:
+				gruppe = &"glas_hell"
+			elif los < fenster_an_anteil:
+				gruppe = &"glas_hell2"
+			elif los < fenster_an_anteil + 0.02:
+				gruppe = &"glas_tv"
+			_kasten(gruppe, ort.call(u, y + 0.8, 0.025), Vector3(0.95, 1.55, 0.04), drehung)
+			# Vorhänge: als Silhouette vor dem erleuchteten Fenster.
+			if gruppe != &"glas_dunkel" and rng.randf() < 0.45:
+				_kasten(&"vorhang", ort.call(u - 0.32, y + 0.8, 0.04), Vector3(0.3, 1.5, 0.03), drehung)
+				_kasten(&"vorhang", ort.call(u + 0.32, y + 0.8, 0.04), Vector3(0.3, 1.5, 0.03), drehung)
+
 			if reihe >= 1 and rng.randf() < 0.07:
 				_kasten(&"rahmen", ort.call(u, y - 0.16, 0.42), Vector3(1.7, 0.12, 0.85), drehung)
 				_kasten(&"gitter", ort.call(u, y + 0.32, 0.8), Vector3(1.7, 0.9, 0.06), drehung)
@@ -223,6 +427,13 @@ func _fassade(block: CSGBox3D, n: Vector3, rng: RandomNumberGenerator) -> void:
 		elif i % 7 == 4 and rng.randf() < 0.75:
 			_kasten(&"laden", ort.call(u, unten + 1.28, 0.055), Vector3(3.3, 2.55, 0.1), drehung)
 			_kasten(&"ladenschild", ort.call(u, unten + 2.85, 0.07), Vector3(3.5, 0.55, 0.12), drehung)
+			# Aushänge am geschlossenen Laden — schief, wie mit Klebeband.
+			if rng.randf() < 0.6:
+				_kasten(&"plakat_a", ort.call(u - 0.8, unten + 1.7, 0.115),
+					Vector3(0.45, 0.62, 0.01), drehung, rng.randf_range(-0.07, 0.07))
+			if rng.randf() < 0.4:
+				_kasten(&"plakat_b", ort.call(u + 0.9, unten + 1.5, 0.115),
+					Vector3(0.5, 0.7, 0.01), drehung, rng.randf_range(-0.07, 0.07))
 
 
 func _grund_verboten(stelle: Vector3) -> bool:
@@ -236,7 +447,7 @@ func _grund_verboten(stelle: Vector3) -> bool:
 
 
 func _gehwege_bauen() -> void:
-	var material := _mat(Color(0.40, 0.40, 0.42), 0.95)
+	var material := _rauschmat(Color(0.40, 0.40, 0.42), 0.92, 9.0, 0.8, 0.3)
 	for feld in GEHWEGE:
 		var masse := Vector3(feld[2] - feld[0], 0.16, feld[3] - feld[1])
 		var mitte := Vector3((feld[0] + feld[2]) * 0.5, 0.0, (feld[1] + feld[3]) * 0.5)
@@ -255,6 +466,19 @@ func _gehwege_bauen() -> void:
 		sicht.mesh = mesh
 		koerper.add_child(sicht)
 		add_child(koerper)
+
+		# Plattenfugen quer zur Laufrichtung — Beton kommt in Stücken.
+		var laengs_x := masse.x >= masse.z
+		var laenge := masse.x if laengs_x else masse.z
+		var fugen := int(laenge / 1.6)
+		for i in fugen:
+			var v := -laenge * 0.5 + (i + 0.5) * 1.6
+			var stelle := mitte + (Vector3(v, 0.081, 0) if laengs_x else Vector3(0, 0.081, v))
+			_kasten(&"fuge", stelle,
+				Vector3(0.03, 0.004, masse.z) if laengs_x else Vector3(masse.x, 0.004, 0.03), 0.0)
+
+	for eintrag in GULLYS:
+		_zylinder(&"gully", Vector3(eintrag[0], 0.015, eintrag[1]), 0.75, 0.03)
 
 
 func _markierungen_bauen() -> void:
@@ -276,23 +500,129 @@ func _gleisbett_bauen() -> void:
 	_kasten(&"gleisbett", Vector3(30.0, 0.008, -55.0), Vector3(86.0, 0.03, 3.6), 0.0)
 
 
+## Fahrdraht über den Gleisen und Querspanner zwischen den Häusern — der
+## Himmel über Berliner Straßen ist nie leer.
+func _oberleitung_spannen() -> void:
+	_kasten(&"draht", Vector3(30.0, 5.6, -55.0), Vector3(86.0, 0.035, 0.035), 0.0)
+	_kasten(&"draht", Vector3(30.0, 6.15, -55.0), Vector3(86.0, 0.03, 0.03), 0.0)
+	for x in [-8.0, 10.0, 28.0, 46.0, 64.0]:
+		_kasten(&"draht", Vector3(x, 6.4, -55.0), Vector3(0.028, 0.028, 24.5), 0.0)
+	for z in [-80.0, -100.0, -120.0]:
+		_kasten(&"draht", Vector3(60.0, 6.5, z), Vector3(24.5, 0.028, 0.028), 0.0)
+	for z in [-160.0, -200.0]:
+		_kasten(&"draht", Vector3(130.0, 6.5, z), Vector3(24.5, 0.028, 0.028), 0.0)
+
+
 func _laternen_anzuenden() -> void:
 	var moebel := get_parent().get_node_or_null("StreetFurniture")
 	if moebel == null:
 		return
-	var glas := _mat(Color(1.0, 0.85, 0.6), 0.4, Color(1.0, 0.78, 0.45), 2.4)
+	# Zwei Leuchtmittel im Bestand, wie auf echten Straßen: warmweiß und das
+	# orangere Natriumdampf-Licht. Laterne 5 flackert.
+	var glas_warm := _mat(Color(1.0, 0.85, 0.6), 0.4, Color(1.0, 0.78, 0.45), 2.4)
+	var glas_orange := _mat(Color(1.0, 0.78, 0.45), 0.4, Color(1.0, 0.62, 0.28), 2.4)
 	for i in range(1, 11):
 		var kopf := moebel.get_node_or_null("Kopf%d" % i) as CSGBox3D
 		if kopf == null:
 			continue
-		kopf.material = glas
+		var orange := i % 2 == 0
+		var glas := glas_orange if orange else glas_warm
 		var licht := OmniLight3D.new()
 		licht.position = kopf.position + Vector3(0, -0.35, 0)
-		licht.light_color = Color(1.0, 0.82, 0.55)
+		licht.light_color = Color(1.0, 0.72, 0.4) if orange else Color(1.0, 0.82, 0.55)
 		licht.light_energy = 3.4
 		licht.omni_range = 15.0
 		licht.omni_attenuation = 1.4
 		add_child(licht)
+		if i == 5:
+			glas = glas.duplicate()
+			_flacker.append({
+				"material": glas, "licht": licht, "basis": 2.4, "licht_basis": 3.4,
+				"ruhe": 0.7, "hub": 0.35, "takt": 11.0, "aussetzer": true,
+			})
+		kopf.material = glas
+
+		# Der orange Berliner Mülleimer, am Mast montiert.
+		if i % 2 == 1:
+			var mast := moebel.get_node_or_null("Mast%d" % i) as CSGCylinder3D
+			if mast != null:
+				# Feste Griffhöhe statt relativ zum Mastmittelpunkt — der
+				# liegt je nach Masthöhe woanders und hob die Eimer hoch.
+				_kasten(&"muell",
+					Vector3(mast.position.x + 0.2, 1.1, mast.position.z + 0.08),
+					Vector3(0.34, 0.5, 0.3), 0.3)
+
+
+## Geparkte Autos: Karosserie, dunkles Glashaus, Räder. Nachts am Straßenrand
+## reicht das — niemand schaut einem stehenden Auto auf die Türgriffe.
+func _autos_parken() -> void:
+	var nummer := 0
+	for eintrag in AUTOS:
+		var fuss := Vector3(eintrag[0], 0.0, eintrag[1])
+		var drehung: float = eintrag[2]
+		var gruppe: StringName = &"auto" if nummer % 3 != 2 else &"auto_hell"
+		nummer += 1
+		_kasten(gruppe, fuss + Vector3(0, 0.55, 0), Vector3(1.76, 0.6, 4.35), drehung)
+		_kasten(&"glas_dunkel", fuss + Vector3(0, 1.08, -0.25).rotated(Vector3.UP, drehung),
+			Vector3(1.6, 0.5, 2.3), drehung)
+		_kasten(gruppe, fuss + Vector3(0, 1.12, -0.25).rotated(Vector3.UP, drehung),
+			Vector3(1.62, 0.06, 2.35), drehung)
+		for ecke in [Vector3(0.85, 0.32, 1.45), Vector3(-0.85, 0.32, 1.45),
+				Vector3(0.85, 0.32, -1.45), Vector3(-0.85, 0.32, -1.45)]:
+			_lege(&"rad", Transform3D(
+				Basis(Vector3.UP, drehung) * Basis(Vector3(0, 0, 1), PI * 0.5)
+					* Basis.from_scale(Vector3(0.64, 0.24, 0.64)),
+				fuss + ecke.rotated(Vector3.UP, drehung)))
+
+
+## Poller, Verteilerkästen, eine rote Ampel über leerer Kreuzung, Plakate an
+## den Litfaßsäulen — das leblose Inventar einer Stadt im Lockdown.
+func _moeblieren() -> void:
+	for z in [-4.0, -9.0, -14.0]:
+		_zylinder(&"poller", Vector3(8.2, 0.5, z), 0.14, 0.85)
+	for z in [-186.0, -190.0, -194.0]:
+		_zylinder(&"poller", Vector3(121.9, 0.5, z), 0.14, 0.85)
+
+	for eintrag in [[-8.3, -35.0, PI * 0.5], [51.4, -78.0, -PI * 0.5], [119.9, -152.0, -PI * 0.5]]:
+		_kasten(&"kasten_grau", Vector3(eintrag[0], 0.65, eintrag[1]),
+			Vector3(0.65, 1.15, 0.42), eintrag[2])
+
+	_ampel(Vector3(10.6, 0.08, -44.3))
+	_ampel(Vector3(70.8, 0.08, -133.2))
+
+
+## Eine Fußgängerampel, die rot in die leere Straße leuchtet — 2020 in einem
+## Bild. Der Mast ist ein Zylinder, das rote Licht glüht.
+func _ampel(fuss: Vector3) -> void:
+	_zylinder(&"poller", fuss + Vector3(0, 1.7, 0), 0.09, 3.4)
+	_kasten(&"gitter", fuss + Vector3(0, 3.15, 0), Vector3(0.24, 0.62, 0.24), 0.0)
+	_kugel(&"ampel_rot", fuss + Vector3(0, 3.32, 0), 0.13)
+	_kasten(&"gitter", fuss + Vector3(0, 2.2, 0), Vector3(0.2, 0.4, 0.2), 0.0)
+	_kugel(&"ampel_rot", fuss + Vector3(0, 2.3, 0), 0.1)
+
+
+## Mond und ein schwaches Sternfeld. Über einer Stadt sieht man wenige Sterne —
+## die Lichtglocke frisst sie —, aber ein völlig leerer Himmel wirkt wie eine
+## Decke. Alles weit außerhalb der begehbaren Welt.
+func _himmel_fuellen() -> void:
+	var mond := MeshInstance3D.new()
+	var scheibe := SphereMesh.new()
+	scheibe.radius = 16.0
+	scheibe.height = 32.0
+	scheibe.material = _mat(Color(0.9, 0.89, 0.84), 0.8, Color(0.95, 0.93, 0.85), 1.3)
+	mond.mesh = scheibe
+	mond.position = Vector3(280.0, 460.0, -580.0)
+	add_child(mond)
+
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 2020
+	for i in 220:
+		var winkel := rng.randf() * TAU
+		var hoehe := rng.randf_range(0.35, 0.95)
+		var radius := 820.0
+		var flach := sqrt(1.0 - hoehe * hoehe) * radius
+		var stelle := Vector3(cos(winkel) * flach + 65.0, hoehe * radius, sin(winkel) * flach - 105.0)
+		_kugel(&"stern", stelle, rng.randf_range(0.6, 1.3))
 
 
 # --- Schauplätze ---------------------------------------------------------------
@@ -304,7 +634,12 @@ func _doenerbude_beleben() -> void:
 		return
 	var schild := bude.get_node_or_null("Schild") as CSGBox3D
 	if schild != null:
-		schild.material = _mat(Color(0.95, 0.79, 0.29), 0.5, Color(1.0, 0.76, 0.2), 2.2)
+		var leuchten := _mat(Color(0.95, 0.79, 0.29), 0.5, Color(1.0, 0.76, 0.2), 2.2)
+		schild.material = leuchten
+		_flacker.append({
+			"material": leuchten, "licht": null, "basis": 2.2, "licht_basis": 0.0,
+			"ruhe": 0.94, "hub": 0.06, "takt": 31.0, "aussetzer": false,
+		})
 	var spiess := bude.get_node_or_null("Spiess") as CSGBox3D
 	if spiess != null:
 		spiess.material = _mat(Color(0.62, 0.42, 0.24), 0.6, Color(0.9, 0.5, 0.2), 0.5)
@@ -314,8 +649,7 @@ func _doenerbude_beleben() -> void:
 
 	# Lichterkette unter dem Vordach — neun warme Punkte.
 	for i in 9:
-		_lege(&"birne", Transform3D(Basis.IDENTITY,
-			Vector3(119.9 + i * 0.53, 2.58 - 0.04 * (i % 2), -234.35)))
+		_kugel(&"birne", Vector3(119.9 + i * 0.53, 2.58 - 0.04 * (i % 2), -234.35), 0.11)
 
 	var licht := get_parent().get_node_or_null("Lichter/Doener") as OmniLight3D
 	if licht != null:
@@ -357,7 +691,7 @@ func _fernsehturm_beleuchten() -> void:
 
 
 func _litfasssaeulen_stellen() -> void:
-	for stelle in [Vector3(-10.2, 0.08, -18.0), Vector3(70.3, 0.08, -112.0)]:
+	for stelle: Vector3 in [Vector3(-10.2, 0.08, -18.0), Vector3(70.3, 0.08, -112.0)]:
 		var saeule := MeshInstance3D.new()
 		var rohr := CylinderMesh.new()
 		rohr.top_radius = 0.62
@@ -376,6 +710,14 @@ func _litfasssaeulen_stellen() -> void:
 		deckel.mesh = kappe
 		deckel.position = stelle + Vector3(0, 3.15, 0)
 		add_child(deckel)
+
+		# Plakatreste, tangential angeklebt und leicht schief.
+		for i in 3:
+			var winkel := i * TAU / 3.0 + 0.4
+			var lage := stelle + Vector3(cos(winkel), 0.0, sin(winkel)) * 0.64
+			lage.y = 1.55 + 0.2 * i
+			_kasten(&"plakat_a" if i % 2 == 0 else &"plakat_b", lage,
+				Vector3(0.55, 0.85, 0.015), -winkel + PI * 0.5, 0.04 * (i - 1))
 
 
 ## Ein schwaches Licht an der Kamera. Nachts wären die Gesichter zwischen den
