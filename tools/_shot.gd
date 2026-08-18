@@ -1,5 +1,7 @@
 # Werkzeug: rendert Standbilder der Berliner Kulisse aus mehreren Blickwinkeln.
-# Nur für die Entwicklung — läuft unter Xvfb, nie im Spiel.
+# Nur für die Entwicklung — läuft unter Xvfb, nie im Spiel. Der Fortschritt
+# steht in user://shots/_fortschritt_stadt.txt, weil die Standardausgabe bei
+# einem Abbruch im Puffer verloren geht.
 extends SceneTree
 
 const ORTE := [
@@ -9,14 +11,26 @@ const ORTE := [
 	{"name": "vorrat", "pos": Vector3(130.3, 1.5, -240.6), "gier": -2.72, "neig": -0.15},
 ]
 
+var _log: FileAccess
+
 
 func _init() -> void:
 	call_deferred("_los")
 
 
+func _merke(text: String) -> void:
+	if _log == null:
+		DirAccess.make_dir_recursive_absolute("user://shots")
+		_log = FileAccess.open("user://shots/_fortschritt_stadt.txt", FileAccess.WRITE)
+	_log.store_line("%d ms  %s" % [Time.get_ticks_msec(), text])
+	_log.flush()
+
+
 func _los() -> void:
+	_merke("start")
 	var szene: Node = load("res://chapters/berlin/berlin_chapter.tscn").instantiate()
 	root.add_child(szene)
+	_merke("szene steht")
 	# Auslöser stilllegen, bevor die Kamera durch die Welt springt.
 	for ausloeser in szene.get_node("Triggers").get_children():
 		if ausloeser is Area3D:
@@ -25,12 +39,12 @@ func _los() -> void:
 	# Warten, bis die Kapitelkarte weg ist.
 	var karte := szene.get_node_or_null("UI/ChapterCard")
 	var frist := 0
-	while karte and karte.visible and frist < 1200:
+	while karte and karte.visible and frist < 200:
 		await process_frame
 		frist += 1
-		if frist % 5 == 0:
-			print("WARTE: Karte, Bild %d, %.1f s" % [frist, Time.get_ticks_msec() / 1000.0])
-	print("KARTE WEG nach %d Bildern, %.1f s" % [frist, Time.get_ticks_msec() / 1000.0])
+		if frist % 10 == 0:
+			_merke("warte auf karte, bild %d" % frist)
+	_merke("karte weg nach %d bildern" % frist)
 	# Oberfläche ausblenden — die Bilder sollen nur die Kulisse zeigen.
 	for name in ["UI", "HUD", "Debug"]:
 		var schicht := szene.get_node_or_null(name)
@@ -49,7 +63,7 @@ func _los() -> void:
 			await process_frame
 		var bild := root.get_viewport().get_texture().get_image()
 		var pfad := "user://shots/%s.png" % ort["name"]
-		DirAccess.make_dir_recursive_absolute("user://shots")
 		bild.save_png(pfad)
-		print("SHOT: ", pfad)
+		_merke("SHOT " + pfad)
+	_merke("fertig")
 	quit(0)
