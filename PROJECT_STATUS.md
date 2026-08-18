@@ -26,15 +26,17 @@ Namen, jede Runde sieht gleich aus). Die Blöcke selbst und damit Kollision,
 Route und Zeiten bleiben unangetastet; einzige Ausnahme sind die Gehwegplatten
 mit ihrer 8-cm-Bordsteinkante, für die das Stufen-Steigen gebaut wurde.
 
-* **Gebackene PBR-Materialsätze** statt Laufzeit-Rauschen: fünf Sätze
-  (`putz`, `asphalt`, `beton_platten`, `beton_rau`, `schotter`) mit je
-  Albedo, Normal-Map und Rauheitskarte in 1024², nahtlos kachelbar,
-  triplanar gemappt. Erzeugt von `tools/make_textures.py` (FFT-Rauschsynthese,
-  Voronoi-Rissnetze, Pfützen in der Rauheitskarte, Schmutzfahnen am Sockel,
-  Schottersteine als Zellen) — keine Fremddaten. Echte Foto-Sets (ambientCG,
-  CC0) können die Dateien unter `assets/texturen/` eins zu eins ersetzen;
-  die üblichen Quellen sind aus dieser Umgebung nicht erreichbar (Netzfilter),
-  darum gebacken statt geladen.
+* **Echte Foto-PBR-Materialien (ambientCG, CC0)**, von Oliver heruntergeladen
+  und per `tools/import_fototexturen.py` eingebaut: Plaster001 (Fassaden),
+  Asphalt025B (Fahrbahn — die Pfützen werden beim Einbau hineingerechnet:
+  dunkle Flecken in der Albedo, spiegelglatte in der Rauheitskarte),
+  Concrete020 (Sockel **und** vorerst Gehweg), Gravel022 (Gleisbett),
+  Bricks054 (Schornsteine). Ambient Occlusion wird zu 75 % in die Albedo
+  eingerechnet. Je Satz Albedo + Normal + Rauheit, triplanar, anisotrop
+  gefiltert. Für den Gehweg fehlt noch ein PavingStones-Set — einfach nach
+  `assets/texturen/beton_platten/` kopieren, gleiche Dateinamen. Als
+  Rückfallebene kann `tools/make_textures.py` alle Plätze weiterhin
+  synthetisch füllen.
 * **Fassaden:** Sockel, Fensterraster, Gesimse, Stuckband, vereinzelt Balkone;
   jede Wand in einem eigenen Berliner Altbauton. Fenster haben jetzt **Tiefe**:
   dunkle Laibung, darin die zurückgesetzte Scheibe, davor der Rahmen als vier
@@ -553,9 +555,9 @@ zeilenweise, nicht spaltenweise. Dadurch stiegen die Rampen zur falschen Seite
   PBR-Texturen sind gebacken (Rauschsynthese), keine Fotografien; es gibt
   keine echten Balkongeländer und keine Menschen außer den beiden und dem
   Dönermann. Der nächtliche Look trägt das; bei Tageslicht würde es kahl
-  wirken. Wer Foto-Material will: ambientCG-1K-Sets (CC0) herunterladen und
-  die Dateien unter `assets/texturen/<satz>/` ersetzen — gleiche Namen,
-  fertig. Die Quellen sind aus dieser Arbeitsumgebung nicht erreichbar.
+  wirken. Fünf Plätze tragen bereits echte ambientCG-Fotos; für den Gehweg
+  fehlt noch ein PavingStones-Set (nach `assets/texturen/beton_platten/`
+  kopieren, gleiche Dateinamen — bis dahin liegt dort der Sockelbeton).
 * SDFGI, Screen-Space-Reflexionen und volumetrischer Nebel wirken nur im
   Forward+-Renderer der fertigen App — die Prüfbilder hier entstehen im
   Kompatibilitätsrenderer und zeigen sie nicht. SDFGI kostet spürbar

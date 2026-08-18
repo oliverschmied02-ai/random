@@ -10,8 +10,8 @@ das wichtige Momente unserer Beziehung als spielbare Szenen nacherzählt.
 aber bewusst noch nicht gebaut.
 
 **Stand:** Stage 7 — Kapitel 1 spielt abends in Berlin: Fassaden, Straßen und
-Gehwege tragen gebackene PBR-Materialsätze (Albedo + Normal + Rauheit, aus
-`tools/make_textures.py`), nasser Asphalt mit Pfützen und Rissen, erleuchtete
+Gehwege tragen echte Foto-PBR-Materialien (ambientCG, CC0 — eingebaut über
+`tools/import_fototexturen.py`), nasser Asphalt mit Pfützen und Rissen, erleuchtete
 Fenster in dunklen Laibungen, Laternen mit sichtbaren Lichtkegeln (warmweiß
 und Natriumdampf-orange, eine flackert), Mond und Sterne, Tram-Oberleitung,
 detaillierte geparkte Autos, Ampeln, Mülleimer, Gullys, Plakate, Dächer mit

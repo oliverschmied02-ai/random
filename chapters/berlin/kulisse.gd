@@ -145,7 +145,7 @@ func _materialien_anlegen() -> void:
 		&"gleisbett": _foto_mat("schotter", Color(0.45, 0.45, 0.48), 0.8, 1.6),
 		&"birne": _mat(Color(1.0, 0.75, 0.4), 0.5, Color(1.0, 0.62, 0.25), 3.2),
 		&"dach": _mat(Color(0.16, 0.16, 0.18), 0.9),
-		&"schornstein": _mat(Color(0.42, 0.33, 0.28), 0.95),
+		&"schornstein": _foto_mat("klinker", Color(0.85, 0.83, 0.8), 0.5, 1.0),
 		&"antenne": _mat(Color(0.12, 0.13, 0.15), 0.5),
 		&"draht": _mat(Color(0.05, 0.05, 0.06), 0.6),
 		&"muell": _mat(Color(0.80, 0.34, 0.06), 0.6),
@@ -273,7 +273,7 @@ func _boden_umfaerben() -> void:
 		return
 	# Pfützen und Risse stecken im gebackenen Asphaltsatz — die Rauheitskarte
 	# macht die nassen Stellen spiegelglatt, dort greifen die Reflexionen.
-	boden.material = _foto_mat("asphalt", Color(0.4, 0.41, 0.45), 0.09, 1.0)
+	boden.material = _foto_mat("asphalt", Color(0.55, 0.56, 0.6), 0.09, 1.0)
 
 
 func _fassaden_bauen() -> void:
@@ -423,7 +423,7 @@ func _grund_verboten(stelle: Vector3) -> bool:
 
 
 func _gehwege_bauen() -> void:
-	var material := _foto_mat("beton_platten", Color(0.6, 0.6, 0.63), 0.35, 0.6)
+	var material := _foto_mat("beton_platten", Color(0.82, 0.82, 0.86), 0.35, 0.6)
 	for feld in GEHWEGE:
 		var masse := Vector3(feld[2] - feld[0], 0.16, feld[3] - feld[1])
 		var mitte := Vector3((feld[0] + feld[2]) * 0.5, 0.0, (feld[1] + feld[3]) * 0.5)
