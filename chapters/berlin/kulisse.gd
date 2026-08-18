@@ -142,7 +142,7 @@ func _materialien_anlegen() -> void:
 		&"ladenschild": _mat(Color(0.42, 0.18, 0.16), 0.7),
 		&"gitter": _mat(Color(0.14, 0.15, 0.17), 0.5),
 		&"markierung": _mat(Color(0.75, 0.74, 0.70), 0.9),
-		&"gleisbett": _foto_mat("schotter", Color(0.45, 0.45, 0.48), 0.8, 1.6),
+		&"gleisbett": _foto_mat("schotter", Color(0.34, 0.34, 0.37), 0.45, 1.0),
 		&"birne": _mat(Color(1.0, 0.75, 0.4), 0.5, Color(1.0, 0.62, 0.25), 3.2),
 		&"dach": _mat(Color(0.16, 0.16, 0.18), 0.9),
 		&"schornstein": _foto_mat("klinker", Color(0.85, 0.83, 0.8), 0.5, 1.0),
