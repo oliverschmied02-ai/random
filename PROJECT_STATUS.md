@@ -109,8 +109,13 @@ lässt, ist das Zusammenspiel der Nebenbewegungen:
   bei jedem Schritt; im Stand pendelt es langsam von Bein zu Bein
 * Arme gegenläufig, der **Unterarm läuft nach** (geschleudert, nicht geschoben),
   Ellbogen immer leicht gebeugt
-* **Entspannte Hände**: alle Fingerglieder leicht gebeugt statt der gespreizten
-  T-Pose — die halbe Natürlichkeit einer stehenden Figur
+* **Entspannte Arme und Hände**: die Arme hängen fast senkrecht (79° aus der
+  T-Pose, 10° Rest zwischen Arm und Rumpf), leicht nach vorn (die
+  Schultergelenke sitzen hinter der Körpermitte), mit Innenrotation, damit die
+  Handflächen zum Oberschenkel zeigen; die Schultern sinken aus dem
+  T-Pose-„Schulterzucken" ab, die Handgelenke fallen leicht, alle
+  Fingerglieder sind gebeugt **und zusammengeführt** — die T-Pose spreizt sie
+  wie zum Abklatschen. Jeder dieser Winkel ist ein Export an der `Figur`
 * **Der Kopf lebt**: `Figur.schaue_an(ziel)` lässt eine Figur jemanden ansehen
   (Nacken und Kopf teilen sich die Drehung 35/65), im Stand schaut sie
   beiläufig umher, und `Figur.betone()` nickt zur eigenen Sprechzeile

@@ -50,12 +50,13 @@ var beinschwung_grad: float = 26.0
 var knie_grad: float = 32.0
 ## Wie weit die Fußspitze beim Durchschwingen anhebt bzw. beim Abdruck senkt.
 var fussrolle_grad: float = 14.0
-## Wie stark die Arme gegenschwingen.
-var armschwung_grad: float = 15.0
+## Wie stark die Arme gegenschwingen. Eng am Körper hängende Arme schwingen
+## sichtbar weniger als die alten, abgespreizten.
+var armschwung_grad: float = 13.0
 ## Verzug des Unterarms hinter dem Oberarm, im Bogenmaß der Phase.
 var arm_verzug: float = 0.55
 ## Ständige leichte Ellbogenbeugung — ganz gestreckte Arme wirken militärisch.
-var ellbogen_grad: float = 9.0
+var ellbogen_grad: float = 11.0
 ## Drehung des Beckens um die Hochachse je Schritt.
 var hueft_dreh_grad: float = 6.0
 ## Gegendrehung des Brustkorbs. Etwas kleiner als die Hüfte — der Oberkörper
@@ -160,7 +161,7 @@ func tick(delta: float, tempo: float, gier_rate: float = 0.0) -> void:
 	var arm_r := deg_to_rad(armschwung_grad) * s * sin(_phase)
 	var unterarm_l := deg_to_rad(armschwung_grad) * 0.5 * s * sin(_phase + PI - arm_verzug)
 	var unterarm_r := deg_to_rad(armschwung_grad) * 0.5 * s * sin(_phase - arm_verzug)
-	var ellbogen := deg_to_rad(ellbogen_grad) * (0.4 + 0.6 * s)
+	var ellbogen := deg_to_rad(ellbogen_grad) * (0.8 + 0.2 * s)
 
 	# --- Rumpf: Gegendrehung, Gewicht, Atem, Vorlage ------------------------
 	var hueft_gier := deg_to_rad(hueft_dreh_grad) * s * sin(_phase)

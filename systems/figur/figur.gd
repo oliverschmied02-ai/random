@@ -32,9 +32,22 @@ extends Node3D
 ##
 ## Modelle kommen mit waagerecht ausgestreckten Armen — das ist die Haltung, in
 ## der sie gebaut und später animiert werden, aber niemand steht so an einer
-## Bushaltestelle. Solange es keine Animationen gibt, ist eine ruhige Haltung
-## das Mindeste; 0 lässt die T-Pose stehen.
-@export_range(0.0, 90.0, 1.0) var arme_senken_grad: float = 68.0
+## Bushaltestelle. Ein natürlicher Arm hängt fast senkrecht: rund 10° bleiben
+## zwischen Arm und Rumpf, mehr wirkt wie eine Schaufensterpuppe, weniger
+## klemmt den Ärmel in die Jacke. 0 lässt die T-Pose stehen.
+@export_range(0.0, 90.0, 1.0) var arme_senken_grad: float = 79.0
+## Wie weit die hängenden Arme zusätzlich nach vorn kommen. Die Schultergelenke
+## sitzen hinter der Körpermitte — ein senkrecht fallender Arm läge sonst zu
+## weit hinten, echte Hände hängen neben dem Oberschenkel.
+@export_range(0.0, 20.0, 0.5) var arme_vor_grad: float = 4.0
+## Wie weit die Schultern aus der angespannten T-Pose absinken. Nimmt der
+## Figur das „Schulterzucken" und holt die Arme näher an den Rumpf.
+@export_range(0.0, 12.0, 0.5) var schultern_senken_grad: float = 4.0
+## Ruhebeugung des Handgelenks — eine ganz gestreckte Hand wirkt wie ein Brett.
+@export_range(0.0, 30.0, 1.0) var handgelenk_grad: float = 9.0
+## Innenrotation der hängenden Arme, damit die Handflächen zum Oberschenkel
+## zeigen statt nach hinten — die Haltung entspannter Schultern.
+@export_range(0.0, 30.0, 1.0) var arme_eindrehen_grad: float = 14.0
 ## Bewegt das Skelett prozedural (Gehen, Atmen), solange es keine echten
 ## Animationen gibt. Aus, wenn später eine Animationsschicht übernimmt.
 @export var gangwerk_aktiv: bool = true
@@ -141,17 +154,21 @@ func _haende_entspannen() -> void:
 	var skelett := skelett_finden()
 	if skelett == null:
 		return
-	var beugung := {"Thumb": 0.10, "Index": 0.30, "Middle": 0.34, "Ring": 0.36, "Pinky": 0.40}
+	var beugung := {"Thumb": 0.08, "Index": 0.22, "Middle": 0.26, "Ring": 0.28, "Pinky": 0.32}
+	# Die T-Pose spreizt die Finger wie zum Abklatschen; in Ruhe liegen sie
+	# fast aneinander. Zusammengeführt wird am Grundglied um die lokale
+	# Z-Achse (die Spreizachse des Rigs), zur Mittelhand hin.
+	var spreizung := {"Thumb": -0.18, "Index": 0.10, "Middle": 0.03, "Ring": -0.06, "Pinky": -0.16}
 	for seite in ["Left", "Right"]:
 		for finger in beugung:
 			for glied in range(1, 4):
 				var idx := skelett.find_bone("%sHand%s%d" % [seite, finger, glied])
 				if idx < 0:
 					continue
-				var ruhe := skelett.get_bone_pose_rotation(idx)
-				skelett.set_bone_pose_rotation(
-					idx, ruhe * Quaternion(Vector3.RIGHT, beugung[finger])
-				)
+				var pose := skelett.get_bone_pose_rotation(idx) 					* Quaternion(Vector3.RIGHT, beugung[finger])
+				if glied == 1:
+					pose *= Quaternion(Vector3(0, 0, 1), spreizung[finger])
+				skelett.set_bone_pose_rotation(idx, pose)
 
 
 ## Skaliert das Modell so, dass es `zielhoehe` misst.
@@ -180,15 +197,44 @@ func _arme_senken() -> void:
 
 	# Die beiden Arme zeigen nach entgegengesetzten Seiten und müssen deshalb
 	# um die Z-Achse in entgegengesetztem Sinn schwenken, damit beide sinken.
-	var seiten := {"LeftArm": -1.0, "RightArm": 1.0}
-	for arm in seiten:
-		var knochen := skelett.find_bone(arm)
+	var seiten := {"Left": -1.0, "Right": 1.0}
+
+	# Zuerst sinken die Schultern selbst ein Stück — die T-Pose hält sie
+	# hochgezogen wie beim Schulterzucken, und weil die Arme an ihnen hängen,
+	# rücken sie damit zugleich näher an den Rumpf.
+	for seite in seiten:
+		var schulter := skelett.find_bone("%sShoulder" % seite)
+		if schulter < 0:
+			continue
+		var lage := skelett.get_bone_global_pose(schulter)
+		var drehung := Basis(Vector3.BACK, deg_to_rad(schultern_senken_grad) * seiten[seite])
+		skelett.set_bone_global_pose(schulter, Transform3D(drehung * lage.basis, lage.origin))
+
+	# Dann die Arme: fast senkrecht nach unten und leicht nach vorn — die
+	# Schultergelenke sitzen hinter der Körpermitte, ohne die Vorlage hingen
+	# die Hände hinter dem Gesäß statt neben dem Oberschenkel.
+	for seite in seiten:
+		var knochen := skelett.find_bone("%sArm" % seite)
 		if knochen < 0:
-			push_warning("Figur: Knochen '%s' fehlt — Arme bleiben waagerecht." % arm)
+			push_warning("Figur: Knochen '%sArm' fehlt — Arme bleiben waagerecht." % seite)
 			continue
 		var lage := skelett.get_bone_global_pose(knochen)
-		var drehung := Basis(Vector3.BACK, deg_to_rad(arme_senken_grad) * seiten[arm])
+		var drehung := (
+			Basis(Vector3.UP, deg_to_rad(arme_eindrehen_grad) * seiten[seite])
+			* Basis(Vector3.RIGHT, -deg_to_rad(arme_vor_grad))
+			* Basis(Vector3.BACK, deg_to_rad(arme_senken_grad) * seiten[seite])
+		)
 		skelett.set_bone_global_pose(knochen, Transform3D(drehung * lage.basis, lage.origin))
+
+	# Zuletzt die Handgelenke: eine Hand in Ruhe fällt leicht nach innen ab,
+	# ganz gestreckt wirkt sie wie ein Brett. Lokal gedreht wie die Finger.
+	for seite in seiten:
+		var hand := skelett.find_bone("%sHand" % seite)
+		if hand < 0:
+			continue
+		skelett.set_bone_pose_rotation(hand,
+			skelett.get_bone_pose_rotation(hand)
+			* Quaternion(Vector3.RIGHT, deg_to_rad(handgelenk_grad)))
 
 
 ## Das erste Skelett im Modell, oder null. Hier docken später die Animationen an.
