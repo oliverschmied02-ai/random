@@ -51,13 +51,18 @@ extends Node3D
 ## Bewegt das Skelett prozedural (Gehen, Atmen), solange es keine echten
 ## Animationen gibt. Aus, wenn später eine Animationsschicht übernimmt.
 @export var gangwerk_aktiv: bool = true
+## Echte Motion-Capture-Bewegung (CMU-Datenbank) statt des prozeduralen
+## Gangwerks, wenn die Daten unter assets/mocap/ liegen. Fällt ohne Daten
+## oder bei fremdem Rig von selbst aufs Gangwerk zurück.
+@export var mocap_aktiv: bool = true
 ## Was ausgeblendet wird, sobald ein Modell steht.
 @export var platzhalter_pfad: NodePath = ^"Platzhalter"
 
 ## Das geladene Modell, oder null solange die Kapsel steht.
 var modell: Node3D
-## Das prozedurale Gangwerk, oder null (kein Modell, abgeschaltet, Rig fremd).
-var gangwerk: Gangwerk
+## Der Bewegungstreiber: Mocap oder Gangwerk (gleiche Schnittstelle), oder
+## null (kein Modell, abgeschaltet, Rig fremd).
+var gangwerk
 
 var _letzte_lage: Vector3
 var _letzte_gier: float = 0.0
@@ -106,12 +111,19 @@ func _ready() -> void:
 	if platzhalter != null:
 		platzhalter.visible = false
 
-	# Das Gangwerk holt sich seine Ruhelage jetzt — nach dem Senken der Arme,
-	# denn diese Haltung ist die Basis aller Schwünge.
+	# Der Bewegungstreiber holt sich seine Ruhelage jetzt — nach dem Senken
+	# der Arme, denn diese Haltung ist die Basis aller Bewegung. Erst die
+	# echte Aufnahme versuchen, dann das prozedurale Gangwerk.
 	if gangwerk_aktiv:
-		var werk := Gangwerk.new()
-		if werk.einrichten(skelett_finden()):
-			gangwerk = werk
+		if mocap_aktiv:
+			var aufnahme := Mocap.new()
+			if aufnahme.einrichten(skelett_finden()):
+				gangwerk = aufnahme
+		if gangwerk == null:
+			var werk := Gangwerk.new()
+			if werk.einrichten(skelett_finden()):
+				gangwerk = werk
+		if gangwerk != null:
 			_letzte_lage = global_position
 			set_physics_process(true)
 

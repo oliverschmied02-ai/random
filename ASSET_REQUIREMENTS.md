@@ -36,14 +36,15 @@ oder die Kapsel einmalig anpassen.
 | --- | --- |
 | **Zweck** | Bewegung soll gehen statt gleiten |
 | **Szene** | `actors/player/player.tscn` |
-| **Typ** | Animationen (Idle, Walk, Run, Übergänge, Drehung im Stand) |
-| **Stil** | Ausdrucksstark, leicht überzeichnet, freundlich |
-| **Animation** | Blend zwischen Idle/Walk/Run über `Player.speed_ratio` (0…1) |
-| **Platzhalter** | Keiner — die Kapsel gleitet |
-| **Priorität** | CRITICAL |
+| **Typ** | Animationen (Idle, Walk, Übergänge) |
+| **Stil** | Natürlich |
+| **Animation** | Mocap blendet Stehen/Gehen über das gemessene Tempo |
+| **Platzhalter** | **Erledigt durch echte CMU-Motion-Capture** (`assets/mocap/`): Gehen 07_01, Stehen 40_10. Gangwerk als Rückfallebene. |
+| **Priorität** | ~~CRITICAL~~ abgedeckt — offen bleiben nur Zusatzclips (Gesten, Drehungen) |
 
 Andockpunkte sind vorhanden: `Player.speed_ratio`, `Player.current_speed`
-und die Signale `started_moving` / `stopped_moving`.
+und die Signale `started_moving` / `stopped_moving`. Neue Clips:
+BVH von der CMU-Datenbank laden und `tools/bvh_konverter.py` aufrufen.
 
 ### Oliver — Begleiter
 | | |

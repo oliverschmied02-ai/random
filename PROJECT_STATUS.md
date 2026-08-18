@@ -154,7 +154,41 @@ gehen mit dem Gangwerk. Beim Aufbau nimmt die Figur die Arme aus der T-Pose
 herunter — diese Haltung ist zugleich die Ruhelage des Gangwerks. Es gibt
 keine Kapseln mehr im Spiel; als Rückfallebene bleiben sie in den Szenen.
 
-### Prozedurales Gangwerk (`systems/figur/gangwerk.gd`)
+### Echte Bewegung: Motion Capture (`systems/figur/mocap.gd`)
+**Die Figuren bewegen sich jetzt mit echten Aufnahmen** aus der freien
+CMU-Motion-Capture-Datenbank (Carnegie Mellon, keine Lizenzgebühr, als BVH
+[auf GitHub gespiegelt](https://github.com/una-dinosauria/cmu-mocap)):
+
+* **Gehen**: Aufnahme 07_01, als nahtlose Schleife geschnitten (bester
+  Posen-Rückschluss zwischen erstem und letztem Drittel des Clips).
+* **Stehen**: Aufnahme 40_10 — „auf den Bus warten". Gewichtsverlagerung,
+  kleine Haltungswechsel, gelegentliches Umschauen, alles echt. Läuft im
+  Hin-und-zurück (die lange Aufnahme hat keinen Schleifenpunkt, gespiegelt
+  braucht sie keinen). Oliver wartet damit an der Bürotür wortwörtlich wie
+  jemand, der auf den Bus wartet.
+
+`tools/bvh_konverter.py` rechnet die BVH-Daten um (`assets/mocap/*.json`),
+das Laufzeit-Retargeting (`mocap.gd`) überträgt sie aufs Modell — zweigleisig,
+weil die CMU-Nullpose nur teilweise zur T-Pose passt: Rumpf/Kopf/Hüfte
+übernehmen die volle Weltrotation, Arme und Beine nur die Knochenrichtung
+(kürzester Bogen von der Ruhehaltung aus). Das seitliche Abspreizen der Arme
+aus den Markeranzügen wird Richtung Ruhehaltung gedämpft (`arm_seite_anteil`),
+der Schwung bleibt voll erhalten. Beim Losgehen und Anhalten blendet die
+Intensität weich zwischen Stehen und Gehen.
+
+Vom Gangwerk übernommen: Phase über den zurückgelegten Weg (kein
+Fußrutschen im Takt, Ton synchron), Drehung im Skelettraum (Eltern vor
+Kindern), die Blickschicht (Ziel ansehen, Nicken zur Sprechzeile) liegt
+über der Aufnahme. Die aufgenommene Schrittlänge (~1,6 m je Zyklus) wird
+mit `strecken_faktor` 1,4 gestreckt — die CMU-Person ging 1,5 m/s, die
+Spielfigur 3,4 m/s; ohne Streckung wirbelte der Gang im Doppeltakt.
+
+Gemessen: Füße bis 0,73 m auseinander, 0,58 m Armschwung, Blick folgt und
+kehrt zurück. **Das Gangwerk bleibt als Rückfallebene** — fehlen die
+Mocap-Daten oder ein Knochen, übernimmt es lautlos (`mocap_aktiv` am
+Knoten `Visual` ist der Schalter).
+
+### Prozedurales Gangwerk (`systems/figur/gangwerk.gd`) — Rückfallebene
 Die Modelle bringen keine Animationen mit, und eine Figur, die starr durch
 Berlin gleitet, ist schlimmer als eine Kapsel. Das Gangwerk bewegt das Skelett
 deshalb selbst — und zwar nicht nur die Beine. Was eine Bewegung echt aussehen
@@ -584,10 +618,12 @@ zeilenweise, nicht spaltenweise. Dadurch stiegen die Rampen zur falschen Seite
   Kompatibilitätsrenderer und zeigen sie nicht. SDFGI kostet spürbar
   Leistung; ruckelt es auf dem Mac, ist `sdfgi_enabled` im Environment der
   erste Schalter zum Ausprobieren.
-* Das Gangwerk bleibt Platzhalter-Bewegung: glaubwürdig in Spiel- und
-  Gesprächsentfernung, aber ohne echtes Fersen-Ballen-Abrollen, ohne
-  Fingergesten, ohne Mimik. Aufgenommene Animationen (Mixamo aufs vorhandene
-  Rig) ersetzen es; der Schalter dafür ist `gangwerk_aktiv`.
+* Die Mocap-Bewegung deckt Gehen und Stehen ab — es gibt keine eigenen
+  Aufnahmen für Anlaufen/Abbremsen (die Intensität blendet stattdessen),
+  kein echtes Kurvenlaufen, keine Gesten beim Sprechen. Die gestreckte
+  Schrittlänge (Faktor 1,4) lässt die Füße leicht gleiten — der Preis dafür,
+  dass die schnelle Spielfigur nicht im Doppeltakt wirbelt. Weitere
+  CMU-Clips (Gesten, Drehungen) wären der nächste Ausbau.
 * Alle Sichtbaren Elemente sind Platzhalter-Geometrie. Die Testfläche ist ein
   Entwicklungswerkzeug und wird später verworfen, nicht ausgebaut.
 * Keine Animationen — die Figur gleitet als Kapsel. Der Controller liefert

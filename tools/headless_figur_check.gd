@@ -238,12 +238,16 @@ func _gangwerk_pruefen() -> void:
 	# Anhalten: nach einer Sekunde muss die Ruhelage wieder erreicht sein.
 	for i in 60:
 		await physics_frame
+	# Mit Mocap-Stehen (echte Aufnahme: Gewichtsverlagerung, kleine
+	# Haltungswechsel) gibt es keine exakte Ruhelage mehr — ein Mensch steht
+	# nie zweimal gleich. Verlangt wird nur noch: in der Nähe der Ruhe, kein
+	# hängengebliebener Schritt.
 	var trennung_danach := _fuss_trennung(skelett, fuss_l, fuss_r)
 	var hand_danach: float = skelett.get_bone_global_pose(hand_l).origin.z
-	_expect(absf(trennung_danach - ruhe_trennung) < 0.06,
-		"stopping settles the feet back to rest: %.2f m off"
+	_expect(absf(trennung_danach - ruhe_trennung) < 0.14,
+		"stopping settles the feet near rest: %.2f m off"
 			% absf(trennung_danach - ruhe_trennung))
-	_expect(absf(hand_danach - ruhe_hand) < 0.06,
+	_expect(absf(hand_danach - ruhe_hand) < 0.14,
 		"and the arms: %.2f m off" % absf(hand_danach - ruhe_hand))
 	_expect(figur.gangwerk.intensitaet() < 0.05,
 		"the gait knows it is standing: intensity %.2f" % figur.gangwerk.intensitaet())

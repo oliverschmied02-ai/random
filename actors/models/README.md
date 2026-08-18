@@ -74,24 +74,21 @@ nicht mehr durch den Chat — sie muss über das Repository kommen.
 
 ## Animationen
 
-**Bis echte Animationen da sind, bewegt ein prozedurales Gangwerk die Figur**
-(`systems/figur/gangwerk.gd`): Schritte im Takt des zurückgelegten Wegs mit
-Hüft- und Schulterrotation, wanderndem Gewicht und abrollenden Füßen; Arme
-gegenläufig mit nachlaufendem Unterarm; entspannte Hände; ein Kopf, der Ziele
-ansieht (`Figur.schaue_an`), zur Sprechzeile nickt (`Figur.betone`) und im
-Stand beiläufig umherschaut. Es braucht nur die Mixamo-Knochennamen — fehlt
-einer, bleibt die Figur starr und eine Warnung sagt welcher.
+**Die Figuren laufen mit echter Motion-Capture-Bewegung** aus der freien
+CMU-Datenbank (Gehen: Aufnahme 07_01, Stehen: 40_10 „auf den Bus warten").
+Der Weg dorthin: BVH von [github.com/una-dinosauria/cmu-mocap](https://github.com/una-dinosauria/cmu-mocap),
+umgerechnet mit `tools/bvh_konverter.py` nach `assets/mocap/*.json`,
+Laufzeit-Retargeting in `systems/figur/mocap.gd`. Andere Clips einbauen:
+BVH herunterladen, Konverter mit neuen Dateien aufrufen, fertig — das
+Retargeting braucht nur die Mixamo-Knochennamen im Modell.
 
-Für echte Bewegungen ist **Mixamo** geplant (kostenlos mit Adobe-Konto,
-royaltyfrei). Zwei Dinge dazu:
+Als **Rückfallebene** bleibt das prozedurale Gangwerk
+(`systems/figur/gangwerk.gd`) eingebaut: Fehlen die Mocap-Daten oder ein
+Knochen, übernimmt es lautlos. Der Kopf (Ziele ansehen mit
+`Figur.schaue_an`, Nicken mit `Figur.betone`), Blinzeln, Sprechkiefer und
+entspannte Hände liegen als eigene Schichten über beiden Systemen.
 
-* Mixamo liefert **FBX**; Godot 4.5 liest das direkt (eingebauter
-  ufbx-Importeur). Die Datei kommt als eigene Animationsdatei hierher — der
-  Avatar selbst bleibt die `.glb`.
-* Wichtig: FBX oder GLB macht nichts animiert. Ob sich etwas bewegt, hängt
-  davon ab, ob Animationsspuren **in der Datei stecken** — Avatar-Generatoren
-  exportieren in beiden Formaten dieselbe starre T-Pose. Die Bewegung wählt
-  man bei Mixamo aus, und erst dessen Download enthält sie.
-* Der Dienst wird von Adobe nicht mehr gepflegt und hatte 2025 längere
-  Ausfälle. Wenn er wegbricht, kommen die Bewegungen aus einer freien
-  Mocap-Sammlung; das Rig entscheidet, nicht der Anbieter.
+**Mixamo** wird damit nicht mehr gebraucht. Falls doch einmal Aufnahmen von
+dort kommen (kostenlos mit Adobe-Konto): Mixamo liefert FBX, Godot 4.5
+liest das direkt — aber der Umweg lohnt nur noch für Bewegungen, die die
+CMU-Datenbank nicht hat.

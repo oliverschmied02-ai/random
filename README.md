@@ -17,8 +17,9 @@ und Natriumdampf-orange, eine flackert), Mond und Sterne, Tram-Oberleitung,
 detaillierte geparkte Autos, Ampeln, Mülleimer, Gullys, Plakate, Dächer mit
 Schornsteinen und Antennen, der Fernsehturm als Silhouette. Nieselregen folgt
 der Kamera, eine ferne Tram quert die Gleisstraße, ein Flugzeug blinkt am
-Himmel; die Figuren blinzeln, atmen sichtbar und bewegen beim Sprechen den
-Mund. Graffiti, Balkongeländer und Fallrohre an den Fassaden. Dazu Vignette
+Himmel; die Figuren **bewegen sich mit echter Motion-Capture** (CMU-Datenbank:
+Gehen und „auf den Bus warten"-Stehen, Laufzeit-Retargeting), blinzeln, atmen
+sichtbar und bewegen beim Sprechen den Mund. Graffiti, Balkongeländer und Fallrohre an den Fassaden. Dazu Vignette
 mit Filmkorn, Farbkorrektur, Tiefenschärfe im Schlussbild und — in der
 fertigen App — SDFGI, Reflexionen und Nebel. Von Anfang bis Ende erzählt, mit Titel und Ton. Oliver vor
 seiner Bürotür abholen, zu zweit durch die Stadt laufen (zwei Gespräche

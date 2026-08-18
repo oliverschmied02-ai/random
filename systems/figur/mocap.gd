@@ -1,0 +1,243 @@
+class_name Mocap
+extends RefCounted
+
+## Echte aufgenommene Bewegung statt prozeduralem Gangwerk.
+##
+## Die Daten stammen aus der freien CMU-Motion-Capture-Datenbank (BVH),
+## umgerechnet von `tools/bvh_konverter.py` in zwei Schleifen: Gehen
+## (`assets/mocap/gehen.json`, ein Gangzyklus) und Stehen
+## (`stehen.json`, ~25 s „auf den Bus warten" — Gewichtsverlagerung,
+## kleine Haltungswechsel, alles echt).
+##
+## Das Retargeting läuft zweigleisig, weil die Nullpose des CMU-Skeletts
+## nur teilweise zur T-Pose der Modelle passt:
+##
+## * **Rumpf, Kopf, Hüfte** übernehmen die volle Weltrotation der Aufnahme —
+##   dort sind beide Skelette aufrecht, die Übertragung stimmt direkt.
+## * **Arme und Beine** übernehmen nur die aufgenommene **Knochenrichtung**:
+##   die Ruherichtung des Modells wird per kürzestem Bogen auf die
+##   aufgenommene gedreht. Das ist unempfindlich gegen die gespreizte
+##   CMU-Nullpose und erhält die Ruhehaltung (hängende Arme) als Basis.
+##
+## Vom Gangwerk übernommen und bewährt: die Phase läuft über den
+## **zurückgelegten Weg** (Füße rutschen nicht, Ton bleibt im Takt), gesetzt
+## wird **nur die Drehung im Skelettraum**, Eltern vor Kindern. Der Blick
+## (Ziel ansehen, Nicken zur Sprechzeile) legt sich als dünne Schicht über
+## die Aufnahme. Die Schnittstelle ist mit dem Gangwerk identisch — die
+## Figur merkt nicht, wer sie bewegt, und fällt ohne Daten aufs Gangwerk
+## zurück.
+
+const GEHEN_PFAD := "res://assets/mocap/gehen.json"
+const STEHEN_PFAD := "res://assets/mocap/stehen.json"
+
+## Streckt die aufgenommene Schrittlänge. Die CMU-Person ging gemütliche
+## 1,5 m/s; die Spielfigur geht 3,4 m/s. Ohne Streckung wirbelte der Gang
+## im Doppeltakt — mit ihr wird der Schritt länger und ruhiger, um den
+## Preis eines leichten Gleitens der Füße.
+var strecken_faktor: float = 1.4
+## Ab diesem Tempo (m/s) zählt die Figur als voll gehend.
+var voll_bei_tempo: float = 1.3
+## Wieviel der seitlichen Armhaltung aus der Aufnahme übernommen wird. Die
+## CMU-Anzüge mit Markern lassen die Arme weiter abstehen, als entspannte
+## Arme hängen — der Schwung (vor/zurück) bleibt voll erhalten, nur das
+## Abspreizen wird Richtung Ruhehaltung gedämpft.
+var arm_seite_anteil: float = 0.3
+var glaettung: float = 8.0
+var blick_gier_max: float = 1.05
+var blick_nick_max: float = 0.4
+var blick_folge: float = 5.0
+
+var blick_ziel: Vector3 = Vector3.INF
+var betonung: float = 0.0
+
+## Eltern vor Kindern — dieselbe Regel wie im Gangwerk.
+const _KNOCHEN: Array[StringName] = [
+	&"Hips", &"Spine", &"Spine1", &"Spine2", &"Neck", &"Head",
+	&"LeftShoulder", &"LeftArm", &"LeftForeArm",
+	&"RightShoulder", &"RightArm", &"RightForeArm",
+	&"LeftUpLeg", &"LeftLeg", &"LeftFoot",
+	&"RightUpLeg", &"RightLeg", &"RightFoot",
+]
+
+## Kindknochen je Richtungs-Knochen, um die Ruherichtung des Modells zu messen.
+const _KINDER := {
+	&"LeftShoulder": &"LeftArm", &"LeftArm": &"LeftForeArm", &"LeftForeArm": &"LeftHand",
+	&"RightShoulder": &"RightArm", &"RightArm": &"RightForeArm", &"RightForeArm": &"RightHand",
+	&"LeftUpLeg": &"LeftLeg", &"LeftLeg": &"LeftFoot", &"LeftFoot": &"LeftToeBase",
+	&"RightUpLeg": &"RightLeg", &"RightLeg": &"RightFoot", &"RightFoot": &"RightToeBase",
+}
+
+static var _gehen: Dictionary = {}
+static var _stehen: Dictionary = {}
+
+var _skelett: Skeleton3D
+var _index: Dictionary = {}
+var _ruhe_basis: Dictionary = {}
+var _ruhe_richtung: Dictionary = {}
+var _zyklus_meter: float = 3.0
+var _weg: float = 0.0
+var _zeit: float = 0.0
+var _intensitaet: float = 0.0
+var _gier: float = 0.0
+var _nick: float = 0.0
+
+
+static func daten_vorhanden() -> bool:
+	return ResourceLoader.exists(GEHEN_PFAD) and ResourceLoader.exists(STEHEN_PFAD)
+
+
+static func _laden(pfad: String) -> Dictionary:
+	var text := FileAccess.get_file_as_string(pfad)
+	var roh: Dictionary = JSON.parse_string(text)
+	# Spuren in PackedFloat32Array umpacken — JSON-Arrays sind zu träge.
+	var spuren := {}
+	for name in roh["spuren"]:
+		var flach := PackedFloat32Array()
+		for bild in roh["spuren"][name]:
+			for wert in bild:
+				flach.append(wert)
+		spuren[StringName(name)] = flach
+	roh["spuren"] = spuren
+	return roh
+
+
+## Liefert false, wenn Daten oder Knochen fehlen — dann bleibt das Gangwerk.
+func einrichten(skelett: Skeleton3D) -> bool:
+	if skelett == null or not daten_vorhanden():
+		return false
+	if _gehen.is_empty():
+		_gehen = _laden(GEHEN_PFAD)
+		_stehen = _laden(STEHEN_PFAD)
+	for name in _KNOCHEN:
+		var idx := skelett.find_bone(name)
+		if idx < 0:
+			push_warning("Mocap: Knochen '%s' fehlt — Gangwerk übernimmt." % name)
+			return false
+		_index[name] = idx
+		_ruhe_basis[name] = skelett.get_bone_global_pose(idx).basis.orthonormalized()
+	# Ruherichtungen der Gliedmaßen: vom Knochen zu seinem Kind.
+	for name in _KINDER:
+		var kind_idx := skelett.find_bone(_KINDER[name])
+		if kind_idx < 0:
+			push_warning("Mocap: Kindknochen '%s' fehlt — Gangwerk übernimmt." % _KINDER[name])
+			return false
+		var von: Vector3 = skelett.get_bone_global_pose(_index[name]).origin
+		var zu: Vector3 = skelett.get_bone_global_pose(kind_idx).origin
+		_ruhe_richtung[name] = (zu - von).normalized()
+	# Schrittweite: die Aufnahme speichert sie in Hüfthöhen des CMU-Skeletts,
+	# hier wird sie mit der Hüfthöhe des Modells zu Metern.
+	var hueft_hoehe: float = skelett.get_bone_global_pose(_index[&"Hips"]).origin.y
+	_zyklus_meter = maxf(0.5, _gehen["weg_je_schleife"] * hueft_hoehe * strecken_faktor)
+	_skelett = skelett
+	return true
+
+
+func tick(delta: float, tempo: float, _gier_rate: float = 0.0) -> void:
+	if _skelett == null:
+		return
+	_zeit += delta
+	_weg += tempo * delta
+	var ziel := clampf(tempo / voll_bei_tempo, 0.0, 1.0)
+	_intensitaet = lerpf(_intensitaet, ziel, 1.0 - exp(-glaettung * delta))
+	betonung = maxf(betonung - delta * 2.2, 0.0)
+
+	# Bildposition beider Schleifen: Gehen läuft über den Weg (nahtlos
+	# geschnitten), Stehen über die Zeit im Hin-und-zurück — die lange
+	# Aufnahme hat keinen sauberen Schleifenpunkt, gespiegelt braucht sie
+	# keinen.
+	var gehen_bilder: int = _gehen["bilder"]
+	var gehen_bild := fposmod(_weg / _zyklus_meter, 1.0) * gehen_bilder
+	var stehen_bilder: int = _stehen["bilder"]
+	var hin_und_zurueck := fposmod(_zeit * float(_stehen["fps"]), 2.0 * (stehen_bilder - 1))
+	var stehen_bild := hin_und_zurueck if hin_und_zurueck < stehen_bilder - 1 \
+		else 2.0 * (stehen_bilder - 1) - hin_und_zurueck
+
+	for name in _KNOCHEN:
+		var im_gehen := _ziel_basis(_gehen, name, gehen_bild, gehen_bilder, true)
+		var im_stehen := _ziel_basis(_stehen, name, stehen_bild, stehen_bilder, false)
+		var soll := Quaternion(im_stehen).slerp(Quaternion(im_gehen), _intensitaet)
+		if name == &"Neck" or name == &"Head":
+			continue  # kommt gleich, mit Blick obendrauf
+		_setze_global(name, Basis(soll))
+
+	_blick(delta, Basis(Quaternion(
+		_ziel_basis(_stehen, &"Neck", stehen_bild, stehen_bilder, false)
+	).slerp(Quaternion(_ziel_basis(_gehen, &"Neck", gehen_bild, gehen_bilder, true)), _intensitaet)),
+	Basis(Quaternion(
+		_ziel_basis(_stehen, &"Head", stehen_bild, stehen_bilder, false)
+	).slerp(Quaternion(_ziel_basis(_gehen, &"Head", gehen_bild, gehen_bilder, true)), _intensitaet)))
+
+
+## Die Ziel-Weltdrehung eines Knochens aus einer Schleife, zwischen zwei
+## Bildern überblendet. `schleife` = true verbindet das letzte Bild mit dem
+## ersten (Gehzyklus), sonst wird am Ende festgehalten.
+func _ziel_basis(daten: Dictionary, name: StringName, bild: float, bilder: int, schleife: bool) -> Basis:
+	var spur: PackedFloat32Array = daten["spuren"][name]
+	var art: String = daten["arten"][name]
+	var i0 := int(bild) % bilder
+	var i1 := (i0 + 1) % bilder if schleife else mini(i0 + 1, bilder - 1)
+	var t := bild - floorf(bild)
+	if art == "voll":
+		var a := Quaternion(spur[i0 * 4], spur[i0 * 4 + 1], spur[i0 * 4 + 2], spur[i0 * 4 + 3])
+		var b := Quaternion(spur[i1 * 4], spur[i1 * 4 + 1], spur[i1 * 4 + 2], spur[i1 * 4 + 3])
+		return Basis(a.slerp(b, t).normalized()) * _ruhe_basis[name]
+	var r0 := Vector3(spur[i0 * 3], spur[i0 * 3 + 1], spur[i0 * 3 + 2])
+	var r1 := Vector3(spur[i1 * 3], spur[i1 * 3 + 1], spur[i1 * 3 + 2])
+	var richtung := r0.slerp(r1, t).normalized()
+	var ruhe: Vector3 = _ruhe_richtung[name]
+	if String(name).contains("Arm") or String(name).contains("Shoulder"):
+		richtung.x = lerpf(ruhe.x, richtung.x, arm_seite_anteil)
+		richtung = richtung.normalized()
+	var achse := ruhe.cross(richtung)
+	if achse.length_squared() < 1e-8:
+		return _ruhe_basis[name]
+	var winkel := ruhe.angle_to(richtung)
+	return Basis(achse.normalized(), winkel) * _ruhe_basis[name]
+
+
+## Blick über die Aufnahme legen: Nacken und Kopf bekommen die Mocap-Drehung
+## plus Zielverfolgung bzw. Nicken — dieselbe Schicht wie im Gangwerk, nur
+## dass die Basis darunter jetzt echt ist.
+func _blick(delta: float, nacken_grund: Basis, kopf_grund: Basis) -> void:
+	var soll_gier := 0.0
+	var soll_nick := 0.0
+	if blick_ziel.is_finite():
+		var lokal := _skelett.global_transform.affine_inverse() * blick_ziel
+		var kopf := _skelett.get_bone_global_pose(_index[&"Head"]).origin
+		var d := lokal - kopf
+		var flach := Vector2(d.x, d.z).length()
+		soll_gier = clampf(atan2(d.x, d.z), -blick_gier_max, blick_gier_max)
+		soll_nick = clampf(atan2(d.y, flach), -blick_nick_max * 0.6, blick_nick_max)
+	var w := 1.0 - exp(-blick_folge * delta)
+	_gier = lerpf(_gier, soll_gier, w)
+	_nick = lerpf(_nick, soll_nick, w)
+	var nicken := 0.14 * sin(PI * (1.0 - betonung)) if betonung > 0.0 else 0.0
+
+	_setze_global(&"Neck",
+		Basis(Vector3.UP, _gier * 0.35) * Basis(Vector3.RIGHT, (_nick - nicken) * 0.35)
+		* nacken_grund)
+	_setze_global(&"Head",
+		Basis(Vector3.UP, _gier * 0.65) * Basis(Vector3.RIGHT, (_nick - nicken) * 0.65)
+		* kopf_grund)
+
+
+## Setzt die Ziel-Weltdrehung eines Knochens, nur Drehung, Eltern vor Kindern —
+## wörtlich die Mechanik des Gangwerks.
+func _setze_global(name: StringName, soll: Basis) -> void:
+	var idx: int = _index[name]
+	var eltern := _skelett.get_bone_parent(idx)
+	if eltern >= 0:
+		soll = _skelett.get_bone_global_pose(eltern).basis.orthonormalized().inverse() * soll
+	_skelett.set_bone_pose_rotation(idx, Quaternion(soll.orthonormalized()))
+
+
+func phase() -> float:
+	return fposmod(_weg / _zyklus_meter, 1.0) * TAU
+
+
+func intensitaet() -> float:
+	return _intensitaet
+
+
+func blick_gier() -> float:
+	return _gier
