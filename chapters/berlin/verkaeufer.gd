@@ -24,7 +24,7 @@ func _ready() -> void:
 	if modell == null:
 		return
 	_stoff = StandardMaterial3D.new()
-	_stoff.albedo_color = Color(0.93, 0.92, 0.88)
+	_stoff.albedo_color = Color(0.88, 0.87, 0.82)
 	_stoff.roughness = 0.85
 	_haar_faerben()
 	_schuerze_umbinden()
@@ -59,10 +59,11 @@ func _haar_faerben() -> void:
 
 
 func _schuerze_umbinden() -> void:
-	# Dicht am Körper — ein Fingerbreit Abstand, sonst schwebt der Stoff.
-	_klotz(Vector3(0.0, 1.24, -0.1), Vector3(0.28, 0.32, 0.025))    # Latz
-	_klotz(Vector3(0.0, 0.82, -0.13), Vector3(0.38, 0.5, 0.03))     # Schurz
-	_klotz(Vector3(0.0, 1.06, -0.12), Vector3(0.42, 0.03, 0.028))   # Bindeband
+	# Knapp außerhalb der Jacke: näher steckt das Revers durch den Stoff,
+	# weiter weg schwebt er sichtbar vor dem Körper.
+	_klotz(Vector3(0.0, 1.26, -0.145), Vector3(0.24, 0.28, 0.02))   # Latz
+	_klotz(Vector3(0.0, 0.84, -0.17), Vector3(0.34, 0.46, 0.025))   # Schurz
+	_klotz(Vector3(0.0, 1.08, -0.155), Vector3(0.36, 0.028, 0.024)) # Bindeband
 
 
 func _klotz(mitte: Vector3, masse: Vector3) -> void:
