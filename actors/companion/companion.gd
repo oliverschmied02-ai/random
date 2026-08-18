@@ -64,6 +64,7 @@ var speed_ratio: float = 0.0
 var state: State = State.IDLE
 
 var _target: Node3D
+var _figur: Figur
 var _trail: PackedVector3Array = PackedVector3Array()
 var _scripted_position: Vector3 = Vector3.ZERO
 var _gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity", 18.0)
@@ -72,6 +73,7 @@ var _gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity", 
 func _ready() -> void:
 	add_to_group(&"companion")
 	_target = get_node_or_null(target_path) as Node3D
+	_figur = get_node_or_null("Visual") as Figur
 
 
 ## Starts walking with the player. Called by the chapter script once the
@@ -121,6 +123,23 @@ func _physics_process(delta: float) -> void:
 
 	current_speed = Vector3(velocity.x, 0.0, velocity.z).length()
 	speed_ratio = clampf(current_speed / maxf(catch_up_speed, 0.001), 0.0, 1.0)
+	_blick_pflegen()
+
+
+## Wen Oliver gerade ansieht. Wartend vor der Tür oder festgehalten im
+## Gespräch: die Spielerin, sobald sie nah genug ist — jemand, der stur
+## geradeaus starrt, während man auf ihn zugeht, wirkt wie eine Puppe.
+## Beim Gehen schaut er dorthin, wo er hingeht; Sequenzen können den Blick
+## über die Figur jederzeit selbst setzen.
+func _blick_pflegen() -> void:
+	if _figur == null or _target == null:
+		return
+	match state:
+		State.IDLE, State.HELD:
+			var nah := global_position.distance_to(_target.global_position) < 9.0
+			_figur.schaue_an(_target if nah else null)
+		State.FOLLOWING:
+			_figur.schaue_an(null)
 
 
 ## Where the companion wants to stand. Vector3.ZERO means "stay put".

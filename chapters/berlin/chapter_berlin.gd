@@ -78,6 +78,8 @@ const _ERINNERUNGEN := [
 @onready var _darts: DartsGame = $DartsGame
 @onready var _objective = $UI/ObjectiveLabel
 @onready var _karte = $UI/ChapterCard
+@onready var _figur_anne: Figur = $Player/Visual
+@onready var _figur_oliver: Figur = $Oliver/Visual
 @onready var _platz_anne: Marker3D = $Abschluss/Anne
 @onready var _platz_oliver: Marker3D = $Abschluss/Oliver
 @onready var _abschluss_kamera: Marker3D = $Abschluss/Kamera
@@ -101,9 +103,20 @@ func _ready() -> void:
 		if punkt == null:
 			push_warning("Kapitel Berlin: Erinnerung '%s' fehlt." % fundstueck["node"])
 			continue
-		punkt.interacted.connect(_on_erinnerung.bind(fundstueck["lines"]))
+		punkt.interacted.connect(_on_erinnerung.bind(fundstueck["lines"], punkt))
+
+	# Wer spricht, nickt dazu — die Dialogbox meldet jede neue Zeile.
+	_dialogue.zeile_begonnen.connect(_auf_sprechzeile)
 
 	_auftakt()
+
+
+func _auf_sprechzeile(sprecher: String) -> void:
+	match sprecher:
+		"ANNE":
+			_figur_anne.betone()
+		"OLIVER":
+			_figur_oliver.betone()
 
 
 ## Der Kapitelanfang: Titeltafel, dann geht das Bild auf. Die Steuerung ruht so
@@ -142,14 +155,16 @@ func _on_station_betreten(body: Node3D, station: Dictionary, area: Area3D) -> vo
 ## Ein Fundstück am Weg. Bewusst viel leichter als eine Station: niemand wird
 ## umgestellt, die Kamera bleibt, wo sie ist. Nur die Steuerung ruht kurz, damit
 ## die Spielerin nicht mitten im Satz weiterläuft.
-func _on_erinnerung(_interactor: Node3D, lines: Array) -> void:
+func _on_erinnerung(_interactor: Node3D, lines: Array, punkt: Node3D) -> void:
 	if _szene_laeuft:
 		return
 	_szene_laeuft = true
 	_player.input_enabled = false
+	_figur_anne.schaue_an(punkt, 0.0)
 
 	await _dialogue.play(lines)
 
+	_figur_anne.schaue_an(null)
 	_player.input_enabled = true
 	_szene_laeuft = false
 
@@ -160,6 +175,7 @@ func _minispiel_starten() -> void:
 	# Die Gesprächsszene gibt die Steuerung am Ende zurück — fürs Minispiel
 	# muss sie gleich wieder weg, sonst läuft die Figur beim Zielen davon.
 	_player.input_enabled = false
+	_figur_anne.schaue_an(null)
 	_objective.clear()
 	await _figuren_an_die_scheibe()
 	_darts.runde_geschafft.connect(_auf_runde_geschafft, CONNECT_ONE_SHOT)
@@ -224,6 +240,7 @@ func _abschluss_szene() -> void:
 	tween.tween_property(kamera, ^"fov", abschluss_bildwinkel, abschluss_fahrt)
 	await tween.finished
 
+	_figur_anne.schaue_an(_oliver)
 	await _dialogue.play(BerlinDialogue.ABSCHLUSS)
 	await _karte.abspann("KAPITEL 1", "BERLIN — 2020")
 
@@ -262,7 +279,11 @@ func _spiele_szene(lines: Array) -> void:
 	await _oliver_danebenstellen()
 	_camera.aim_at_yaw(_gespraechs_winkel())
 
+	# Für die Dauer des Gesprächs sehen die beiden einander an; Oliver tut das
+	# im gehaltenen Zustand von selbst, sobald Anne nah ist.
+	_figur_anne.schaue_an(_oliver)
 	await _dialogue.play(lines)
+	_figur_anne.schaue_an(null)
 
 	_camera.release_aim()
 	_player.input_enabled = true

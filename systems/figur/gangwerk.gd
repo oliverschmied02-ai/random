@@ -6,44 +6,67 @@ extends RefCounted
 ## Die Modelle kommen mit Skelett, aber ohne Animationen — und eine Figur, die
 ## starr durch Berlin gleitet, ist schlimmer als eine Kapsel, weil sie aussieht
 ## wie eine Schaufensterpuppe auf Rollen. Dieses Gangwerk schwenkt die Knochen
-## selbst: Beine gegengleich, Arme gegenläufig zu den Beinen, ein leichtes
-## Wippen der Hüfte, im Stand ein ruhiges Atmen. Kein Ersatz für echte
-## Animationen, aber der Unterschied zwischen Puppe und Person.
+## selbst. Kein Ersatz für aufgenommene Bewegung, aber der Unterschied zwischen
+## Puppe und Person.
 ##
-## Zwei Entscheidungen tragen das Ganze:
+## Was eine Bewegung „echt" aussehen lässt, ist weniger der einzelne Schwung
+## als das Zusammenspiel der Nebenbewegungen. Deshalb steuert das Gangwerk
+## nicht nur die Beine:
+##
+## * **Becken und Schultern drehen gegeneinander.** Das Becken folgt dem
+##   führenden Bein, der Brustkorb hält dagegen — das ist der Unterschied
+##   zwischen Marschieren und Gehen.
+## * **Das Gewicht wandert.** Die Hüfte verschiebt sich seitlich über das
+##   Standbein und federt bei jedem Schritt ein.
+## * **Die Füße rollen ab**, statt parallel zum Boden zu schweben: die Spitze
+##   hebt sich beim Durchschwingen, der hintere Fuß drückt sich ab.
+## * **Die Arme pendeln nach**, mit leichtem Verzug im Unterarm — geschleudert,
+##   nicht geschoben.
+## * **Der Kopf lebt.** Er kann ein Ziel ansehen (den Gesprächspartner, die
+##   Spielerin), nickt zur eigenen Sprechzeile und schaut im Stand gelegentlich
+##   beiläufig umher. Nacken und Kopf teilen sich die Drehung, wie bei Menschen.
+## * **Im Stand** bleibt die Figur nie ganz still: Atmen, langsame
+##   Gewichtsverlagerung von Bein zu Bein.
+##
+## Zwei technische Entscheidungen tragen alles:
 ##
 ## 1. **Die Phase läuft über den zurückgelegten Weg**, nicht über die Zeit —
 ##    dasselbe Prinzip wie bei den Schrittgeräuschen, mit derselben
-##    Schrittlänge. Wer schneller geht, schreitet schneller aus, die Füße
-##    „rutschen" nicht, und Bild und Ton bleiben von selbst ungefähr im Takt.
-##
-## 2. **Gedreht wird im Skelettraum** (um dessen X-Achse), nicht in den lokalen
-##    Achsen der Knochen. Wie ein Oberschenkelknochen orientiert ist, hängt vom
-##    Werkzeug ab, das ihn gebaut hat; „vor und zurück" ist im Skelettraum
-##    überall dasselbe. Kinder werden nach den Eltern gesetzt — Fuß nach
-##    Unterschenkel nach Oberschenkel —, dadurch sind die Winkel absolut und
-##    der Fuß bleibt von allein annähernd parallel zum Boden.
+##    Schrittlänge. Füße rutschen nicht, Bild und Ton bleiben im Takt.
+## 2. **Gedreht wird im Skelettraum**, nur die Drehung, nie die Position:
+##    Kinder folgen der Elternkette (Eltern werden vor Kindern gesetzt), der
+##    Fuß bleibt dadurch von allein in Bodennähe kontrolliert.
 ##
 ## Alle Winkel skalieren mit der Intensität (0 = stehen, 1 = volles Gangbild),
-## die dem Tempo weich nachläuft. Beim Anhalten kehrt die Figur dadurch von
-## selbst in die Ruhehaltung zurück, egal wo im Schritt sie gerade war.
+## die dem Tempo weich nachläuft — beim Anhalten kehrt die Figur von selbst in
+## die Ruhehaltung zurück, egal wo im Schritt sie war.
 
-## Weg für einen vollen Gangzyklus (zwei Schritte), in Metern. Die Hälfte davon
-## ist die Schrittlänge — passend zu `Schritte.schrittlaenge` (1,5 m), damit
-## Tritt und Ton zusammenfallen.
+## Weg für einen vollen Gangzyklus (zwei Schritte), in Metern — passend zu
+## `Schritte.schrittlaenge` (1,5 m), damit Tritt und Ton zusammenfallen.
 var zyklus_laenge: float = 3.0
 ## Wie weit die Oberschenkel bei vollem Gangbild ausschwingen.
 var beinschwung_grad: float = 26.0
 ## Wie weit das Knie beim Durchschwingen beugt.
 var knie_grad: float = 32.0
+## Wie weit die Fußspitze beim Durchschwingen anhebt bzw. beim Abdruck senkt.
+var fussrolle_grad: float = 14.0
 ## Wie stark die Arme gegenschwingen.
 var armschwung_grad: float = 15.0
+## Verzug des Unterarms hinter dem Oberarm, im Bogenmaß der Phase.
+var arm_verzug: float = 0.55
 ## Ständige leichte Ellbogenbeugung — ganz gestreckte Arme wirken militärisch.
 var ellbogen_grad: float = 9.0
+## Drehung des Beckens um die Hochachse je Schritt.
+var hueft_dreh_grad: float = 6.0
+## Gegendrehung des Brustkorbs. Etwas kleiner als die Hüfte — der Oberkörper
+## läuft dem Becken nach, er spiegelt es nicht.
+var schulter_dreh_grad: float = 4.0
+## Seitliche Gewichtsverlagerung über das Standbein (Meter).
+var gewicht_seitlich: float = 0.020
 ## Vorlage des Oberkörpers bei vollem Tempo.
 var neigung_grad: float = 3.5
 ## Wie tief die Hüfte bei jedem Schritt einfedert (Meter).
-var wippen_meter: float = 0.022
+var wippen_meter: float = 0.02
 ## Atembewegung im Stand, in Grad am Brustwirbel.
 var atem_grad: float = 1.1
 ## Atemzüge je Sekunde im Stand.
@@ -52,11 +75,23 @@ var atem_frequenz: float = 0.27
 var voll_bei_tempo: float = 3.2
 ## Wie schnell die Intensität dem Tempo nachläuft.
 var glaettung: float = 8.0
+## Größte Kopfdrehung zur Seite bzw. nach oben/unten (Bogenmaß).
+var blick_gier_max: float = 1.05
+var blick_nick_max: float = 0.4
+## Wie schnell der Blick einem neuen Ziel folgt.
+var blick_folge: float = 5.0
+
+## Weltpunkt, den die Figur ansieht. `Vector3.INF` heißt: kein Ziel, geradeaus
+## (im Stand mit beiläufigem Umherschauen).
+var blick_ziel: Vector3 = Vector3.INF
+## 1 setzen, wenn die Figur eine Zeile zu sprechen beginnt: ein kurzes Nicken,
+## das von selbst abklingt.
+var betonung: float = 0.0
 
 ## Reihenfolge ist Absicht: Eltern vor Kindern, sonst rechnet ein gesetzter
 ## Fuß mit der alten Lage seines Unterschenkels.
 const _KNOCHEN: Array[StringName] = [
-	&"Hips", &"Spine1",
+	&"Hips", &"Spine1", &"Spine2", &"Neck", &"Head",
 	&"LeftUpLeg", &"LeftLeg", &"LeftFoot",
 	&"RightUpLeg", &"RightLeg", &"RightFoot",
 	&"LeftArm", &"LeftForeArm",
@@ -70,11 +105,14 @@ var _hueft_ruhe: Vector3
 var _phase: float = 0.0
 var _zeit: float = 0.0
 var _intensitaet: float = 0.0
+var _gier: float = 0.0
+var _nick: float = 0.0
+var _lehnen: float = 0.0
 
 
 ## Merkt sich die Ruhelage aller beteiligten Knochen. Muss laufen, nachdem die
-## Grundhaltung steht (Arme gesenkt) — sie ist die Basis aller Schwünge.
-## Liefert false, wenn dem Skelett ein Knochen fehlt; dann bleibt es starr.
+## Grundhaltung steht (Arme gesenkt, Hände entspannt) — sie ist die Basis
+## aller Schwünge. Liefert false, wenn ein Knochen fehlt; dann bleibt es starr.
 func einrichten(skelett: Skeleton3D) -> bool:
 	if skelett == null:
 		return false
@@ -90,9 +128,10 @@ func einrichten(skelett: Skeleton3D) -> bool:
 	return true
 
 
-## Ein Physikschritt: `tempo` ist die tatsächliche waagerechte Geschwindigkeit
-## der Figur. Alles Weitere — Takt, Ausschlag, Rückkehr zur Ruhe — folgt daraus.
-func tick(delta: float, tempo: float) -> void:
+## Ein Physikschritt. `tempo` ist die tatsächliche waagerechte Geschwindigkeit,
+## `gier_rate` die Drehgeschwindigkeit der Figur (rad/s) fürs Hineinlehnen in
+## Kurven. Alles Weitere — Takt, Ausschlag, Rückkehr zur Ruhe — folgt daraus.
+func tick(delta: float, tempo: float, gier_rate: float = 0.0) -> void:
 	if _skelett == null:
 		return
 	_zeit += delta
@@ -100,55 +139,106 @@ func tick(delta: float, tempo: float) -> void:
 	_intensitaet = lerpf(_intensitaet, ziel, 1.0 - exp(-glaettung * delta))
 	if _intensitaet > 0.01:
 		_phase = fposmod(_phase + tempo * delta * TAU / zyklus_laenge, TAU)
+	betonung = maxf(betonung - delta * 2.2, 0.0)
+	_lehnen = lerpf(_lehnen, clampf(-gier_rate * 0.045, -0.08, 0.08), 1.0 - exp(-6.0 * delta))
 
 	var s := _intensitaet
-	var bein_links := deg_to_rad(beinschwung_grad) * s * sin(_phase)
-	var bein_rechts := deg_to_rad(beinschwung_grad) * s * sin(_phase + PI)
-	# Das Knie beugt, während das Bein nach vorn durchschwingt — der Versatz
-	# von 2,4 rad legt den Beugegipfel in die Mitte des Durchschwungs.
-	var knie_links := deg_to_rad(knie_grad) * s * maxf(0.0, sin(_phase + 2.4))
-	var knie_rechts := deg_to_rad(knie_grad) * s * maxf(0.0, sin(_phase + PI + 2.4))
-	var arm_links := deg_to_rad(armschwung_grad) * s * sin(_phase + PI)
-	var arm_rechts := deg_to_rad(armschwung_grad) * s * sin(_phase)
+	var ruhe := 1.0 - s
+
+	# --- Beine: Schwung, Kniebeugung im Durchschwung, abrollende Füße ------
+	var bein_l := deg_to_rad(beinschwung_grad) * s * sin(_phase)
+	var bein_r := deg_to_rad(beinschwung_grad) * s * sin(_phase + PI)
+	var knie_l := deg_to_rad(knie_grad) * s * maxf(0.0, sin(_phase + 2.4))
+	var knie_r := deg_to_rad(knie_grad) * s * maxf(0.0, sin(_phase + PI + 2.4))
+	# Spitze hoch, wenn das Bein vorn durchschwingt (mit dem Knie), Spitze
+	# runter beim Abdruck hinten (wenn das Bein nach hinten zeigt).
+	var rolle_l := deg_to_rad(fussrolle_grad) * s * (0.7 * maxf(0.0, sin(_phase + 2.4)) - 0.9 * maxf(0.0, -sin(_phase)))
+	var rolle_r := deg_to_rad(fussrolle_grad) * s * (0.7 * maxf(0.0, sin(_phase + PI + 2.4)) - 0.9 * maxf(0.0, -sin(_phase + PI)))
+
+	# --- Arme: gegenläufig, der Unterarm läuft nach ------------------------
+	var arm_l := deg_to_rad(armschwung_grad) * s * sin(_phase + PI)
+	var arm_r := deg_to_rad(armschwung_grad) * s * sin(_phase)
+	var unterarm_l := deg_to_rad(armschwung_grad) * 0.5 * s * sin(_phase + PI - arm_verzug)
+	var unterarm_r := deg_to_rad(armschwung_grad) * 0.5 * s * sin(_phase - arm_verzug)
 	var ellbogen := deg_to_rad(ellbogen_grad) * (0.4 + 0.6 * s)
-	var atmen := deg_to_rad(atem_grad) * (1.0 - s) * sin(TAU * atem_frequenz * _zeit)
-	# Das Einfedern verschiebt die Hüfte als einzigen Knochen wirklich — alle
-	# anderen behalten ihre lokale Position und folgen der Elternkette.
+
+	# --- Rumpf: Gegendrehung, Gewicht, Atem, Vorlage ------------------------
+	var hueft_gier := deg_to_rad(hueft_dreh_grad) * s * sin(_phase)
+	var schulter_gier := -deg_to_rad(schulter_dreh_grad) * s * sin(_phase)
+	var atmen := deg_to_rad(atem_grad) * ruhe * sin(TAU * atem_frequenz * _zeit)
+	# Im Stand wandert das Gewicht langsam von Bein zu Bein; beim Gehen liegt
+	# es im Schritttakt über dem Standbein.
+	var pendeln := ruhe * 0.014 * sin(TAU * 0.09 * _zeit)
+	var seitlich := gewicht_seitlich * s * sin(_phase + PI * 0.5) + pendeln
+	var einfedern := -wippen_meter * s * absf(sin(_phase))
+
 	_skelett.set_bone_pose_position(
-		_index[&"Hips"],
-		_hueft_ruhe + Vector3(0.0, -wippen_meter * s * absf(sin(_phase)), 0.0)
+		_index[&"Hips"], _hueft_ruhe + Vector3(seitlich, einfedern, 0.0)
 	)
-	_setze(&"Hips", 0.0)
-	_setze(&"Spine1", deg_to_rad(neigung_grad) * s + atmen)
+	_setze(&"Hips", Basis(Vector3.UP, hueft_gier))
+	_setze(&"Spine1",
+		Basis(Vector3.UP, schulter_gier * 0.5)
+		* Basis(Vector3.RIGHT, -(deg_to_rad(neigung_grad) * s + atmen))
+		* Basis(Vector3(0, 0, 1), _lehnen + pendeln * 1.6))
+	_setze(&"Spine2", Basis(Vector3.UP, schulter_gier * 0.5))
 
-	_setze(&"LeftUpLeg", bein_links)
-	_setze(&"LeftLeg", bein_links - knie_links)
-	_setze(&"LeftFoot", bein_links * 0.3)
-	_setze(&"RightUpLeg", bein_rechts)
-	_setze(&"RightLeg", bein_rechts - knie_rechts)
-	_setze(&"RightFoot", bein_rechts * 0.3)
+	_blick(delta, ruhe)
 
-	_setze(&"LeftArm", arm_links)
-	_setze(&"LeftForeArm", arm_links + ellbogen)
-	_setze(&"RightArm", arm_rechts)
-	_setze(&"RightForeArm", arm_rechts + ellbogen)
+	_setze(&"LeftUpLeg", Basis(Vector3.RIGHT, -bein_l))
+	_setze(&"LeftLeg", Basis(Vector3.RIGHT, -(bein_l - knie_l)))
+	_setze(&"LeftFoot", Basis(Vector3.RIGHT, -(bein_l * 0.2 + rolle_l)))
+	_setze(&"RightUpLeg", Basis(Vector3.RIGHT, -bein_r))
+	_setze(&"RightLeg", Basis(Vector3.RIGHT, -(bein_r - knie_r)))
+	_setze(&"RightFoot", Basis(Vector3.RIGHT, -(bein_r * 0.2 + rolle_r)))
+
+	_setze(&"LeftArm", Basis(Vector3.RIGHT, -arm_l))
+	_setze(&"LeftForeArm", Basis(Vector3.RIGHT, -(unterarm_l + ellbogen)))
+	_setze(&"RightArm", Basis(Vector3.RIGHT, -arm_r))
+	_setze(&"RightForeArm", Basis(Vector3.RIGHT, -(unterarm_r + ellbogen)))
 
 
-## Setzt die Drehung eines Knochens: Ruhelage plus Vorwärtsneigung, absolut im
-## Skelettraum. Nur die Drehung — die Position bleibt lokal unangetastet, damit
-## Knie und Fuß dem Oberschenkel folgen, statt an ihrer Ruheposition zu kleben.
+## Kopf und Nacken: dem Ziel folgen, sonst beiläufig umherschauen; dazu das
+## Nicken der Betonung. Nacken und Kopf teilen sich die Drehung 35/65 — ein
+## Kopf, der allein auf dem starren Hals dreht, sieht mechanisch aus.
+func _blick(delta: float, ruhe: float) -> void:
+	var soll_gier := 0.0
+	var soll_nick := 0.0
+
+	if blick_ziel.is_finite():
+		var lokal := _skelett.global_transform.affine_inverse() * blick_ziel
+		var kopf := _skelett.get_bone_global_pose(_index[&"Head"]).origin
+		var d := lokal - kopf
+		var flach := Vector2(d.x, d.z).length()
+		soll_gier = clampf(atan2(d.x, d.z), -blick_gier_max, blick_gier_max)
+		soll_nick = clampf(atan2(d.y, flach), -blick_nick_max * 0.6, blick_nick_max)
+	else:
+		# Beiläufig: zwei ungleiche, langsame Wellen — kein erkennbares Muster.
+		soll_gier = ruhe * (0.11 * sin(0.23 * _zeit) + 0.06 * sin(0.71 * _zeit + 1.7))
+		soll_nick = ruhe * 0.04 * sin(0.31 * _zeit + 0.8)
+
+	var w := 1.0 - exp(-blick_folge * delta)
+	_gier = lerpf(_gier, soll_gier, w)
+	_nick = lerpf(_nick, soll_nick, w)
+
+	# Das Nicken: ein weicher Bogen abwärts und zurück, ausgelöst über
+	# `betonung = 1.0`, abklingend in tick().
+	var nicken := 0.14 * sin(PI * (1.0 - betonung)) if betonung > 0.0 else 0.0
+
+	_setze(&"Neck", Basis(Vector3.UP, _gier * 0.35) * Basis(Vector3.RIGHT, (_nick - nicken) * 0.35))
+	_setze(&"Head", Basis(Vector3.UP, _gier * 0.65) * Basis(Vector3.RIGHT, (_nick - nicken) * 0.65))
+
+
+## Setzt einen Knochen auf Ruhelage plus Drehung, absolut im Skelettraum. Nur
+## die Drehung — die Position bleibt lokal, damit Knie und Fuß dem Oberschenkel
+## folgen statt an ihrer Ruheposition zu kleben.
 ##
-## `vorwaerts` > 0 kippt zur Blickrichtung der Figur. Im Skelettraum schaut das
-## Modell nach +Z (die Figur dreht es als Ganzes um 180°); eine Drehung um +X
-## bewegt einen Punkt unterhalb des Gelenks nach −Z, nach vorn kippen heißt
-## also um −X drehen.
-##
-## Die gewünschte Skelettraum-Drehung wird über die **aktuelle** Lage des
-## Elternknochens in eine lokale übersetzt — deshalb Eltern vor Kindern.
-func _setze(name: StringName, vorwaerts: float) -> void:
+## Vorzeichen: das Modell schaut im Skelettraum nach +Z (die Figur dreht es als
+## Ganzes um 180°); eine Drehung um −X kippt nach vorn. Die gewünschte Drehung
+## wird über die **aktuelle** Lage des Elternknochens in eine lokale übersetzt —
+## deshalb Eltern vor Kindern.
+func _setze(name: StringName, drehung: Basis) -> void:
 	var idx: int = _index[name]
-	var soll: Basis = Basis(Vector3.RIGHT, -vorwaerts) * _ruhe_basis[name]
-
+	var soll: Basis = drehung * _ruhe_basis[name]
 	var eltern := _skelett.get_bone_parent(idx)
 	if eltern >= 0:
 		soll = _skelett.get_bone_global_pose(eltern).basis.orthonormalized().inverse() * soll
@@ -164,3 +254,8 @@ func phase() -> float:
 ## Aktuelle Intensität, 0 = ruhig stehend, 1 = volles Gangbild.
 func intensitaet() -> float:
 	return _intensitaet
+
+
+## Aktuelle Kopfdrehung zur Seite (Bogenmaß) — für Prüfläufe.
+func blick_gier() -> float:
+	return _gier

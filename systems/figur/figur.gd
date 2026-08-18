@@ -47,6 +47,10 @@ var modell: Node3D
 var gangwerk: Gangwerk
 
 var _letzte_lage: Vector3
+var _letzte_gier: float = 0.0
+var _blick: Node3D
+## Auf welcher Höhe über dem Ziel der Blick landet — Augenhöhe einer Figur.
+var _blick_hoehe: float = 1.55
 
 
 func _ready() -> void:
@@ -70,6 +74,7 @@ func _ready() -> void:
 		modell.rotate_y(PI)
 	_auf_hoehe_bringen()
 	_arme_senken()
+	_haende_entspannen()
 
 	var platzhalter := get_node_or_null(platzhalter_pfad) as Node3D
 	if platzhalter != null:
@@ -96,7 +101,57 @@ func _physics_process(delta: float) -> void:
 	_letzte_lage = jetzt
 	weg.y = 0.0
 	var tempo := 0.0 if weg.length() > 1.0 else weg.length() / maxf(delta, 0.0001)
-	gangwerk.tick(delta, tempo)
+
+	# Drehgeschwindigkeit fürs Hineinlehnen in Kurven.
+	var gier := global_rotation.y
+	var gier_rate := angle_difference(_letzte_gier, gier) / maxf(delta, 0.0001)
+	_letzte_gier = gier
+
+	if _blick != null and not is_instance_valid(_blick):
+		_blick = null
+	gangwerk.blick_ziel = (
+		_blick.global_position + Vector3.UP * _blick_hoehe if _blick != null
+		else Vector3.INF
+	)
+	gangwerk.tick(delta, tempo, gier_rate)
+
+
+## Lässt die Figur ein Ziel ansehen — den Gesprächspartner, die Spielerin.
+## `null` gibt den Blick frei (geradeaus, im Stand beiläufig umherschauend).
+## `hoehe` ist der Punkt über dem Zielursprung, auf den geschaut wird.
+func schaue_an(ziel: Node3D, hoehe: float = 1.55) -> void:
+	_blick = ziel
+	_blick_hoehe = hoehe
+
+
+## Ein kurzes Nicken — beim Beginn der eigenen Sprechzeile.
+func betone() -> void:
+	if gangwerk != null:
+		gangwerk.betonung = 1.0
+
+
+## Nimmt den Händen die gespreizte T-Pose: alle Fingerglieder leicht gebeugt,
+## der Daumen kaum. Gespreizte Finger fallen in jeder Nahaufnahme sofort auf —
+## entspannte Hände sind die halbe Natürlichkeit einer stehenden Figur.
+##
+## Gebeugt wird im **lokalen** Raum der Fingerknochen (Mixamo-Rigs beugen
+## Finger um die lokale X-Achse) — die Glieder sind nicht Teil des Gangwerks
+## und behalten diese Haltung dauerhaft.
+func _haende_entspannen() -> void:
+	var skelett := skelett_finden()
+	if skelett == null:
+		return
+	var beugung := {"Thumb": 0.10, "Index": 0.30, "Middle": 0.34, "Ring": 0.36, "Pinky": 0.40}
+	for seite in ["Left", "Right"]:
+		for finger in beugung:
+			for glied in range(1, 4):
+				var idx := skelett.find_bone("%sHand%s%d" % [seite, finger, glied])
+				if idx < 0:
+					continue
+				var ruhe := skelett.get_bone_pose_rotation(idx)
+				skelett.set_bone_pose_rotation(
+					idx, ruhe * Quaternion(Vector3.RIGHT, beugung[finger])
+				)
 
 
 ## Skaliert das Modell so, dass es `zielhoehe` misst.

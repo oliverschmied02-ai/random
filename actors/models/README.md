@@ -75,8 +75,11 @@ nicht mehr durch den Chat — sie muss über das Repository kommen.
 ## Animationen
 
 **Bis echte Animationen da sind, bewegt ein prozedurales Gangwerk die Figur**
-(`systems/figur/gangwerk.gd`): Schritte im Takt des zurückgelegten Wegs, Arme
-gegenläufig, Atmen im Stand. Es braucht nur die Mixamo-Knochennamen — fehlt
+(`systems/figur/gangwerk.gd`): Schritte im Takt des zurückgelegten Wegs mit
+Hüft- und Schulterrotation, wanderndem Gewicht und abrollenden Füßen; Arme
+gegenläufig mit nachlaufendem Unterarm; entspannte Hände; ein Kopf, der Ziele
+ansieht (`Figur.schaue_an`), zur Sprechzeile nickt (`Figur.betone`) und im
+Stand beiläufig umherschaut. Es braucht nur die Mixamo-Knochennamen — fehlt
 einer, bleibt die Figur starr und eine Warnung sagt welcher.
 
 Für echte Bewegungen ist **Mixamo** geplant (kostenlos mit Adobe-Konto,

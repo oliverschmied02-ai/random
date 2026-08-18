@@ -98,10 +98,33 @@ keine Kapseln mehr im Spiel; als Rückfallebene bleiben sie in den Szenen.
 ### Prozedurales Gangwerk (`systems/figur/gangwerk.gd`)
 Die Modelle bringen keine Animationen mit, und eine Figur, die starr durch
 Berlin gleitet, ist schlimmer als eine Kapsel. Das Gangwerk bewegt das Skelett
-deshalb selbst: Beine gegengleich (26° Ausschlag, Knie beugt im Durchschwung),
-Arme gegenläufig, leichtes Einfedern der Hüfte, Vorlage bei Tempo, im Stand ein
-ruhiges Atmen. Gemessen am echten Modell: 0,88 m Schrittweite, 0,24 m
-Armschwung, saubere Rückkehr in die Ruhelage nach dem Anhalten.
+deshalb selbst — und zwar nicht nur die Beine. Was eine Bewegung echt aussehen
+lässt, ist das Zusammenspiel der Nebenbewegungen:
+
+* Beine gegengleich (26° Ausschlag, Knie beugt im Durchschwung), **Füße rollen
+  ab** — Spitze hoch im Durchschwung, Abdruck hinten
+* **Becken und Schultern drehen gegeneinander** (6° / 4°) — der Unterschied
+  zwischen Marschieren und Gehen
+* **Das Gewicht wandert**: seitliche Verlagerung über das Standbein, Einfedern
+  bei jedem Schritt; im Stand pendelt es langsam von Bein zu Bein
+* Arme gegenläufig, der **Unterarm läuft nach** (geschleudert, nicht geschoben),
+  Ellbogen immer leicht gebeugt
+* **Entspannte Hände**: alle Fingerglieder leicht gebeugt statt der gespreizten
+  T-Pose — die halbe Natürlichkeit einer stehenden Figur
+* **Der Kopf lebt**: `Figur.schaue_an(ziel)` lässt eine Figur jemanden ansehen
+  (Nacken und Kopf teilen sich die Drehung 35/65), im Stand schaut sie
+  beiläufig umher, und `Figur.betone()` nickt zur eigenen Sprechzeile
+* Vorlage bei Tempo, Hineinlehnen in Kurven, Atmen im Stand
+
+Verdrahtet ist das im Kapitel: in Gesprächen sehen die beiden einander an
+(Oliver tut das als Begleiter von selbst, sobald Anne nah ist — jemand, der
+stur geradeaus starrt, während man auf ihn zugeht, wirkt wie eine Puppe), die
+Dialogbox meldet jede neue Zeile (`zeile_begonnen`) und die sprechende Figur
+nickt dazu, bei den Erinnerungen schaut Anne das Fundstück an.
+
+Gemessen am echten Modell: 0,88 m Schrittweite, 0,24 m Armschwung, Blick folgt
+auf 1,0 rad und kehrt zurück, saubere Rückkehr in die Ruhelage nach dem
+Anhalten.
 
 Zwei Entscheidungen tragen es:
 
@@ -475,10 +498,10 @@ zeilenweise, nicht spaltenweise. Dadurch stiegen die Rampen zur falschen Seite
 * Die Kulisse bleibt Kastenarchitektur mit aufgesetzten Details — es gibt
   keine Texturen, keine echten Balkongeländer, keine Menschen außer den
   beiden. Der nächtliche Look trägt das; bei Tageslicht würde es kahl wirken.
-* Das Gangwerk ist Platzhalter-Bewegung: glaubwürdig aus Spielentfernung, aber
-  ohne Fersenabrollen, ohne Hüftrotation, ohne Gewichtsverlagerung. Echte
-  Animationen (Mixamo aufs vorhandene Rig) ersetzen es; der Schalter dafür ist
-  `gangwerk_aktiv`.
+* Das Gangwerk bleibt Platzhalter-Bewegung: glaubwürdig in Spiel- und
+  Gesprächsentfernung, aber ohne echtes Fersen-Ballen-Abrollen, ohne
+  Fingergesten, ohne Mimik. Aufgenommene Animationen (Mixamo aufs vorhandene
+  Rig) ersetzen es; der Schalter dafür ist `gangwerk_aktiv`.
 * Alle Sichtbaren Elemente sind Platzhalter-Geometrie. Die Testfläche ist ein
   Entwicklungswerkzeug und wird später verworfen, nicht ausgebaut.
 * Keine Animationen — die Figur gleitet als Kapsel. Der Controller liefert

@@ -248,6 +248,24 @@ func _gangwerk_pruefen() -> void:
 	_expect(figur.gangwerk.intensitaet() < 0.05,
 		"the gait knows it is standing: intensity %.2f" % figur.gangwerk.intensitaet())
 
+	# Der Blick: ein Ziel seitlich der Figur muss den Kopf drehen, das
+	# Loslassen muss ihn zurückbringen.
+	var ziel := Node3D.new()
+	root.add_child(ziel)
+	ziel.global_position = traeger.global_position + Vector3(-3.0, 0.0, -2.0)
+	figur.schaue_an(ziel)
+	for i in 60:
+		await physics_frame
+	_expect(figur.gangwerk.blick_gier() > 0.35,
+		"the head turns towards a target: %.2f rad" % figur.gangwerk.blick_gier())
+	figur.schaue_an(null)
+	for i in 60:
+		await physics_frame
+	_expect(absf(figur.gangwerk.blick_gier()) < 0.2,
+		"and lets go again: %.2f rad" % figur.gangwerk.blick_gier())
+	_note("Blick folgt und kehrt zurück")
+	ziel.queue_free()
+
 	traeger.queue_free()
 	await physics_frame
 

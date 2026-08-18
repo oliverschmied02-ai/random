@@ -13,6 +13,9 @@ extends CanvasLayer
 ## gameplay code.
 
 signal finished
+## Meldet den Sprecher jeder neu angezeigten Zeile — die Szene lässt die
+## passende Figur dazu nicken.
+signal zeile_begonnen(sprecher: String)
 
 ## Characters revealed per second. Slow enough to read along, fast enough not
 ## to feel like waiting.
@@ -96,6 +99,7 @@ func _advance() -> void:
 func _show_line() -> void:
 	var line: Dictionary = _lines[_index]
 	_speaker_label.text = str(line.get("speaker", ""))
+	zeile_begonnen.emit(_speaker_label.text)
 	_text_label.text = str(line.get("text", ""))
 	_text_label.visible_characters = 0
 	_revealed = 0.0
