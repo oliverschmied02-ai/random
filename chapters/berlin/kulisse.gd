@@ -195,6 +195,9 @@ func _foto_mat(satz: String, ton: Color, masstab: float = 0.22, relief: float = 
 	m.roughness_texture = load("res://assets/texturen/%s/rauheit.jpg" % satz)
 	m.uv1_triplanar = true
 	m.uv1_scale = Vector3(masstab, masstab, masstab)
+	# Ohne anisotrope Filterung verschmieren Bodentexturen im flachen
+	# Blickwinkel zu Schlieren — und Boden füllt das halbe Bild.
+	m.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS_ANISOTROPIC
 	return m
 
 
