@@ -77,3 +77,15 @@ func _einschlagen() -> void:
 	var versatz := global_position - scheiben_mitte
 	var radius := Vector2(versatz.x, versatz.y).length()
 	eingeschlagen.emit(DartsConfig.punkte_fuer_radius(radius), global_position, radius)
+	_stecken_bleiben()
+
+
+## Lässt die Spritze sichtbar in der Scheibe stecken: nur die halbe Nadel im
+## Kork, das hintere Ende hängt durch — ein senkrecht steckender Wurf zeigt
+## dem Betrachter nur seinen Deckel, erst die Schräglage macht die Silhouette
+## mit Glaszylinder und Serum erkennbar.
+func _stecken_bleiben() -> void:
+	global_position += global_transform.basis.z * 0.09
+	var spitze := global_position - global_transform.basis.z * 0.185
+	rotate_object_local(Vector3.RIGHT, randf_range(0.25, 0.4))
+	global_position = spitze + global_transform.basis.z * 0.185
