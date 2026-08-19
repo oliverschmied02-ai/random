@@ -175,7 +175,7 @@ func _materialien_anlegen() -> void:
 		&"ladenschild": _mat(Color(0.42, 0.18, 0.16), 0.7),
 		&"gitter": _mat(Color(0.14, 0.15, 0.17), 0.5),
 		&"markierung": _mat(Color(0.75, 0.74, 0.70), 0.9),
-		&"gleisbett": _foto_mat("schotter", Color(0.34, 0.34, 0.37), 0.45, 1.0),
+		&"gleisbett": _foto_mat("schotter", Color(0.34, 0.34, 0.37), 0.8, 1.0),
 		&"birne": _mat(Color(1.0, 0.75, 0.4), 0.5, Color(1.0, 0.62, 0.25), 3.2),
 		&"dach": _mat(Color(0.16, 0.16, 0.18), 0.9),
 		&"schornstein": _foto_mat("klinker", Color(0.85, 0.83, 0.8), 0.5, 1.0),
@@ -499,7 +499,7 @@ func _grund_verboten(stelle: Vector3) -> bool:
 
 
 func _gehwege_bauen() -> void:
-	var material := _foto_mat("beton_platten", Color(0.82, 0.82, 0.86), 0.35, 0.6)
+	var material := _foto_mat("beton_platten", Color(0.72, 0.72, 0.76), 0.35, 0.6)
 	for feld in GEHWEGE:
 		var masse := Vector3(feld[2] - feld[0], 0.16, feld[3] - feld[1])
 		var mitte := Vector3((feld[0] + feld[2]) * 0.5, 0.0, (feld[1] + feld[3]) * 0.5)

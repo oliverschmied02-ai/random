@@ -30,11 +30,13 @@ mit ihrer 8-cm-Bordsteinkante, für die das Stufen-Steigen gebaut wurde.
   und per `tools/import_fototexturen.py` eingebaut: Plaster001 (Fassaden),
   Asphalt025B (Fahrbahn — die Pfützen werden beim Einbau hineingerechnet:
   dunkle Flecken in der Albedo, spiegelglatte in der Rauheitskarte),
-  Concrete020 (Sockel **und** vorerst Gehweg), Gravel022 (Gleisbett),
-  Bricks054 (Schornsteine). Ambient Occlusion wird zu 75 % in die Albedo
-  eingerechnet. Je Satz Albedo + Normal + Rauheit, triplanar, anisotrop
-  gefiltert. Für den Gehweg fehlt noch ein PavingStones-Set — einfach nach
-  `assets/texturen/beton_platten/` kopieren, gleiche Dateinamen. Als
+  Concrete020 (Sockel), **PavingStones128** (Gehwegplatten im
+  Läuferverband), **PavingStones138** (Kopfsteinpflaster mit Moosfugen —
+  das Gleisbett der Tram; das Moos wird beim Einbau entsättigt, sonst
+  leuchtet es grün im blauen Nachtlicht), Bricks054 (Schornsteine).
+  Ambient Occlusion wird zu 75 % in die Albedo eingerechnet, nicht-quadratische
+  Karten werden mittig aufs Quadrat beschnitten (triplanar streckt sonst).
+  Je Satz Albedo + Normal + Rauheit, triplanar, anisotrop gefiltert. Als
   Rückfallebene kann `tools/make_textures.py` alle Plätze weiterhin
   synthetisch füllen.
 * **Fassaden:** Sockel, Fensterraster, Gesimse, Stuckband, vereinzelt Balkone;
@@ -631,9 +633,8 @@ zeilenweise, nicht spaltenweise. Dadurch stiegen die Rampen zur falschen Seite
   PBR-Texturen sind gebacken (Rauschsynthese), keine Fotografien; es gibt
   keine echten Balkongeländer und keine Menschen außer den beiden und dem
   Dönermann. Der nächtliche Look trägt das; bei Tageslicht würde es kahl
-  wirken. Fünf Plätze tragen bereits echte ambientCG-Fotos; für den Gehweg
-  fehlt noch ein PavingStones-Set (nach `assets/texturen/beton_platten/`
-  kopieren, gleiche Dateinamen — bis dahin liegt dort der Sockelbeton).
+  wirken. Alle sieben Materialplätze tragen inzwischen echte
+  ambientCG-Fotos.
 * SDFGI, Screen-Space-Reflexionen und volumetrischer Nebel wirken nur im
   Forward+-Renderer der fertigen App — die Prüfbilder hier entstehen im
   Kompatibilitätsrenderer und zeigen sie nicht. SDFGI kostet spürbar

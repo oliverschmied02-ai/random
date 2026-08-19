@@ -59,15 +59,28 @@ def _spektrum_rauschen(n, seed, beta, cmin=1, cmax=None):
     return feld / spanne if spanne > 0 else feld
 
 
-def standard_set(ordner: Path, satz: str, pfuetzen: bool = False) -> None:
+def _quadratisch(feld: np.ndarray) -> np.ndarray:
+    """Beschneidet eine nicht-quadratische Karte mittig aufs Quadrat —
+    triplanares Mapping streckt sie sonst zu Ovalen."""
+    h, b = feld.shape[:2]
+    kante = min(h, b)
+    oy, ox = (h - kante) // 2, (b - kante) // 2
+    return feld[oy:oy + kante, ox:ox + kante]
+
+
+def standard_set(ordner: Path, satz: str, pfuetzen: bool = False,
+                 entsaettigen: float = 0.0) -> None:
     """Ein normales ambientCG-1K-JPG-Set auf seinen Platz kopieren."""
-    albedo = _lies(_finde(ordner, "_Color.jpg"))
-    normal = _lies(_finde(ordner, "_NormalGL.jpg"))
-    rauheit = _lies(_finde(ordner, "_Roughness.jpg"))[..., 0]
+    albedo = _quadratisch(_lies(_finde(ordner, "_Color.jpg")))
+    normal = _quadratisch(_lies(_finde(ordner, "_NormalGL.jpg")))
+    rauheit = _quadratisch(_lies(_finde(ordner, "_Roughness.jpg")))[..., 0]
     ao_pfad = _finde(ordner, "_AmbientOcclusion.jpg")
     if ao_pfad is not None:
-        ao = _lies(ao_pfad)[..., 0]
+        ao = _quadratisch(_lies(ao_pfad))[..., 0]
         albedo = albedo * (0.25 + 0.75 * ao[..., None])
+    if entsaettigen > 0.0:
+        grau = albedo.mean(axis=2, keepdims=True)
+        albedo = albedo * (1 - entsaettigen) + grau * entsaettigen
 
     if pfuetzen:
         maske = _spektrum_rauschen(N, 90, 2.6, 1, 4)
@@ -116,7 +129,11 @@ if __name__ == "__main__":
         "Plaster001": ("putz", "dds"),
         "Asphalt025B": ("asphalt", "pfuetzen"),
         "Concrete020": ("beton_rau", ""),
-        "Gravel022": ("schotter", ""),
+        "PavingStones128": ("beton_platten", ""),
+        # Kopfsteinpflaster mit Moosfugen: das Gleisbett der Tram. Das Moos
+        # wird entsättigt, sonst leuchtet es grün im blauen Nachtlicht.
+        "PavingStones138": ("schotter", "entsaettigen"),
+        "Gravel022": ("schotter_alt", ""),
         "Bricks054": ("klinker", ""),
     }
     for ordner in sorted(quelle.iterdir()):
@@ -128,11 +145,6 @@ if __name__ == "__main__":
             if art == "dds":
                 leadwerks_set(ordner, satz)
             else:
-                standard_set(ordner, satz, pfuetzen=(art == "pfuetzen"))
-    # Der Gehweg nutzt denselben Beton, nur heller getönt — eigener Platz,
-    # damit später ein PavingStones-Set einfach darüberkopiert werden kann.
-    import shutil
-    for name in ["albedo.jpg", "normal.jpg", "rauheit.jpg"]:
-        shutil.copyfile(WURZEL / "beton_rau" / name, WURZEL / "beton_platten" / name)
-    print("  beton_platten: Kopie von beton_rau (bis ein PavingStones-Set kommt)")
+                standard_set(ordner, satz, pfuetzen=(art == "pfuetzen"),
+                             entsaettigen=0.4 if art == "entsaettigen" else 0.0)
     print("fertig")
