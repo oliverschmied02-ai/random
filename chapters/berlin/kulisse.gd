@@ -280,6 +280,22 @@ func _graffiti_mat(variante: String) -> StandardMaterial3D:
 	return m
 
 
+## Holt das Netz aus einem Requisiten-GLB — für MultiMesh-Instanzierung.
+func _modul_mesh(name: String) -> Mesh:
+	var szene := load("res://assets/props/%s.glb" % name) as PackedScene
+	if szene == null:
+		return null
+	var wurzel := szene.instantiate()
+	for kind in wurzel.find_children("*", "MeshInstance3D", true, false):
+		var teil := kind as MeshInstance3D
+		if teil != null and teil.mesh != null:
+			var netz := teil.mesh
+			wurzel.free()
+			return netz
+	wurzel.free()
+	return null
+
+
 func _lege(gruppe: StringName, lage: Transform3D) -> void:
 	if not _stapel.has(gruppe):
 		_stapel[gruppe] = []
@@ -292,9 +308,20 @@ func _stapel_absetzen() -> void:
 	var kugelgruppen := [&"birne", &"stern", &"ampel_rot"]
 	var zylindergruppen := [&"gully", &"poller", &"rad", &"antenne", &"radkappe", &"fallrohr"]
 	var flaechengruppen := [&"graffiti_a", &"graffiti_b", &"graffiti_c"]
+	# Fassadenmodule aus der Blender-Werkstatt: ein echtes Netz je Gruppe,
+	# tausendfach instanziert wie die Grundkörper.
+	var modulgruppen := {
+		&"modul_fenster": "fenster_modul",
+		&"modul_tuer": "tuer_modul",
+		&"modul_gesims": "gesims_modul",
+	}
 	for gruppe in _stapel:
 		var mesh: Mesh
-		if gruppe in kugelgruppen:
+		if gruppe in modulgruppen:
+			mesh = _modul_mesh(modulgruppen[gruppe])
+			if mesh == null:
+				continue
+		elif gruppe in kugelgruppen:
 			var kugel := SphereMesh.new()
 			kugel.radius = 0.5
 			kugel.height = 1.0
@@ -434,13 +461,17 @@ func _fassade(block: CSGBox3D, n: Vector3, rng: RandomNumberGenerator) -> void:
 			_zylinder(&"fallrohr",
 				ort.call(seite * (breite * 0.5 - 0.7), (unten + oben) * 0.5, 0.12),
 				0.11, oben - unten - 0.4)
-	_kasten(&"rahmen", ort.call(0.0, oben - 0.22, 0.14), Vector3(breite + 0.25, 0.35, 0.34), drehung)
+	# Kranzgesims als echtes Profil, je Wandbreite gestreckt.
+	_lege(&"modul_gesims", Transform3D(
+		Basis(Vector3.UP, drehung) * Basis.from_scale(Vector3(breite + 0.3, 1.0, 1.0)),
+		ort.call(0.0, oben - 0.42, 0.0)))
 	if block.size.y > 9.0:
 		_kasten(&"rahmen", ort.call(0.0, unten + 4.35, 0.07), Vector3(breite, 0.16, 0.16), drehung)
 
-	# Fensterraster: mittig verteilt, Ränder bleiben frei. Der Rahmen steht
-	# vor der Wand, das Glas liegt dahinter zurückgesetzt in einer dunklen
-	# Laibung — diese drei Zentimeter Tiefe machen aus Aufklebern Fenster.
+	# Fensterraster: mittig verteilt, Ränder bleiben frei. Jedes Fenster ist
+	# ein Blender-Modul: Faschen-Band, abgeschrägte Laibung, Fensterbank —
+	# mit gebackener Verschattung, die aus dem 7-cm-Relief eine tiefe
+	# Laibung macht. Scheibe und Vorhang hängen dahinter wie gehabt.
 	var spalten := int((breite - 3.2) / fenster_raster) + 1
 	var start := -(spalten - 1) * fenster_raster * 0.5
 	var reihe := 0
@@ -448,16 +479,11 @@ func _fassade(block: CSGBox3D, n: Vector3, rng: RandomNumberGenerator) -> void:
 	while y + 1.0 < oben - 0.9:
 		for i in spalten:
 			var u := start + i * fenster_raster
-			_kasten(&"laibung", ort.call(u, y + 0.8, 0.01), Vector3(1.18, 1.78, 0.05), drehung)
-			# Rahmen als vier Leisten — eine volle Platte würde die
-			# zurückgesetzte Scheibe verdecken. Dazu ein Sprossenkreuz.
-			_kasten(&"rahmen", ort.call(u, y + 1.635, 0.055), Vector3(1.15, 0.08, 0.06), drehung)
-			_kasten(&"rahmen", ort.call(u, y - 0.035, 0.055), Vector3(1.15, 0.08, 0.06), drehung)
-			_kasten(&"rahmen", ort.call(u - 0.535, y + 0.8, 0.055), Vector3(0.08, 1.75, 0.06), drehung)
-			_kasten(&"rahmen", ort.call(u + 0.535, y + 0.8, 0.055), Vector3(0.08, 1.75, 0.06), drehung)
-			_kasten(&"rahmen", ort.call(u, y + 0.8, 0.045), Vector3(0.05, 1.6, 0.04), drehung)
-			_kasten(&"rahmen", ort.call(u, y + 1.05, 0.045), Vector3(1.05, 0.05, 0.04), drehung)
-			_kasten(&"rahmen", ort.call(u, y - 0.14, 0.1), Vector3(1.32, 0.09, 0.2), drehung)
+			_lege(&"modul_fenster", Transform3D(
+				Basis(Vector3.UP, drehung), ort.call(u, y + 0.8, 0.0)))
+			# Sprossenkreuz hinter der Öffnung — das Modul lässt sie offen.
+			_kasten(&"rahmen", ort.call(u, y + 0.8, 0.03), Vector3(0.05, 1.5, 0.03), drehung)
+			_kasten(&"rahmen", ort.call(u, y + 1.05, 0.03), Vector3(0.95, 0.05, 0.03), drehung)
 
 			var los := rng.randf()
 			var gruppe: StringName = &"glas_dunkel"
@@ -493,7 +519,8 @@ func _fassade(block: CSGBox3D, n: Vector3, rng: RandomNumberGenerator) -> void:
 		if _grund_verboten(stelle):
 			continue
 		if i % 6 == 2:
-			_kasten(&"tuer", stelle, Vector3(1.35, 2.5, 0.12), drehung)
+			_lege(&"modul_tuer", Transform3D(
+				Basis(Vector3.UP, drehung), ort.call(u, unten + 1.48, 0.0)))
 		elif i % 5 == 1 and rng.randf() < 0.3:
 			# Ein verwitterter Tag zwischen den Fenstern — nichts sagt
 			# schneller „Berlin" als besprühter Putz in Hüfthöhe.
