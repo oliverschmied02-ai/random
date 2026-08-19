@@ -295,7 +295,7 @@ def baum():
     bleibend (~5,2 m). Nachts zählt die Silhouette, nicht das Blattwerk."""
     _leeren()
     rinde = _material("rinde", (0.21, 0.16, 0.12), 0.9)
-    laub = _material("laub", (0.16, 0.22, 0.12), 0.95)
+    laub = _material("laub", (0.10, 0.13, 0.08), 0.95)
     erde = _material("baumscheibe", (0.09, 0.08, 0.07), 0.95)
 
     _kasten((1.5, 1.5, 0.06), (0, 0, 0.03), erde, 0.01)

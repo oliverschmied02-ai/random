@@ -83,10 +83,13 @@ func _los() -> void:
 			await process_frame
 
 	darts._hud.visible = false
+	# Eine Maske ins Bild hängen, damit das Lieferbild das neue Ziel zeigt.
+	darts.masken_spawn_aktiv = false
+	darts.maske_setzen(darts._mitte.global_position + Vector3(0.55, 0.6, 0.0), 0.0)
 	var kam := darts.kamera
-	kam.global_position = Vector3(131.7, 1.75, -241.6)
-	kam.look_at(Vector3(132, 1.7, -243.95))
-	kam.fov = 45.0
+	kam.global_position = Vector3(131.5, 1.9, -241.0)
+	kam.look_at(Vector3(132, 1.9, -243.95))
+	kam.fov = 55.0
 	for i in 3:
 		await process_frame
 	_schuss("darts_scheibe")
