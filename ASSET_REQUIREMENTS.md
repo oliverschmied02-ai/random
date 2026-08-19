@@ -103,7 +103,7 @@ Andockpunkte wie die Spielfigur.
 | **Typ** | Modulare Gebäude, Bodenmaterialien, Straßenmöbel |
 | **Stil** | Stilisiert, warme Farben, starke Silhouetten |
 | **Animation** | Dezente Bewegung: Fahnen, Blätter, ferne Bahnen |
-| **Platzhalter** | Prozedurale Nachtkulisse aus `kulisse.gd`: Fassaden mit Putzkörnung (Rauschtexturen, triplanar), Fenster mit Laibungstiefe und Vorhängen, Dächer mit Schornsteinen und Antennen, nasser Asphalt mit Pfützen, Tram-Oberleitung, geparkte Autos, Ampeln, Mülleimer, Gullys, Plakate, Mond und Sterne, flackernde Laterne |
+| **Platzhalter** | Prozedurale Nachtkulisse aus `kulisse.gd`: Fassaden mit Putzkörnung (Rauschtexturen, triplanar), Fenster/Türen/Gesimse als Blender-Module mit gebackener AO (`tools/make_fassade.py`, Vorhänge und Scheiben dahinter), Dächer mit Schornsteinen und Antennen, nasser Asphalt mit Pfützen, Tram-Oberleitung, geparkte Autos, Ampeln, Mülleimer, Gullys, Plakate, Mond und Sterne, flackernde Laterne |
 | **Priorität** | POLISH — der Platzhalter trägt inzwischen selbst |
 
 Fünf Abschnitte mit vier Ecken. Beim Austausch erhalten bleiben sollten: die

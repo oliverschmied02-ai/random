@@ -346,7 +346,9 @@ func _stapel_absetzen() -> void:
 		var traeger := MultiMeshInstance3D.new()
 		traeger.name = "MM_%s" % gruppe
 		traeger.multimesh = mm
-		traeger.material_override = _materialien[gruppe]
+		# Module bringen ihre gebackene Textur aus dem GLB mit — kein Override.
+		if gruppe in _materialien:
+			traeger.material_override = _materialien[gruppe]
 		add_child(traeger)
 
 

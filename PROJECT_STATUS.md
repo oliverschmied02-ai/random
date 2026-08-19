@@ -40,9 +40,18 @@ mit ihrer 8-cm-Bordsteinkante, für die das Stufen-Steigen gebaut wurde.
   Rückfallebene kann `tools/make_textures.py` alle Plätze weiterhin
   synthetisch füllen.
 * **Fassaden:** Sockel, Fensterraster, Gesimse, Stuckband, vereinzelt Balkone;
-  jede Wand in einem eigenen Berliner Altbauton. Fenster haben jetzt **Tiefe**:
-  dunkle Laibung, darin die zurückgesetzte Scheibe, davor der Rahmen als vier
-  Leisten mit Sprossenkreuz, darunter die Fensterbank. 14 % sind warm erleuchtet
+  jede Wand in einem eigenen Berliner Altbauton. Fenster, Türen und das
+  Kranzgesims kommen aus dem **Fassaden-Kit** (`tools/make_fassade.py`): in
+  Blender modellierte Module mit **in Cycles gebackener Ambient Occlusion**
+  (eine Wand hinter dem Modul dient beim Backen als Verdecker, deshalb sitzt
+  echter Kontaktschatten in Laibung und Profil). Das Fenstermodul bringt
+  Faschen-Band, abgeschrägte Laibung und profilierte Fensterbank mit
+  Tropfkante mit; davor nur noch das Sprossenkreuz, dahinter wie gehabt die
+  zurückgesetzte Scheibe. Türen sind Kassettentüren mit Gewände und
+  Trittstufe, das Gesims ein gestuftes 1-m-Profil, das je Wand in der Breite
+  gestreckt wird. Alle drei laufen als MultiMesh-Gruppen (`modul_fenster`,
+  `modul_tuer`, `modul_gesims`) — rund 4000 Fenster kosten drei Draw-Calls.
+  14 % sind warm erleuchtet
   (zwei Farbtemperaturen plus vereinzelt bläuliches Fernseherlicht), 45 % der
   erleuchteten haben Vorhang-Silhouetten. Erdgeschosse mit Türen,
   heruntergelassenen Rollläden samt Ladenschild und schief geklebten Plakaten.
