@@ -40,6 +40,16 @@ die Nacht (und halten, wenn man die Straße quert).
 Ausschließlich Platzhalter-Geometrie, alle Dialoge sind Platzhaltertexte, aller
 Ton ist synthetisch erzeugt.
 
+**Davor: die Tinder-Intro** — wie alles anfing. Eine Nahaufnahme von Annes
+Hand mit dem Handy (Blender-Modell, der Daumen wischt sichtbar mit), Bokeh-
+Lichter im Hintergrund, auf dem Bildschirm die Dating-App „zünder". Drei
+Profile, die niemand will (der Angler, der Auto-Typ, das Gym-Spiegel-Selfie),
+wischt man nach links — dann liegt Olivers Profil da: drei Fotos, auf jedem
+sieht er anders aus. Anne denkt laut nach („Na ja. Bei der Auswahl hier hab
+ich ja nichts zu verlieren."), ein Wisch nach rechts, *Es ist ein Match!* —
+und Kapitel 1 beginnt. Gewischt wird per Maus-Ziehen oder Pfeiltasten, ein
+Tipp aufs Foto blättert durch die Bilder, Esc überspringt die Intro.
+
 ## Starten
 
 Godot 4.5 wird benötigt.
@@ -105,6 +115,7 @@ godot --headless --path . --script res://tools/headless_chapter_check.gd
 godot --headless --path . --script res://tools/headless_ending_check.gd
 godot --headless --path . --script res://tools/headless_rahmen_check.gd
 godot --headless --path . --script res://tools/headless_figur_check.gd
+godot --headless --path . --script res://tools/headless_intro_check.gd
 ```
 
 Der erste fährt die Figur über Bahn, Treppe und Rampe und prüft

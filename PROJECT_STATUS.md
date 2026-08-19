@@ -152,6 +152,36 @@ in Berlin, mit gefangener Maus. Jetzt gibt es einen Anfang.
   Während des Auftakts ruht die Steuerung.
 * **Pausenmenü** mit Lautstärkereglern und *Zum Titelbildschirm*.
 
+### Tinder-Intro (`chapters/intro/tinder_intro.gd`)
+**Wie alles anfing** — die spielbare Vorgeschichte, *Anfangen* startet sie vor
+Kapitel 1 (sie wechselt danach selbst nach Berlin, Esc überspringt):
+
+* **Nahaufnahme:** Annes rechte Hand mit dem Handy, in Blender gebaut
+  (`tools/make_intro_props.py` → `assets/intro/hand_handy.glb`). Der Daumen
+  ist ein eigenes Objekt und **wischt sichtbar mit**; die Hand atmet leicht.
+  Hinter ihr warme Bokeh-Lichter (weiche Kreistextur, additiv), ein kühler
+  Fensterschimmer, das Bildschirmlicht flackert schwach auf den Fingern.
+* **Die App:** eine SubViewport-Textur (540 × 1170) auf der Bildfläche des
+  Modells — Statuszeile, „zünder"-Kopfzeile, Karten mit Foto, Name, Bio,
+  NEE-/GEFÄLLT-MIR-Stempeln beim Ziehen, Foto-Punkten und Knopfreihe. Alles
+  Godot-Controls, keine Bilddateien außer den Fotos.
+* **Ablauf:** drei Scherz-Profile (Angler Kevin, Auto-Marcel, Gym-Justin —
+  stilisierte Silhouetten-Porträts aus `tools/make_tinder_fotos.py`) lassen
+  sich **nur nach links** wischen; rechts federt zurück und Anne kommentiert.
+  Dann Olivers Profil: **drei Fotos, auf jedem sieht er anders aus** (aus
+  seinem 3D-Modell in der Kapitelszene gerendert — ordentlich / dunkel und
+  verwackelt / Blitz von schräg unten vor dem BÜRO-Schild; Nachbearbeitung
+  in `make_tinder_fotos.py veredeln`). Annes Gedanken laufen Zeile für Zeile
+  (`INTRO_GEDANKEN` in `dialogue_lines.gd`), ein Tipp aufs Foto blättert,
+  rechts wischen macht das **Match** (Dreiklang, zwei runde Avatare) und
+  blendet nach Berlin über.
+* **Eingabe:** Maus ziehen oder ←/→, Tipp/Leertaste blättert Fotos, Klick
+  schaltet Gedanken weiter, Esc überspringt.
+* **Prüflauf** `tools/headless_intro_check.gd`: Zustandsmaschine komplett —
+  falsche Richtungen federn, drei Linkswische legen Oliver hin, Gedanken
+  sperren das Wischen, Fotos rotieren, erst der Rechtswisch auf Oliver
+  setzt das Match. Die Logik schaltet sofort, Tweens sind nur Kosmetik.
+
 ### Ton (`audio/`, `systems/audio/`)
 Alle Klänge sind **synthetische Platzhalter** und entstehen in
 `tools/make_placeholder_audio.py` — ohne Fremdmaterial, ohne Abhängigkeiten,

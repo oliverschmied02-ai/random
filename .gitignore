@@ -22,3 +22,4 @@ mono_crash.*.json
 # OS
 .DS_Store
 Thumbs.db
+tools/__pycache__/

@@ -10,8 +10,9 @@ extends Control
 ## Der Übergang ins Kapitel blendet ab und wechselt erst dann die Szene. Ein
 ## harter Schnitt mitten aus der Musik heraus wirkt wie ein Absturz.
 
-## Kapitel, das *Anfangen* startet.
-@export_file("*.tscn") var kapitel: String = "res://chapters/berlin/berlin_chapter.tscn"
+## Szene, die *Anfangen* startet — erst die Tinder-Intro, die wechselt
+## danach selbst ins Berlin-Kapitel.
+@export_file("*.tscn") var kapitel: String = "res://chapters/intro/tinder_intro.tscn"
 @export_range(0.2, 3.0, 0.1) var abblenden_dauer: float = 1.1
 @export_range(0.2, 4.0, 0.1) var aufblenden_dauer: float = 1.6
 

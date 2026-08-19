@@ -83,3 +83,51 @@ const ERINNERUNG_BANK: Array[Dictionary] = [
 	{"speaker": "ANNE", "text": "Auf so einer haben wir mal zwei Stunden gesessen."},
 	{"speaker": "ANNE", "text": "Es war viel zu kalt dafür."},
 ]
+
+
+# --- Tinder-Intro (vor Kapitel 1) ------------------------------------------
+#
+# Die Profile, die Anne wegwischt, bevor Oliver auftaucht. `abwink` sagt sie,
+# wenn man versehentlich doch nach rechts wischt — die Karte federt zurück.
+# Namen, Alter und Sprüche sind Platzhalter mit der richtigen Tonlage.
+
+const INTRO_PROFILE: Array[Dictionary] = [
+	{
+		"name": "Kevin", "alter": 29,
+		"bild": "res://assets/intro/profil_kevin.png",
+		"bio": "Der Fisch ist nicht immer dabei. Meistens schon.",
+		"abwink": "Nee. Nicht schon wieder ein Fisch.",
+	},
+	{
+		"name": "Marcel", "alter": 31,
+		"bild": "res://assets/intro/profil_marcel.png",
+		"bio": "Frag mich nach meinem Auto.",
+		"abwink": "Ich will nichts über sein Auto wissen.",
+	},
+	{
+		"name": "Justin", "alter": 26,
+		"bild": "res://assets/intro/profil_justin.png",
+		"bio": "Erst das Gym. Dann das Gym.",
+		"abwink": "Ich habe nicht mal sein Gesicht gesehen.",
+	},
+]
+
+## Olivers Profil — kommt als vierte Karte. Drei Fotos, auf jedem sieht er
+## anders aus; genau darüber denkt Anne dann laut nach.
+const INTRO_OLIVER: Dictionary = {
+	"name": "Oliver", "alter": 28,
+	"bilder": [
+		"res://assets/intro/oliver_foto_1.png",
+		"res://assets/intro/oliver_foto_2.png",
+		"res://assets/intro/oliver_foto_3.png",
+	],
+	"bio": "Sucht jemanden für Spaziergänge, solange alles andere zu hat.",
+	"abwink": "Hm. Vielleicht doch noch mal gucken.",
+}
+
+## Annes Gedanken, sobald Olivers Karte liegt — Zeile für Zeile, per Klick.
+const INTRO_GEDANKEN: Array[String] = [
+	"Oh. Der könnte was sein.",
+	"Aber er sieht auf jedem Bild anders aus…",
+	"Na ja. Bei der Auswahl hier hab ich ja nichts zu verlieren.",
+]

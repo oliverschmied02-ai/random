@@ -95,6 +95,17 @@ Andockpunkte wie die Spielfigur.
 
 ## Umgebung
 
+### Tinder-Intro (Hand, Handy, Profilbilder)
+| | |
+| --- | --- |
+| **Zweck** | Die Vorgeschichte: Anne swipet, Oliver taucht auf, Match |
+| **Szene** | `chapters/intro/tinder_intro.tscn` |
+| **Typ** | Hand-mit-Handy-Modell, App-Oberfläche, Profilfotos |
+| **Stil** | Nahaufnahme, abends, warmes Bokeh; die App bewusst generisch („zünder") |
+| **Animation** | Daumen wischt mit, Hand atmet; Karten fliegen/federn |
+| **Platzhalter** | `assets/intro/hand_handy.glb` (Blender, `tools/make_intro_props.py`), Scherz-Profile als Silhouetten-Porträts, Olivers drei Fotos aus dem 3D-Modell gerendert (`tools/_foto_oliver.gd` + `make_tinder_fotos.py veredeln`) |
+| **Priorität** | POLISH — trägt; echte Fotos der beiden würden die Match-Avatare ersetzen |
+
 ### Straßenzug Berlin-Mitte
 | | |
 | --- | --- |

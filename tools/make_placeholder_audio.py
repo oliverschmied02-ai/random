@@ -287,6 +287,62 @@ def titelmusik():
     schreibe("titelmusik.wav", schleife_schliessen(spur, 1.2), 0.55)
 
 
+def wisch():
+    """Karten-Wisch der Tinder-Intro: kurzes, helles Luft-Zischen.
+
+    Bandpass-Rauschen, dessen Mitte in 0,16 s nach oben zieht — wie Stoff
+    über Glas. Dazu `wisch_zurueck.wav`: dieselbe Geste rückwärts und tiefer,
+    wenn die Karte zurückfedert.
+    """
+    random.seed(11)
+    dauer = 0.16
+    roh = rauschen(dauer)
+    n = len(roh)
+    spur = []
+    for i, s in enumerate(roh):
+        t = i / n
+        spur.append(s * (0.25 + 0.75 * t))
+    spur = hochpass(tiefpass(spur, 3800), 900)
+    spur = huellkurve(spur, 0.01, 0.09)
+    schreibe("wisch.wav", spur, 0.4)
+
+    zurueck = hochpass(tiefpass(list(reversed(spur)), 2200), 500)
+    schreibe("wisch_zurueck.wav", huellkurve(zurueck, 0.01, 0.10), 0.32)
+
+
+def handy_tipp():
+    """Fingertipp aufs Glas: sehr kurzer, dumpfer Tick."""
+    random.seed(12)
+    klopf = huellkurve(tiefpass(rauschen(0.03), 2400), 0.001, 0.02)
+    koerper = huellkurve(sinus(310, 0.05), 0.001, 0.035)
+    spur = mische(klopf, [s * 0.5 for s in koerper])
+    schreibe("handy_tipp.wav", spur, 0.32)
+
+
+def match_klang():
+    """„Es ist ein Match!" — freundlicher Dreiklang mit kleinem Glitzer."""
+    random.seed(13)
+    laenge = int(1.4 * RATE)
+    spur = [0.0] * laenge
+    for versatz, ton in [(0.0, 523.25), (0.10, 659.25), (0.20, 783.99)]:
+        klang = huellkurve(
+            mische(sinus(ton, 1.0), [s * 0.25 for s in sinus(ton * 2, 1.0)]),
+            0.01, 0.7,
+        )
+        start = int(versatz * RATE)
+        for j, s in enumerate(klang):
+            if start + j < laenge:
+                spur[start + j] += s * 0.4
+    # Glitzer: drei hohe, kurze Pings hinterher.
+    for versatz, ton in [(0.42, 1567.98), (0.52, 2093.0), (0.62, 2637.02)]:
+        klang = huellkurve(sinus(ton, 0.3), 0.005, 0.22)
+        start = int(versatz * RATE)
+        for j, s in enumerate(klang):
+            if start + j < laenge:
+                spur[start + j] += s * 0.16
+    schreibe("match.wav", spur, 0.5)
+
+
 if __name__ == "__main__":
     os.makedirs(AUS, exist_ok=True)
     schritte()
@@ -298,4 +354,7 @@ if __name__ == "__main__":
     stadt()
     bude_summen()
     titelmusik()
+    wisch()
+    handy_tipp()
+    match_klang()
     print("fertig — %s" % AUS)
