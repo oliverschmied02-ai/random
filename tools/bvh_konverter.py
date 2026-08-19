@@ -234,4 +234,6 @@ def verarbeiten(pfad, ist_gang, ausgabe):
 if __name__ == "__main__":
     verarbeiten(sys.argv[1], True, "gehen.json")
     verarbeiten(sys.argv[2], False, "stehen.json")
+    if len(sys.argv) > 3:
+        verarbeiten(sys.argv[3], False, "sprechen.json")
     print("fertig")

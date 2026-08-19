@@ -29,6 +29,7 @@ extends RefCounted
 
 const GEHEN_PFAD := "res://assets/mocap/gehen.json"
 const STEHEN_PFAD := "res://assets/mocap/stehen.json"
+const SPRECHEN_PFAD := "res://assets/mocap/sprechen.json"
 
 ## Streckt die aufgenommene Schrittlänge. Die CMU-Person ging gemütliche
 ## 1,5 m/s; die Spielfigur geht 3,4 m/s. Ohne Streckung wirbelte der Gang
@@ -49,6 +50,9 @@ var blick_folge: float = 5.0
 
 var blick_ziel: Vector3 = Vector3.INF
 var betonung: float = 0.0
+## true, solange die Figur ihre Sprechzeile hat — dann erklärt sie mit den
+## Händen (CMU-Aufnahme 18_08), weich ein- und ausgeblendet.
+var spricht: bool = false
 
 ## Eltern vor Kindern — dieselbe Regel wie im Gangwerk.
 const _KNOCHEN: Array[StringName] = [
@@ -69,6 +73,7 @@ const _KINDER := {
 
 static var _gehen: Dictionary = {}
 static var _stehen: Dictionary = {}
+static var _sprechen: Dictionary = {}
 
 var _skelett: Skeleton3D
 var _index: Dictionary = {}
@@ -78,6 +83,7 @@ var _zyklus_meter: float = 3.0
 var _weg: float = 0.0
 var _zeit: float = 0.0
 var _intensitaet: float = 0.0
+var _sprech_gewicht: float = 0.0
 var _gier: float = 0.0
 var _nick: float = 0.0
 
@@ -108,6 +114,8 @@ func einrichten(skelett: Skeleton3D) -> bool:
 	if _gehen.is_empty():
 		_gehen = _laden(GEHEN_PFAD)
 		_stehen = _laden(STEHEN_PFAD)
+		if ResourceLoader.exists(SPRECHEN_PFAD):
+			_sprechen = _laden(SPRECHEN_PFAD)
 	for name in _KNOCHEN:
 		var idx := skelett.find_bone(name)
 		if idx < 0:
@@ -140,32 +148,46 @@ func tick(delta: float, tempo: float, _gier_rate: float = 0.0) -> void:
 	var ziel := clampf(tempo / voll_bei_tempo, 0.0, 1.0)
 	_intensitaet = lerpf(_intensitaet, ziel, 1.0 - exp(-glaettung * delta))
 	betonung = maxf(betonung - delta * 2.2, 0.0)
+	# Beim Sprechen erklärt die Figur mit den Händen — nur im Stand, und
+	# weich ein- und ausgeblendet.
+	var sprech_ziel := 1.0 if (spricht and not _sprechen.is_empty()) else 0.0
+	_sprech_gewicht = lerpf(_sprech_gewicht, sprech_ziel, 1.0 - exp(-3.5 * delta))
 
-	# Bildposition beider Schleifen: Gehen läuft über den Weg (nahtlos
-	# geschnitten), Stehen über die Zeit im Hin-und-zurück — die lange
-	# Aufnahme hat keinen sauberen Schleifenpunkt, gespiegelt braucht sie
-	# keinen.
+	# Bildposition der Schleifen: Gehen läuft über den Weg (nahtlos
+	# geschnitten), Stehen und Sprechen über die Zeit im Hin-und-zurück —
+	# die langen Aufnahmen haben keinen Schleifenpunkt, gespiegelt brauchen
+	# sie keinen.
 	var gehen_bilder: int = _gehen["bilder"]
 	var gehen_bild := fposmod(_weg / _zyklus_meter, 1.0) * gehen_bilder
-	var stehen_bilder: int = _stehen["bilder"]
-	var hin_und_zurueck := fposmod(_zeit * float(_stehen["fps"]), 2.0 * (stehen_bilder - 1))
-	var stehen_bild := hin_und_zurueck if hin_und_zurueck < stehen_bilder - 1 \
-		else 2.0 * (stehen_bilder - 1) - hin_und_zurueck
 
 	for name in _KNOCHEN:
-		var im_gehen := _ziel_basis(_gehen, name, gehen_bild, gehen_bilder, true)
-		var im_stehen := _ziel_basis(_stehen, name, stehen_bild, stehen_bilder, false)
-		var soll := Quaternion(im_stehen).slerp(Quaternion(im_gehen), _intensitaet)
+		var soll := _stand_und_gang(name, gehen_bild, gehen_bilder)
 		if name == &"Neck" or name == &"Head":
 			continue  # kommt gleich, mit Blick obendrauf
 		_setze_global(name, Basis(soll))
 
-	_blick(delta, Basis(Quaternion(
-		_ziel_basis(_stehen, &"Neck", stehen_bild, stehen_bilder, false)
-	).slerp(Quaternion(_ziel_basis(_gehen, &"Neck", gehen_bild, gehen_bilder, true)), _intensitaet)),
-	Basis(Quaternion(
-		_ziel_basis(_stehen, &"Head", stehen_bild, stehen_bilder, false)
-	).slerp(Quaternion(_ziel_basis(_gehen, &"Head", gehen_bild, gehen_bilder, true)), _intensitaet)))
+	_blick(delta,
+		Basis(_stand_und_gang(&"Neck", gehen_bild, gehen_bilder)),
+		Basis(_stand_und_gang(&"Head", gehen_bild, gehen_bilder)))
+
+
+## Die gemischte Zieldrehung eines Knochens: Stehen (ggf. mit Sprechgesten)
+## und Gehen, gewichtet nach Sprechzustand und Tempo.
+func _stand_und_gang(name: StringName, gehen_bild: float, gehen_bilder: int) -> Quaternion:
+	var stand := Quaternion(_ziel_basis(_stehen, name, _pendel_bild(_stehen), _stehen["bilder"], false))
+	if _sprech_gewicht > 0.01:
+		var geste := Quaternion(_ziel_basis(_sprechen, name, _pendel_bild(_sprechen), _sprechen["bilder"], false))
+		stand = stand.slerp(geste, _sprech_gewicht)
+	if _intensitaet < 0.01:
+		return stand
+	return stand.slerp(Quaternion(_ziel_basis(_gehen, name, gehen_bild, gehen_bilder, true)), _intensitaet)
+
+
+## Bildposition einer Zeit-Schleife im Hin-und-zurück.
+func _pendel_bild(daten: Dictionary) -> float:
+	var bilder: int = daten["bilder"]
+	var lauf := fposmod(_zeit * float(daten["fps"]), 2.0 * (bilder - 1))
+	return lauf if lauf < bilder - 1 else 2.0 * (bilder - 1) - lauf
 
 
 ## Die Ziel-Weltdrehung eines Knochens aus einer Schleife, zwischen zwei

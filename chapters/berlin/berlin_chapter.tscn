@@ -1,4 +1,4 @@
-[gd_scene load_steps=36 format=3]
+[gd_scene load_steps=37 format=3]
 
 [ext_resource type="Script" path="res://chapters/berlin/chapter_berlin.gd" id="1_chapter"]
 [ext_resource type="PackedScene" path="res://actors/player/player.tscn" id="2_player"]
@@ -18,13 +18,10 @@
 [ext_resource type="Script" path="res://chapters/berlin/kulisse.gd" id="16_kulisse"]
 [ext_resource type="Script" path="res://chapters/berlin/verkaeufer.gd" id="20_verkaeufer"]
 [ext_resource type="Shader" path="res://ui/vignette.gdshader" id="21_vignette"]
+[ext_resource type="Shader" path="res://chapters/berlin/nachthimmel.gdshader" id="22_himmel"]
 
-[sub_resource type="ProceduralSkyMaterial" id="Sky_mat"]
-sky_top_color = Color(0.012, 0.02, 0.05, 1)
-sky_horizon_color = Color(0.16, 0.115, 0.1, 1)
-sky_curve = 0.12
-ground_bottom_color = Color(0.015, 0.015, 0.025, 1)
-ground_horizon_color = Color(0.14, 0.1, 0.09, 1)
+[sub_resource type="ShaderMaterial" id="Sky_mat"]
+shader = ExtResource("22_himmel")
 
 [sub_resource type="Sky" id="Sky_env"]
 sky_material = SubResource("Sky_mat")

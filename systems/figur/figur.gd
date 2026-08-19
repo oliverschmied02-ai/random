@@ -151,6 +151,8 @@ func _physics_process(delta: float) -> void:
 		_blick.global_position + Vector3.UP * _blick_hoehe if _blick != null
 		else Vector3.INF
 	)
+	if "spricht" in gangwerk:
+		gangwerk.spricht = _sprech_rest > 0.0
 	gangwerk.tick(delta, tempo, gier_rate)
 	_mimik_pflegen(delta)
 	_atem_pflegen(delta)

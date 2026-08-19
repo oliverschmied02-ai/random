@@ -95,9 +95,24 @@ mit ihrer 8-cm-Bordsteinkante, für die das Stufen-Steigen gebaut wurde.
   scharf, Berlin dahinter weich — nur dort, beim Zielen wäre sie eine
   Zumutung), zwei **ReflectionProbes** (Bude, Gleisstraße) als Ergänzung der
   Screen-Space-Reflexionen im Forward+-Renderer.
+* **In Blender modellierte Requisiten** (bpy läuft in der Arbeitsumgebung —
+  `tools/make_props.py` baut und exportiert nach `assets/props/*.glb`):
+  Bogenlaternen mit geschwungenem Arm, deren Kopf über die Fahrbahn hängt
+  (Ausrichtung zum nächsten Mittelstreifen gerechnet), Autos mit gerundeter
+  Karosserie, Parkbänke mit Latten und Gussfüßen, Ampeln mit Blendschirmen,
+  die orangen Mülleimer, Poller mit Kugelkopf, Litfaßsäulen mit gewölbter
+  Haube. Alle mit gefasten Kanten — die messerscharfen Quader waren das
+  letzte laute „Computergrafik"-Signal. Farbwerte werden beim Export von
+  sRGB nach linear gewandelt, sonst kommt alles zu hell heraus.
+* **Nachthimmel mit ziehenden Wolken** (`chapters/berlin/nachthimmel.gdshader`,
+  ein Sky-Shader): zwei Wolkenschichten aus Wertrauschen driften
+  unterschiedlich schnell, der Saum ist von der Lichtglocke der Stadt schwach
+  warm angeleuchtet, der Kern dunkler als der Himmel. Mond und Sterne bleiben
+  Meshes (Grenze: die Sterne stehen vor den Wolken statt hinter ihnen —
+  bei dünnen, dunklen Wolken fällt es nicht auf).
 * Alle Kleinteile (Quader, Kugeln, Zylinder und Flächen, inzwischen einige
   zehntausend) liegen in gut zwei Dutzend MultiMeshes — ein Zeichenaufruf je
-  Materialgruppe.
+  Materialgruppe; dazu ~35 Requisiten-Instanzen aus Blender.
 
 Dabei gefunden: **das Café steckte seit Stage 3 komplett in der Hauswand.**
 Beim Begradigen der Blöcke war die Wand über das Café gewandert; auf keinem
@@ -182,6 +197,12 @@ Kindern), die Blickschicht (Ziel ansehen, Nicken zur Sprechzeile) liegt
 über der Aufnahme. Die aufgenommene Schrittlänge (~1,6 m je Zyklus) wird
 mit `strecken_faktor` 1,4 gestreckt — die CMU-Person ging 1,5 m/s, die
 Spielfigur 3,4 m/s; ohne Streckung wirbelte der Gang im Doppeltakt.
+
+Dazu **Sprechgesten**: Aufnahme 18_08 („conversation — explain with hand
+gestures") blendet ein, solange eine Figur ihre Zeile hat (`Figur.betone()`
+setzt den Zustand, das Nicken und der Kiefer laufen weiter obendrüber),
+und blendet nach knapp zwei Sekunden weich wieder aus. Nur im Stand — beim
+Gehen gewinnt der Gang.
 
 Gemessen: Füße bis 0,73 m auseinander, 0,58 m Armschwung, Blick folgt und
 kehrt zurück. **Das Gangwerk bleibt als Rückfallebene** — fehlen die

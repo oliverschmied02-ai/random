@@ -104,6 +104,7 @@ func _ready() -> void:
 	_buero_beschildern()
 	_fernsehturm_beleuchten()
 	_litfasssaeulen_stellen()
+	_baenke_ersetzen()
 	_fuelllicht_anbringen()
 	_regen_bauen()
 	_tram_bauen()
@@ -564,48 +565,97 @@ func _oberleitung_spannen() -> void:
 		_kasten(&"draht", Vector3(130.0, 6.5, z), Vector3(24.5, 0.028, 0.028), 0.0)
 
 
+## Stellt ein in Blender gebautes Requisit auf (assets/props/<name>.glb).
+func _prop(name: String, ort: Vector3, gier: float = 0.0) -> Node3D:
+	var szene := load("res://assets/props/%s.glb" % name) as PackedScene
+	if szene == null:
+		return null
+	var teil := szene.instantiate() as Node3D
+	teil.position = ort
+	teil.rotation.y = gier
+	add_child(teil)
+	return teil
+
+
+## Findet in einem Requisit das Material mit dem gegebenen Namen und ersetzt
+## es durch eine eigene Kopie — die importierten Materialien teilen sich
+## sonst alle Exemplare.
+func _prop_material(teil: Node3D, name: String) -> StandardMaterial3D:
+	for kind in teil.find_children("*", "MeshInstance3D", true, false):
+		var mi := kind as MeshInstance3D
+		if mi == null or mi.mesh == null:
+			continue
+		for s in mi.mesh.get_surface_count():
+			var mat := mi.get_active_material(s)
+			if mat != null and mat.resource_name.contains(name):
+				var kopie := mat.duplicate() as StandardMaterial3D
+				mi.set_surface_override_material(s, kopie)
+				return kopie
+	return null
+
+
+## Der nächste Punkt auf den Mittelstreifen — dorthin hängen die Laternen
+## ihren Kopf über die Fahrbahn.
+func _richtung_zur_strasse(fuss: Vector3) -> float:
+	var beste := Vector3(fuss.x + 1.0, 0, fuss.z)
+	var abstand := 1e9
+	for linie in MARKIERUNGEN:
+		var von := Vector3(linie[0], 0, linie[1])
+		var bis := Vector3(linie[2], 0, linie[3])
+		var t := clampf((fuss - von).dot(bis - von) / maxf((bis - von).length_squared(), 0.01), 0.0, 1.0)
+		var punkt := von + (bis - von) * t
+		var d := fuss.distance_to(punkt)
+		if d < abstand:
+			abstand = d
+			beste = punkt
+	var richtung := (beste - fuss).normalized()
+	return atan2(richtung.x, richtung.z)
+
+
 func _laternen_anzuenden() -> void:
 	var moebel := get_parent().get_node_or_null("StreetFurniture")
 	if moebel == null:
 		return
-	# Zwei Leuchtmittel im Bestand, wie auf echten Straßen: warmweiß und das
-	# orangere Natriumdampf-Licht. Laterne 5 flackert.
-	var glas_warm := _mat(Color(1.0, 0.85, 0.6), 0.4, Color(1.0, 0.78, 0.45), 2.4)
-	var glas_orange := _mat(Color(1.0, 0.78, 0.45), 0.4, Color(1.0, 0.62, 0.28), 2.4)
+	# Die Blender-Bogenlaternen ersetzen die CSG-Masten; der Kopf hängt über
+	# die Fahrbahn (Arm zeigt zum nächsten Mittelstreifen). Zwei Leuchtmittel
+	# wie auf echten Straßen: warmweiß und Natriumdampf-orange. Laterne 5
+	# flackert.
 	for i in range(1, 11):
 		var kopf := moebel.get_node_or_null("Kopf%d" % i) as CSGBox3D
-		if kopf == null:
+		var mast := moebel.get_node_or_null("Mast%d" % i) as CSGCylinder3D
+		if kopf == null or mast == null:
 			continue
+		kopf.visible = false
+		mast.visible = false
+		var fuss := Vector3(mast.position.x, 0.0, mast.position.z)
+		var gier := _richtung_zur_strasse(fuss)
+		var laterne := _prop("laterne", fuss, gier)
+
 		var orange := i % 2 == 0
-		var glas := glas_orange if orange else glas_warm
+		var glas := _prop_material(laterne, "lampenglas")
+		if glas != null and orange:
+			glas.albedo_color = Color(1.0, 0.78, 0.45)
+			glas.emission = Color(1.0, 0.62, 0.28)
+
+		var arm := Vector3(sin(gier), 0.0, cos(gier)) * 0.85
 		var licht := OmniLight3D.new()
-		licht.position = kopf.position + Vector3(0, -0.35, 0)
+		licht.position = fuss + arm + Vector3(0, 5.4, 0)
 		licht.light_color = Color(1.0, 0.72, 0.4) if orange else Color(1.0, 0.82, 0.55)
 		licht.light_energy = 3.4
 		licht.omni_range = 15.0
 		licht.omni_attenuation = 1.4
 		add_child(licht)
 		_lichtkegel(licht.position, licht.light_color)
-		if i == 5:
-			glas = glas.duplicate()
+		if i == 5 and glas != null:
 			_flacker.append({
 				"material": glas, "licht": licht, "basis": 2.4, "licht_basis": 3.4,
 				"ruhe": 0.7, "hub": 0.35, "takt": 11.0, "aussetzer": true,
 			})
-		kopf.material = glas
 
 		# Der orange Berliner Mülleimer, am Mast montiert.
 		if i % 2 == 1:
-			var mast := moebel.get_node_or_null("Mast%d" % i) as CSGCylinder3D
-			if mast != null:
-				# Feste Griffhöhe statt relativ zum Mastmittelpunkt — der
-				# liegt je nach Masthöhe woanders und hob die Eimer hoch.
-				_kasten(&"muell",
-					Vector3(mast.position.x + 0.2, 1.1, mast.position.z + 0.08),
-					Vector3(0.34, 0.5, 0.3), 0.3)
-				_kasten(&"muell_deckel",
-					Vector3(mast.position.x + 0.2, 1.38, mast.position.z + 0.08),
-					Vector3(0.38, 0.06, 0.34), 0.3)
+			_prop("muelleimer",
+				Vector3(mast.position.x + 0.24, 0.72, mast.position.z + 0.1), gier + PI)
 
 
 ## Der sichtbare Lichtschein unter einer Laterne: ein additiver, ungeschatteter
@@ -629,56 +679,34 @@ func _lichtkegel(quelle: Vector3, farbe: Color) -> void:
 	add_child(kegel)
 
 
-## Geparkte Autos: Karosserie, dunkles Glashaus, Räder. Nachts am Straßenrand
-## reicht das — niemand schaut einem stehenden Auto auf die Türgriffe.
+## Geparkte Autos: die Blender-Karosserie mit gerundeten Kanten. Jeder
+## dritte Wagen in hellerem Lack — eine eigene Materialkopie je Exemplar.
 func _autos_parken() -> void:
 	var nummer := 0
 	for eintrag in AUTOS:
 		var fuss := Vector3(eintrag[0], 0.0, eintrag[1])
 		var drehung: float = eintrag[2]
-		var gruppe: StringName = &"auto" if nummer % 3 != 2 else &"auto_hell"
+		var wagen := _prop("auto", fuss, drehung)
+		if wagen == null:
+			continue
+		if nummer % 3 == 2:
+			var lack := _prop_material(wagen, "autolack")
+			if lack != null:
+				lack.albedo_color = Color(0.3, 0.31, 0.34)
+		elif nummer % 3 == 1:
+			var lack := _prop_material(wagen, "autolack")
+			if lack != null:
+				lack.albedo_color = Color(0.14, 0.16, 0.22)
 		nummer += 1
-		_kasten(gruppe, fuss + Vector3(0, 0.55, 0), Vector3(1.76, 0.6, 4.35), drehung)
-		_kasten(&"glas_dunkel", fuss + Vector3(0, 1.08, -0.25).rotated(Vector3.UP, drehung),
-			Vector3(1.6, 0.5, 2.3), drehung)
-		_kasten(gruppe, fuss + Vector3(0, 1.12, -0.25).rotated(Vector3.UP, drehung),
-			Vector3(1.62, 0.06, 2.35), drehung)
-		for ecke in [Vector3(0.85, 0.32, 1.45), Vector3(-0.85, 0.32, 1.45),
-				Vector3(0.85, 0.32, -1.45), Vector3(-0.85, 0.32, -1.45)]:
-			var rad_basis := Basis(Vector3.UP, drehung) * Basis(Vector3(0, 0, 1), PI * 0.5)
-			_lege(&"rad", Transform3D(
-				rad_basis * Basis.from_scale(Vector3(0.64, 0.24, 0.64)),
-				fuss + ecke.rotated(Vector3.UP, drehung)))
-			_lege(&"radkappe", Transform3D(
-				rad_basis * Basis.from_scale(Vector3(0.3, 0.26, 0.3)),
-				fuss + ecke.rotated(Vector3.UP, drehung)))
-
-		# Was ein Auto von einem Kasten unterscheidet: Stoßstangen,
-		# Kennzeichen, Leuchten, Spiegel.
-		for ende in [1.0, -1.0]:
-			_kasten(&"stossstange",
-				fuss + Vector3(0, 0.3, 2.2 * ende).rotated(Vector3.UP, drehung),
-				Vector3(1.82, 0.16, 0.14), drehung)
-			_kasten(&"kennzeichen",
-				fuss + Vector3(0, 0.44, 2.24 * ende).rotated(Vector3.UP, drehung),
-				Vector3(0.52, 0.11, 0.02), drehung)
-			for seite in [0.6, -0.6]:
-				_kasten(&"ruecklicht" if ende < 0 else &"frontlicht",
-					fuss + Vector3(seite, 0.72, 2.19 * ende).rotated(Vector3.UP, drehung),
-					Vector3(0.3, 0.11, 0.04), drehung)
-		for seite in [0.93, -0.93]:
-			_kasten(gruppe,
-				fuss + Vector3(seite, 1.0, 0.85).rotated(Vector3.UP, drehung),
-				Vector3(0.07, 0.08, 0.16), drehung)
 
 
 ## Poller, Verteilerkästen, eine rote Ampel über leerer Kreuzung, Plakate an
 ## den Litfaßsäulen — das leblose Inventar einer Stadt im Lockdown.
 func _moeblieren() -> void:
 	for z in [-4.0, -9.0, -14.0]:
-		_zylinder(&"poller", Vector3(8.2, 0.5, z), 0.14, 0.85)
+		_prop("poller", Vector3(8.2, 0.0, z))
 	for z in [-186.0, -190.0, -194.0]:
-		_zylinder(&"poller", Vector3(121.9, 0.5, z), 0.14, 0.85)
+		_prop("poller", Vector3(121.9, 0.0, z))
 
 	for eintrag in [[-8.3, -35.0, PI * 0.5], [51.4, -78.0, -PI * 0.5], [119.9, -152.0, -PI * 0.5]]:
 		_kasten(&"kasten_grau", Vector3(eintrag[0], 0.65, eintrag[1]),
@@ -688,14 +716,10 @@ func _moeblieren() -> void:
 	_ampel(Vector3(70.8, 0.08, -133.2))
 
 
-## Eine Fußgängerampel, die rot in die leere Straße leuchtet — 2020 in einem
-## Bild. Der Mast ist ein Zylinder, das rote Licht glüht.
+## Eine Ampel, die rot in die leere Straße leuchtet — 2020 in einem Bild.
+## Das Blender-Requisit; die Linsen schauen zum nächsten Mittelstreifen.
 func _ampel(fuss: Vector3) -> void:
-	_zylinder(&"poller", fuss + Vector3(0, 1.7, 0), 0.09, 3.4)
-	_kasten(&"gitter", fuss + Vector3(0, 3.15, 0), Vector3(0.24, 0.62, 0.24), 0.0)
-	_kugel(&"ampel_rot", fuss + Vector3(0, 3.32, 0), 0.13)
-	_kasten(&"gitter", fuss + Vector3(0, 2.2, 0), Vector3(0.2, 0.4, 0.2), 0.0)
-	_kugel(&"ampel_rot", fuss + Vector3(0, 2.3, 0), 0.1)
+	_prop("ampel", Vector3(fuss.x, 0.0, fuss.z), _richtung_zur_strasse(fuss))
 
 
 ## Feiner Nieselregen um die Kamera: Streifenpartikel in einer Box, die in
@@ -954,24 +978,7 @@ func _fernsehturm_beleuchten() -> void:
 
 func _litfasssaeulen_stellen() -> void:
 	for stelle: Vector3 in [Vector3(-10.2, 0.08, -18.0), Vector3(70.3, 0.08, -112.0)]:
-		var saeule := MeshInstance3D.new()
-		var rohr := CylinderMesh.new()
-		rohr.top_radius = 0.62
-		rohr.bottom_radius = 0.62
-		rohr.height = 3.0
-		rohr.material = _mat(Color(0.26, 0.22, 0.21), 0.85)
-		saeule.mesh = rohr
-		saeule.position = stelle + Vector3(0, 1.5, 0)
-		add_child(saeule)
-		var deckel := MeshInstance3D.new()
-		var kappe := CylinderMesh.new()
-		kappe.top_radius = 0.5
-		kappe.bottom_radius = 0.72
-		kappe.height = 0.3
-		kappe.material = _mat(Color(0.15, 0.14, 0.14), 0.8)
-		deckel.mesh = kappe
-		deckel.position = stelle + Vector3(0, 3.15, 0)
-		add_child(deckel)
+		_prop("litfass", Vector3(stelle.x, 0.0, stelle.z))
 
 		# Plakatreste, tangential angeklebt und leicht schief.
 		for i in 3:
@@ -980,6 +987,28 @@ func _litfasssaeulen_stellen() -> void:
 			lage.y = 1.55 + 0.2 * i
 			_kasten(&"plakat_a" if i % 2 == 0 else &"plakat_b", lage,
 				Vector3(0.55, 0.85, 0.015), -winkel + PI * 0.5, 0.04 * (i - 1))
+
+
+## Ersetzt die Sitzklötze der Parkbänke durch das Blender-Requisit. Der
+## versteckte CSG-Klotz verliert seine Kollision mit der Sichtbarkeit,
+## deshalb bekommt jede Bank einen eigenen unsichtbaren Kollisionskasten.
+## Lehne zur Hauswand (+X), Sitz zur Straße — beide Bänke stehen östlich
+## ihres Mittelstreifens.
+func _baenke_ersetzen() -> void:
+	for name in ["Bank1", "Bank2"]:
+		var sitz := get_parent().get_node_or_null("%s/Sitz" % name) as CSGBox3D
+		if sitz == null:
+			continue
+		sitz.visible = false
+		var koerper := StaticBody3D.new()
+		koerper.position = sitz.position
+		var form := CollisionShape3D.new()
+		var kasten := BoxShape3D.new()
+		kasten.size = sitz.size
+		form.shape = kasten
+		koerper.add_child(form)
+		add_child(koerper)
+		_prop("bank", Vector3(sitz.position.x, 0.0, sitz.position.z), PI)
 
 
 ## Ein schwaches Licht an der Kamera. Nachts wären die Gesichter zwischen den
