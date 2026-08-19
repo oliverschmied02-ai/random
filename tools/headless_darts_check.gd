@@ -13,21 +13,23 @@ extends SceneTree
 ## fürs Testen gedachte Schnittstelle anzuhängen — das wäre der schlechtere
 ## Tausch.
 
-## Geplante Würfe: [Zielversatz von der Mitte in Metern, Ladestand].
+## Geplante Würfe: [Zielversatz von der Mitte, Ladestand, Maskenversatz].
+## Maskenversatz null heißt: keine Maske im Spiel — der Wurf muss leer
+## ausgehen. Die Masken werden mit Fallgeschwindigkeit 0 gesetzt, damit
+## jeder Durchlauf dasselbe misst.
 const PLAN: Array = [
-	# Runde 1: zwei Würfe mit falscher Kraft, drei an den Rand. Zusammen unter
-	# der Zielpunktzahl — die Runde muss also verloren gehen und neu starten.
-	[Vector2(0.0, 0.0), 1.0],
-	[Vector2(0.0, 0.0), 0.0],
-	[Vector2(0.29, 0.0), 0.5],
-	[Vector2(-0.29, 0.0), 0.5],
-	[Vector2(0.0, 0.29), 0.5],
-	# Runde 2: fünf Volltreffer.
-	[Vector2(0.0, 0.0), 0.5],
-	[Vector2(0.0, 0.0), 0.5],
-	[Vector2(0.0, 0.0), 0.5],
-	[Vector2(0.0, 0.0), 0.5],
-	[Vector2(0.0, 0.0), 0.5],
+	# Runde 1: zwei Treffer (40 Punkte), drei Fehlwürfe — verliert, Neustart.
+	[Vector2(0.0, 0.0), 0.5, Vector2(0.0, 0.0)],
+	[Vector2(0.6, 0.3), 0.5, Vector2(0.6, 0.3)],
+	[Vector2(0.0, 0.0), 1.0, null],
+	[Vector2(0.0, 0.0), 0.0, null],
+	[Vector2(1.0, -0.4), 0.5, null],
+	# Runde 2: fünf Treffer auf verstreute Masken — gewinnt mit 100.
+	[Vector2(0.0, 0.0), 0.5, Vector2(0.0, 0.0)],
+	[Vector2(-0.8, 0.5), 0.5, Vector2(-0.8, 0.5)],
+	[Vector2(0.9, -0.2), 0.5, Vector2(0.9, -0.2)],
+	[Vector2(0.3, 0.8), 0.5, Vector2(0.3, 0.8)],
+	[Vector2(-0.4, -0.5), 0.5, Vector2(-0.4, -0.5)],
 ]
 
 var _root: Node3D
@@ -58,8 +60,11 @@ func _vorbereiten() -> void:
 		_fail("chapter scene has no DartsGame")
 		return
 
-	# Wartezeiten kurz halten, die Kamerafahrt entfällt.
+	# Wartezeiten kurz halten, die Kamerafahrt entfällt; keine zufälligen
+	# Masken — der Plan setzt seine eigenen, unbewegt.
 	_darts.kamerafahrt = 0.0
+	_darts.masken_spawn_aktiv = false
+	_darts.intro_dauer = 0.2
 	_darts.pause_nach_wurf = 0.05
 	_darts.pause_nach_runde = 0.1
 	_darts.runde_geschafft.connect(func(punkte: int) -> void: _gewonnen_mit = punkte)
@@ -113,6 +118,9 @@ func _physics_process(_delta: float) -> bool:
 
 	var wurf: Array = PLAN[_index]
 	_punkte_vor_wurf.append(_darts.punkte)
+	if wurf[2] != null:
+		var versatz: Vector2 = wurf[2]
+		_darts.maske_setzen(_mitte + Vector3(versatz.x, versatz.y, 0.0), 0.0)
 	_darts._ziel = wurf[0]
 	_darts._kraft = wurf[1]
 	_darts._werfen()
@@ -126,8 +134,8 @@ func _auswerten() -> void:
 		"every throw landed: %d of %d" % [_treffer.size(), PLAN.size()])
 
 	# --- Kraft verschiebt nur die Höhe, nie die Seite ---------------------
-	var hoch: Dictionary = _treffer[0]
-	var tief: Dictionary = _treffer[1]
+	var hoch: Dictionary = _treffer[2]
+	var tief: Dictionary = _treffer[3]
 	var seite := absf(hoch["ort"].x - tief["ort"].x)
 	_expect(seite < 0.005,
 		"power leaves the horizontal hit untouched: %.4f m apart" % seite)
@@ -135,42 +143,36 @@ func _auswerten() -> void:
 		"full power lands high: %+.3f m" % (hoch["ort"].y - _mitte.y))
 	_expect(tief["ort"].y < _mitte.y - 0.02,
 		"no power lands low: %+.3f m" % (tief["ort"].y - _mitte.y))
-	_expect(int(hoch["punkte"]) > 0 and int(tief["punkte"]) > 0,
-		"even the worst charge still scores: %d and %d"
-			% [hoch["punkte"], tief["punkte"]])
 
-	# --- Wertung nach Ringen ---------------------------------------------
-	for i in range(2, 5):
-		var t: Dictionary = _treffer[i]
-		_expect(int(t["punkte"]) == 5,
-			"outer ring scores 5, throw %d gave %d" % [i + 1, t["punkte"]])
-	for i in range(5, 10):
-		var t: Dictionary = _treffer[i]
-		_expect(int(t["punkte"]) == 50,
-			"centred throw hits the bull, throw %d gave %d" % [i + 1, t["punkte"]])
+	# --- Masken zählen, die leere Wand nicht ------------------------------
+	for i in [0, 1]:
+		_expect(_darts.punkte >= 0 and _punkte_vor_wurf.size() > i, "bookkeeping")
+	_expect(_punkte_vor_wurf[1] == DartsConfig.MASKEN_PUNKTE,
+		"a mask hit scores %d, got %d"
+			% [DartsConfig.MASKEN_PUNKTE, _punkte_vor_wurf[1]])
+	_expect(_punkte_vor_wurf[2] == 2 * DartsConfig.MASKEN_PUNKTE,
+		"two hits add up, got %d" % _punkte_vor_wurf[2])
+	_expect(_punkte_vor_wurf[3] == _punkte_vor_wurf[2],
+		"a throw without mask scores nothing")
+	_expect(_darts.masken_anzahl() == 0,
+		"hit masks disappear, %d left" % _darts.masken_anzahl())
 
 	# --- Verlorene Runde startet bei null neu ------------------------------
-	var runde1 := 0
-	for i in range(5):
-		runde1 += int(_treffer[i]["punkte"])
+	var runde1 := 2 * DartsConfig.MASKEN_PUNKTE
 	_expect(runde1 < DartsConfig.ZIELPUNKTZAHL,
 		"the first round is meant to fall short: %d points" % runde1)
-	_expect(_punkte_vor_wurf[4] == runde1 - int(_treffer[4]["punkte"]),
-		"score adds up during a round")
 	_expect(_punkte_vor_wurf[5] == 0,
 		"a missed target starts a fresh round at zero, got %d" % _punkte_vor_wurf[5])
 
 	# --- Gewonnene Runde ---------------------------------------------------
-	_expect(_gewonnen_mit == 250,
+	_expect(_gewonnen_mit == 5 * DartsConfig.MASKEN_PUNKTE,
 		"reaching the target reports the score, got %d" % _gewonnen_mit)
 
 	_note("Ladefehler: %+.3f m / %+.3f m senkrecht, %.4f m waagerecht"
 		% [hoch["ort"].y - _mitte.y, tief["ort"].y - _mitte.y, seite])
-	_note("volle Kraft %d Punkte, keine Kraft %d Punkte, Rand je %d Punkte"
-		% [hoch["punkte"], tief["punkte"], _treffer[2]["punkte"]])
 	_note("verlorene Runde: %d von %d Punkten, danach Neustart bei %d"
 		% [runde1, DartsConfig.ZIELPUNKTZAHL, _punkte_vor_wurf[5]])
-	_note("gewonnene Runde: %d Punkte" % _gewonnen_mit)
+	_note("gewonnene Runde: %d Punkte (fünf Masken abgeworfen)" % _gewonnen_mit)
 	_report()
 
 

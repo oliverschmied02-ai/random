@@ -29,9 +29,18 @@ const RINGE: Array = [
 	[0.300, 5],
 ]
 
+## Punkte für eine abgeworfene Maske. Bei 60 Zielpunkten heißt das: drei
+## der fünf Würfe müssen sitzen — deutlich schwerer als die alte Scheibe,
+## denn die Ziele fallen.
+const MASKEN_PUNKTE: int = 20
+
+## Trefferradius um die Maskenmitte, in Metern. Großzügig — die Maske
+## bewegt sich schließlich.
+const MASKEN_RADIUS: float = 0.34
+
 ## Ab dieser Punktzahl gilt ein Wurf als richtig guter Treffer — stärkere
 ## Rückmeldung, mehr Partikel, kräftigeres Wackeln.
-const GUTER_TREFFER: int = 25
+const GUTER_TREFFER: int = 20
 
 
 ## Punkte für einen Treffer im Abstand `radius` von der Scheibenmitte.
@@ -45,10 +54,8 @@ static func punkte_fuer_radius(radius: float) -> int:
 ## Text für die Trefferanzeige. Danebengeworfen wird nicht bestraft, nur
 ## freundlich kommentiert.
 static func treffer_text(punkte: int) -> String:
-	if punkte >= 50:
-		return "VOLLTREFFER!"
 	if punkte >= GUTER_TREFFER:
-		return "+%d!" % punkte
+		return "GETROFFEN! +%d" % punkte
 	if punkte > 0:
 		return "+%d" % punkte
 	return "daneben"

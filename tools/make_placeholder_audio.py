@@ -115,16 +115,41 @@ def schleife_schliessen(samples, ueberblendung=1.0):
 
 
 def schritte():
-    """Vier Varianten, damit das Gehen nicht tickt wie ein Metronom."""
+    """Vier Varianten, damit das Gehen nicht tickt wie ein Metronom.
+
+    Ein Schritt ist kein Klopfen, sondern zwei Berührungen: die **Ferse**
+    setzt dumpf und kurz auf, der **Ballen** rollt eine Sechzigstelsekunde
+    später weicher und breiter nach. Dazu ein Hauch Sohlenreibung auf dem
+    Pflaster. Der Abstand und die Färbung variieren je Variante — genau die
+    Unordnung, an der das Ohr „echt" erkennt."""
     for nummer in range(1, 5):
         random.seed(100 + nummer)
-        koerper = tiefpass(rauschen(0.16), 900 + nummer * 120)
-        klick = hochpass(rauschen(0.05), 2200)
-        spur = mische(
-            huellkurve(koerper, 0.001, 0.045),
-            [s * 0.35 for s in huellkurve(klick, 0.0005, 0.012)],
-        )
-        schreibe("schritt_%d.wav" % nummer, spur, 0.55)
+        luecke = 0.052 + 0.009 * nummer
+        n_gesamt = int(0.3 * RATE)
+
+        ferse_rauschen = tiefpass(rauschen(0.09), 360 + nummer * 45)
+        ferse_koerper = [
+            0.45 * s
+            for s in huellkurve(sinus(80 + nummer * 7, 0.09), 0.001, 0.02)
+        ]
+        ferse = mische(huellkurve(ferse_rauschen, 0.0008, 0.02), ferse_koerper)
+
+        ballen_rauschen = hochpass(tiefpass(rauschen(0.12), 1400 + nummer * 100), 450)
+        ballen = [0.5 * s for s in huellkurve(ballen_rauschen, 0.004, 0.042)]
+
+        reibung = hochpass(rauschen(0.14), 1900)
+        reibung = [0.09 * s for s in huellkurve(reibung, 0.012, 0.055)]
+
+        spur = [0.0] * n_gesamt
+        for i, s in enumerate(ferse):
+            if i < n_gesamt:
+                spur[i] += s
+        start = int(luecke * RATE)
+        for quelle in (ballen, reibung):
+            for i, s in enumerate(quelle):
+                if start + i < n_gesamt:
+                    spur[start + i] += s
+        schreibe("schritt_%d.wav" % nummer, spur, 0.5)
 
 
 def einschlag():

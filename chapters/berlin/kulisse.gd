@@ -70,6 +70,29 @@ const AUTOS: Array = [
 	[135.6, -168.0, 0.0], [135.4, -215.0, 0.0],
 ]
 
+## Straßenbäume: [x, z], entlang der Gehwege, mit Abstand zu Türen, Café,
+## Bürofront und Bude. Unter den Oberleitungen bleiben sie mit ~5,2 m Höhe.
+const BAEUME: Array = [
+	[-10.3, 14.0], [-10.3, 1.0], [-10.3, -12.0], [-10.3, -25.0], [-10.3, -37.0],
+	[10.3, -24.0], [10.3, -36.0],
+	[22.0, -44.7], [36.0, -44.7], [50.0, -44.7], [64.0, -44.7],
+	[49.8, -74.0], [49.8, -86.0], [49.8, -112.0], [49.8, -122.0],
+	[70.5, -76.0], [70.5, -91.0], [70.5, -106.0], [70.5, -119.0],
+	[62.0, -145.2], [78.0, -145.2], [94.0, -145.2], [110.0, -145.2],
+	[82.0, -124.9], [98.0, -124.9], [114.0, -124.9], [130.0, -124.9],
+	[119.9, -156.0], [119.9, -170.0], [119.9, -199.0],
+	[140.3, -160.0], [140.3, -176.0], [140.3, -192.0], [140.3, -208.0], [140.3, -222.0],
+]
+
+## Fahrende Autos: je [von_x, von_z, bis_x, bis_z, versatz_s]. Sie fahren
+## auf den Durchgangsstraßen, halten vor der Spielerin und tauchen nach
+## einer Pause wieder am Anfang auf.
+const FAHRTEN: Array = [
+	[-2.2, 22.0, -2.2, -40.0, 0.0],
+	[57.8, -68.0, 57.8, -132.0, 19.0],
+	[138.0, -132.8, 54.0, -132.8, 41.0],
+]
+
 ## Gullydeckel am Fahrbahnrand: [x, z].
 const GULLYS: Array = [
 	[-7.6, -6.0], [7.6, -26.0], [16.0, -44.6], [30.0, -65.4],
@@ -85,6 +108,7 @@ var _regen: CPUParticles3D
 var _tram: Node3D
 var _flugzeug: Node3D
 var _flugzeug_blink: MeshInstance3D
+var _verkehr: Array = []
 
 
 func _ready() -> void:
@@ -106,6 +130,8 @@ func _ready() -> void:
 	_litfasssaeulen_stellen()
 	_baenke_ersetzen()
 	_fuelllicht_anbringen()
+	_baeume_pflanzen()
+	_verkehr_starten()
 	_regen_bauen()
 	_tram_bauen()
 	_flugzeug_starten()
@@ -119,6 +145,7 @@ func _ready() -> void:
 func _process(_delta: float) -> void:
 	if _spiess_dreher != null:
 		_spiess_dreher.rotate_y(_delta * 0.9)
+	_verkehr_pflegen(_delta)
 	var t := Time.get_ticks_msec() / 1000.0
 
 	# Der Regen folgt der Kamera — nur dort, wo jemand hinsieht, muss es regnen.
@@ -722,6 +749,69 @@ func _ampel(fuss: Vector3) -> void:
 	_prop("ampel", Vector3(fuss.x, 0.0, fuss.z), _richtung_zur_strasse(fuss))
 
 
+## Straßenbäume entlang der Gehwege — jede Stadt braucht Grün, und nachts
+## brechen die Kronen die geraden Dachlinien. Leichte Zufallsdrehung und
+## -größe je Baum, gesät, damit jede Runde gleich aussieht.
+func _baeume_pflanzen() -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 1989
+	for eintrag in BAEUME:
+		var baum := _prop("baum", Vector3(eintrag[0], 0.0, eintrag[1]),
+			rng.randf() * TAU)
+		if baum != null:
+			var groesse := rng.randf_range(0.85, 1.15)
+			baum.scale = Vector3(groesse, groesse * rng.randf_range(0.9, 1.1), groesse)
+
+
+## Ein paar Autos fahren durch die Nacht — mit Scheinwerferlicht, und sie
+## halten an, wenn die Spielerin vor ihnen die Straße quert. Rein visuell,
+## keine Physik: die Straßen gehören weiter den Fußgängern.
+func _verkehr_starten() -> void:
+	for eintrag in FAHRTEN:
+		var wagen := _prop("auto", Vector3(eintrag[0], 0.0, eintrag[1]))
+		if wagen == null:
+			continue
+		var von := Vector3(eintrag[0], 0.0, eintrag[1])
+		var bis := Vector3(eintrag[2], 0.0, eintrag[3])
+		var richtung := (bis - von).normalized()
+		wagen.rotation.y = atan2(richtung.x, richtung.z)
+		var scheinwerfer := SpotLight3D.new()
+		scheinwerfer.position = Vector3(0, 0.75, 2.1)
+		scheinwerfer.rotation.y = PI
+		scheinwerfer.light_color = Color(1.0, 0.93, 0.78)
+		scheinwerfer.light_energy = 5.0
+		scheinwerfer.spot_range = 22.0
+		scheinwerfer.spot_angle = 32.0
+		scheinwerfer.spot_angle_attenuation = 0.6
+		wagen.add_child(scheinwerfer)
+		_verkehr.append({
+			"wagen": wagen, "von": von, "bis": bis, "richtung": richtung,
+			"laenge": von.distance_to(bis), "fortschritt": eintrag[4] * -6.0,
+			"tempo": 7.5, "pause": 14.0,
+		})
+
+
+func _verkehr_pflegen(delta: float) -> void:
+	var spieler := get_parent().get_node_or_null("Player") as Node3D
+	for fahrt in _verkehr:
+		var wagen: Node3D = fahrt["wagen"]
+		# Negativer Fortschritt ist die Wartezeit vor der Abfahrt.
+		var frei := true
+		if spieler != null and fahrt["fortschritt"] >= 0.0:
+			var voraus: Vector3 = spieler.global_position - wagen.global_position
+			var entlang: float = fahrt["richtung"].dot(voraus)
+			var seitlich: float = (voraus - fahrt["richtung"] * entlang).length()
+			frei = entlang < 2.0 or entlang > 10.0 or seitlich > 3.0
+		if frei:
+			fahrt["fortschritt"] += fahrt["tempo"] * delta
+		if fahrt["fortschritt"] > fahrt["laenge"]:
+			fahrt["fortschritt"] = -fahrt["pause"] * fahrt["tempo"]
+		var sichtbar: bool = fahrt["fortschritt"] >= 0.0
+		wagen.visible = sichtbar
+		if sichtbar:
+			wagen.position = fahrt["von"] + fahrt["richtung"] * fahrt["fortschritt"]
+
+
 ## Feiner Nieselregen um die Kamera: Streifenpartikel in einer Box, die in
 ## `_process` der Kamera folgt. 2020 war ein nasses Frühjahr, und der nasse
 ## Asphalt braucht eine Quelle.
@@ -1020,7 +1110,7 @@ func _fuelllicht_anbringen() -> void:
 		return
 	var licht := OmniLight3D.new()
 	licht.light_color = Color(0.75, 0.78, 0.9)
-	licht.light_energy = 0.28
+	licht.light_energy = 0.36
 	licht.omni_range = 12.0
 	licht.omni_attenuation = 1.8
 	licht.position = Vector3(0, 1.6, 0)

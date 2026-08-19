@@ -83,6 +83,15 @@ mit ihrer 8-cm-Bordsteinkante, für die das Stufen-Steigen gebaut wurde.
   niemandem durchs Bild), ein Flugzeug mit rotem Blinklicht hoch über der
   Stadt, und **Atemdampf** an allen Figuren (kalter Abend, alle 3–5 s ein
   Hauch).
+* **35 Straßenbäume** (Blender: konischer Stamm, Astansätze, klumpige Krone
+  aus verbeulten Kugeln, ~5,2 m — bleiben unter den Oberleitungen) entlang
+  der Gehwege, mit gesäter Zufallsdrehung und -größe. Rein visuell, keine
+  Kollision.
+* **Fahrender Verkehr:** drei Autos ziehen auf den Durchgangsstraßen ihre
+  Runden — mit Scheinwerferkegel und Rücklichtern, versetzt getaktet, und
+  sie **halten an, wenn die Spielerin vor ihnen die Straße quert** (Prüfung
+  entlang der Fahrtrichtung in `_verkehr_pflegen`). Rein visuell, keine
+  Physik.
 * **Mimik über die Blendshapes der Modelle** (ARKit-Namen): alle Figuren
   **blinzeln** (alle 2,6–5,8 s, Lidschlag 0,16 s — schnell zu, langsamer
   auf), und beim Sprechen bewegt sich der **Kiefer** für die Dauer der Zeile
@@ -142,6 +151,11 @@ im Skript ändern und neu erzeugen. Ersetzen heißt: gleiche Datei, gleicher Nam
 
 * Vier Tritte, Stadtschleife, Brummen des Budenschilds, Dart-Einschlag,
   Ladeton, Volltreffer, Siegfanfare, Menüklick, Titelmusik
+* **Die Tritte sind zweiteilig** wie echte Schritte: die Ferse setzt dumpf
+  und kurz auf, der Ballen rollt ~60 ms später weicher nach, dazu ein Hauch
+  Sohlenreibung; Abstand und Färbung variieren je Variante. Ein einzelner
+  Klopfer pro Schritt — die alte Fassung — ist genau das, woran das Ohr
+  „künstlich" erkennt.
 * **Schritte** (`systems/audio/schritte.gd`) zählen den zurückgelegten *Weg*
   statt der Zeit: alle 1,5 m ein Tritt. Damit hängt die Kadenz am Tempo — wer
   rennt, tritt öfter auf. Gemessen: 2,2 Schritte je Sekunde beim Gehen.
@@ -428,8 +442,20 @@ Scheibe trifft, schafft die 60 also praktisch immer — Scheitern erfordert
 Danebenzielen und wird mit einer freundlichen Zeile und sofortigem Neustart
 quittiert.
 
-Rückmeldung: Einschlagpartikel, aufsteigende Punktzahl, Kamerawackeln (stärker
-ab 25 Punkten), Konfetti und Banner beim Gewinn.
+**Seit dem Schwierigkeits-Umbau sind die Ziele beweglich:** Vor der Zielwand
+fallen **Atemmasken** (in Blender modellierte OP-Masken, leicht selbstleuchtend,
+seitlich pendelnd und trudelnd wie Papier) — abgeworfen wird, was das
+Fadenkreuz im richtigen Moment trifft. Eine getroffene Maske bringt 20 Punkte,
+die alte Ringscheibe hängt nur noch als Kulisse dahinter. Bei 60 Zielpunkten
+müssen also drei der fünf Würfe sitzen, auf fallende Ziele — deutlich
+schwerer als vorher. Stellschrauben: `masken_takt`, `masken_fall`,
+`masken_breite` am `DartsGame`, `MASKEN_PUNKTE`/`MASKEN_RADIUS` in
+`darts_config.gd`. Der Prüflauf setzt eigene, unbewegte Masken
+(`maske_setzen`, `masken_spawn_aktiv = false`) und misst Treffer, Fehlwurf,
+Rundenneustart und Gewinn deterministisch.
+
+Rückmeldung: Einschlagpartikel, aufsteigende Punktzahl, Kamerawackeln,
+Konfetti und Banner beim Gewinn.
 
 Seit dem Feinschliff-Durchgang sieht man auch, **womit** man wirft:
 

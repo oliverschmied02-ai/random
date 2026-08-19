@@ -28,10 +28,12 @@ fertigen App — SDFGI, Reflexionen und Nebel. Von Anfang bis Ende erzählt, mit
 seiner Bürotür abholen, zu zweit durch die Stadt laufen (zwei Gespräche
 unterwegs, dazu drei optionale Erinnerungen am Weg), an der Dönerbude ankommen
 (offener Verkaufsraum mit Verkäufer hinterm Tresen und drehendem Dönerspieß),
-dort *Vaccination Darts* spielen — die Spritzen liegen auf der Stehtonne
-bereit, bleiben in der Scheibe stecken, und vorher steht kurz „IMPFSPRITZEN
-WERFEN" im Bild — und danach ein Schlussbild, in dem die beiden miteinander
-reden, gefolgt vom Abspann.
+dort *Vaccination Darts* spielen — **fallende Atemmasken mit Impfspritzen
+abwerfen**: die Spritzen liegen auf der Stehtonne bereit, drei von fünf
+Würfen müssen die pendelnden Masken treffen — und danach ein Schlussbild,
+in dem die beiden miteinander reden, gefolgt vom Abspann. Straßenbäume
+säumen die Gehwege, vereinzelte Autos fahren mit Scheinwerferlicht durch
+die Nacht (und halten, wenn man die Straße quert).
 Ausschließlich Platzhalter-Geometrie, alle Dialoge sind Platzhaltertexte, aller
 Ton ist synthetisch erzeugt.
 

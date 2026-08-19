@@ -289,7 +289,76 @@ def litfass():
     _exportieren("litfass")
 
 
+def baum():
+    """Straßenbaum: konischer Stamm, drei Astansätze, klumpige Krone aus
+    verformten Kugeln, dunkle Baumscheibe. Bewusst unter den Oberleitungen
+    bleibend (~5,2 m). Nachts zählt die Silhouette, nicht das Blattwerk."""
+    _leeren()
+    rinde = _material("rinde", (0.21, 0.16, 0.12), 0.9)
+    laub = _material("laub", (0.16, 0.22, 0.12), 0.95)
+    erde = _material("baumscheibe", (0.09, 0.08, 0.07), 0.95)
+
+    _kasten((1.5, 1.5, 0.06), (0, 0, 0.03), erde, 0.01)
+    _zylinder(0.16, 2.6, (0, 0, 1.3), rinde, fase=0.01, seiten=12, r_oben=0.1)
+    for winkel, neig in [(0.4, 0.5), (2.5, 0.45), (4.4, 0.55)]:
+        ast = _zylinder(0.06, 1.1, (0.35 * math.cos(winkel), 0.35 * math.sin(winkel), 3.0),
+                        rinde, fase=0, seiten=8, r_oben=0.03)
+        ast.rotation_euler = (neig * math.sin(winkel), neig * math.cos(winkel), 0)
+
+    # Krone: verformte Kugeln um den Kronenansatz, per Wolkentextur verbeult.
+    wolken = bpy.data.textures.new("kronenform", type="CLOUDS")
+    wolken.noise_scale = 0.6
+    import random as zufall
+    zufall.seed(11)
+    for i in range(6):
+        ort = (zufall.uniform(-0.7, 0.7), zufall.uniform(-0.7, 0.7),
+               3.9 + zufall.uniform(-0.3, 0.6))
+        bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=2,
+                                              radius=zufall.uniform(0.85, 1.25),
+                                              location=ort)
+        kugel = bpy.context.active_object
+        beule = kugel.modifiers.new("beule", "DISPLACE")
+        beule.texture = wolken
+        beule.strength = 0.45
+        _zuweisen(kugel, laub)
+        _glatt(kugel, 60)
+    _exportieren("baum")
+
+
+def atemmaske():
+    """OP-Maske fürs Minispiel: gewölbtes Kissen mit zwei Ohrbändern.
+    Leicht selbstleuchtend, damit sie im Nachtlicht als Ziel lesbar bleibt."""
+    _leeren()
+    stoff = _material("maskenstoff", (0.75, 0.85, 0.92), 0.8,
+                      leuchten=(0.75, 0.85, 0.92), staerke=0.25)
+    band = _material("maskenband", (0.9, 0.9, 0.9), 0.7)
+
+    bpy.ops.mesh.primitive_cube_add(size=1.0, location=(0, 0, 0))
+    kissen = bpy.context.active_object
+    kissen.scale = (0.17, 0.05, 0.11)
+    bpy.ops.object.transform_apply(scale=True)
+    f = kissen.modifiers.new("fase", "BEVEL")
+    f.width = 0.035
+    f.segments = 4
+    _zuweisen(kissen, stoff)
+    _glatt(kissen, 70)
+
+    # Ohrbänder: je Seite ein Bogen aus kurzen Röhrchen.
+    for seite in (1, -1):
+        for i in range(5):
+            w0 = math.pi * i / 5
+            w1 = math.pi * (i + 1) / 5
+            r = 0.06
+            p0 = (seite * (0.17 + r - r * math.cos(w0)), 0, r * math.sin(w0) - 0.0)
+            p1 = (seite * (0.17 + r - r * math.cos(w1)), 0, r * math.sin(w1) - 0.0)
+            mitte = ((p0[0] + p1[0]) / 2, 0, (p0[2] + p1[2]) / 2)
+            seg = _zylinder(0.006, math.dist(p0, p1) * 1.4, mitte, band, fase=0, seiten=6)
+            seg.rotation_euler.y = math.atan2(seite * (p1[0] - p0[0]), p1[2] - p0[2]) * seite
+    _exportieren("atemmaske")
+
+
 if __name__ == "__main__":
-    for bau in [laterne, auto, bank, ampel, muelleimer, poller, litfass]:
+    for bau in [laterne, auto, bank, ampel, muelleimer, poller, litfass, baum,
+                atemmaske]:
         bau()
     print("fertig")

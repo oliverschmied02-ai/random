@@ -24,7 +24,8 @@ enum Zustand { INAKTIV, ZIELEN, LADEN, FLUG, RUNDENENDE }
 
 @export_group("Zielen")
 ## Wie weit sich das Fadenkreuz von der Scheibenmitte entfernen lässt (Meter).
-@export_range(0.2, 1.5, 0.05) var ziel_grenze: float = 0.45
+## Groß genug für die fallenden Masken links und rechts der Scheibe.
+@export_range(0.2, 2.0, 0.05) var ziel_grenze: float = 1.5
 ## Meter Fadenkreuz-Weg pro Mauspixel.
 @export_range(0.0002, 0.005, 0.0001) var maus_empfindlichkeit: float = 0.0011
 ## Meter pro Sekunde bei voll ausgelenktem Gamepad-Stick.
@@ -51,7 +52,20 @@ enum Zustand { INAKTIV, ZIELEN, LADEN, FLUG, RUNDENENDE }
 ## Sekunden für die Einblendung „Impfspritzen werfen" vor der ersten Runde.
 @export_range(0.0, 6.0, 0.1) var intro_dauer: float = 2.6
 
+@export_group("Masken")
+## Sekunden zwischen zwei fallenden Masken.
+@export_range(0.8, 6.0, 0.1) var masken_takt: float = 2.1
+## Fallgeschwindigkeit der Masken (m/s) — Papier fällt gemächlich.
+@export_range(0.3, 3.0, 0.05) var masken_fall: float = 1.05
+## Höhe, in der die Masken erscheinen.
+@export_range(2.0, 6.0, 0.1) var masken_hoehe: float = 3.1
+## Wie weit links und rechts der Scheibenmitte Masken fallen.
+@export_range(0.4, 2.0, 0.05) var masken_breite: float = 1.1
+## Für Prüfläufe abschaltbar — dann fallen nur von Hand gesetzte Masken.
+@export var masken_spawn_aktiv: bool = true
+
 const _SYRINGE := preload("res://chapters/berlin/darts/syringe.tscn")
+const _MASKE := preload("res://assets/props/atemmaske.glb")
 
 @onready var kamera: Camera3D = $Kamera
 @onready var spieler_platz: Marker3D = $Plaetze/Spielerin
@@ -79,6 +93,10 @@ var _maus_bewegung: Vector2 = Vector2.ZERO
 var _kamera_ruhe: Transform3D
 var _fahrt_start: Transform3D
 var _wackeln: float = 0.0
+var _masken: Array = []
+var _masken_wurzel: Node3D
+var _masken_uhr: float = 0.0
+var _masken_zufall := RandomNumberGenerator.new()
 
 
 func _ready() -> void:
@@ -95,6 +113,9 @@ func _ready() -> void:
 	# Die Spritzen liegen schon beim Ankommen auf der Tonne bereit — der
 	# Vorrat gehört zum Schauplatz, nicht erst zum gestarteten Spiel.
 	_vorrat_fuellen()
+	_masken_wurzel = Node3D.new()
+	add_child(_masken_wurzel)
+	_masken_zufall.seed = 2020
 
 
 ## Startet das Minispiel. `von_kamera` ist die Kamera, von der aus die Fahrt
@@ -134,7 +155,7 @@ func _intro_zeigen() -> void:
 		return
 	_hud.zeige_banner(
 		"IMPFSPRITZEN WERFEN",
-		"Fünf Spritzen, %d Punkte. Taste halten, im grünen Bereich loslassen."
+		"Triff die fallenden Masken! Fünf Spritzen, %d Punkte. Taste halten, im grünen Bereich loslassen."
 			% DartsConfig.ZIELPUNKTZAHL
 	)
 	await get_tree().create_timer(intro_dauer).timeout
@@ -142,8 +163,74 @@ func _intro_zeigen() -> void:
 	zustand = Zustand.ZIELEN
 
 
+# --- Die fallenden Masken ---------------------------------------------------
+
+
+## Lässt in regelmäßigen, leicht verzitterten Abständen Masken fallen und
+## bewegt sie: gemächlich abwärts, seitlich pendelnd wie Papier, mit
+## leichtem Trudeln. Unten angekommen verschwinden sie ungestraft.
+func _masken_pflegen(delta: float) -> void:
+	if zustand != Zustand.INAKTIV and masken_spawn_aktiv:
+		_masken_uhr -= delta
+		if _masken_uhr <= 0.0:
+			_masken_uhr = masken_takt * _masken_zufall.randf_range(0.75, 1.3)
+			var seitlich := _masken_zufall.randf_range(-masken_breite, masken_breite)
+			maske_setzen(
+				_mitte.global_position + Vector3(seitlich, masken_hoehe - _mitte.global_position.y, 0.0),
+				masken_fall * _masken_zufall.randf_range(0.85, 1.2))
+
+	for eintrag in _masken.duplicate():
+		var teil: Node3D = eintrag["node"]
+		eintrag["zeit"] += delta
+		var ort: Vector3 = eintrag["heim"]
+		ort.y -= eintrag["tempo"] * eintrag["zeit"]
+		ort.x += 0.22 * sin(eintrag["zeit"] * 1.7 + eintrag["phase"])
+		teil.global_position = ort
+		teil.rotation = Vector3(
+			0.35 * sin(eintrag["zeit"] * 2.3 + eintrag["phase"]),
+			eintrag["zeit"] * 0.8,
+			0.3 * sin(eintrag["zeit"] * 1.9))
+		if ort.y < 0.3:
+			_maske_entfernen(eintrag)
+
+
+## Setzt eine Maske an eine Weltposition — vom Spawner und von Prüfläufen
+## benutzt (`tempo` 0 hält sie für deterministische Würfe fest).
+func maske_setzen(ort: Vector3, tempo: float = 0.0) -> void:
+	var teil := _MASKE.instantiate() as Node3D
+	teil.scale = Vector3.ONE * 1.9
+	_masken_wurzel.add_child(teil)
+	teil.global_position = ort
+	_masken.append({
+		"node": teil, "heim": ort, "tempo": tempo, "zeit": 0.0,
+		"phase": _masken_zufall.randf() * TAU,
+	})
+
+
+func _maske_entfernen(eintrag: Dictionary) -> void:
+	_masken.erase(eintrag)
+	eintrag["node"].queue_free()
+
+
+func masken_anzahl() -> int:
+	return _masken.size()
+
+
+## Trifft der Einschlag `ort` eine Maske? Dann fällt sie und es gibt Punkte.
+func _maske_punkte(ort: Vector3) -> int:
+	for eintrag in _masken:
+		var teil: Node3D = eintrag["node"]
+		if teil.global_position.distance_to(ort) <= DartsConfig.MASKEN_RADIUS:
+			_einschlag.global_position = teil.global_position
+			_einschlag.restart()
+			_maske_entfernen(eintrag)
+			return DartsConfig.MASKEN_PUNKTE
+	return 0
+
+
 func _process(delta: float) -> void:
 	_kamera_wackeln_anwenden(delta)
+	_masken_pflegen(delta)
 
 	match zustand:
 		Zustand.ZIELEN:
@@ -255,7 +342,10 @@ func _wurfgeschwindigkeit(ziel: Vector3, kraft: float) -> Vector3:
 	return geschwindigkeit * (1.0 + (kraft - 0.5) * 2.0 * kraft_einfluss)
 
 
-func _auf_einschlag(treffer_punkte: int, ort: Vector3, _radius: float) -> void:
+func _auf_einschlag(_ring_punkte: int, ort: Vector3, _radius: float) -> void:
+	# Gezählt werden abgeworfene Masken, nicht die Ringe der alten Scheibe —
+	# die hängt nur noch als Zielwand dahinter.
+	var treffer_punkte := _maske_punkte(ort)
 	punkte += treffer_punkte
 	_hud.setze_punkte(punkte, DartsConfig.ZIELPUNKTZAHL)
 	_hud.zeige_trefferpunkte(
@@ -317,6 +407,9 @@ func _neue_runde() -> void:
 	_ziel = Vector2.ZERO
 	for spritze in _treffer.get_children():
 		spritze.queue_free()
+	for eintrag in _masken.duplicate():
+		_maske_entfernen(eintrag)
+	_masken_uhr = 0.6
 	_vorrat_fuellen()
 	_hud.setze_wurf(wurf_nummer, DartsConfig.WUERFE_PRO_RUNDE)
 	_hud.setze_punkte(punkte, DartsConfig.ZIELPUNKTZAHL)
