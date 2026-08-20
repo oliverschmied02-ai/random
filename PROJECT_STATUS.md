@@ -64,7 +64,12 @@ mit ihrer 8-cm-Bordsteinkante, für die das Stufen-Steigen gebaut wurde.
   (mit Stoßstangen, Kennzeichen, Rück- und Frontleuchten, Spiegeln und
   Radkappen), Poller, Verteilerkästen, zwei Ampeln, orange Berliner Mülleimer
   mit Deckel an den Laternenmasten, zwei Litfaßsäulen mit Plakatresten.
-* **Nacht:** dunkler Himmel mit warmem Horizontrest, **Mond und 220 Sterne**,
+* **Dämmerung statt tiefer Nacht:** früher Abend — Abendrot am Horizont
+  (rosa-lavendel, damit die Pfützen nicht rosten), tiefblauer Zenit, warm
+  gesäumte Wolken, hellere Umgebung (Ambient 1,75, Anpassung 1,2) und ein
+  kräftigeres Blaue-Stunde-Licht statt Mondlicht. Die Sterne sind auf
+  Dämmerungsstärke gedimmt. Stellschrauben: die `shader_parameter/…` am
+  `Sky_mat` in `berlin_chapter.tscn`. Dazu **Mond und 220 Sterne**,
   bläuliches Mondlicht mit weichen Schatten, zehn brennende Laternen —
   abwechselnd warmweiß und orangenes Natriumdampflicht. **Laterne 5 flackert**
   mit gelegentlichen Aussetzern, das Dönerschild brummt leise im Takt. Ein
@@ -202,6 +207,15 @@ Kapitel 1 (sie wechselt danach selbst nach Berlin, Esc überspringt):
   falsche Richtungen federn, drei Linkswische legen Oliver hin, Gedanken
   sperren das Wischen, Fotos rotieren, erst der Rechtswisch auf Oliver
   setzt das Match. Die Logik schaltet sofort, Tweens sind nur Kosmetik.
+
+### Level-Übergang nach dem Sieg (`chapter_berlin.gd`)
+Nach dem gewonnenen Minispiel (und kurzem Wirken des GESCHAFFT-Banners)
+blendet das Bild schwarz und zeigt **„Glückwunsch." / „Du hast es ins
+zweite Level geschafft."** (Texte in `dialogue_lines.gd`: `LEVEL_TITEL`,
+`LEVEL_ZEILE`). Klick, Taste oder acht Sekunden führen weiter; die
+Schwarzblende löst sich über der anlaufenden Schlussszene — die beiden am
+Tresen, Dialog, Abspann wie gehabt. Das „zweite Level" ist der Teaser für
+Kapitel 2.
 
 ### Ton (`audio/`, `systems/audio/`)
 **Die Stadt-Ambience ist echt:** `audio/stadt_ambiente.mp3` (ruhige

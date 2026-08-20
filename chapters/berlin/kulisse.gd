@@ -228,7 +228,7 @@ func _materialien_anlegen() -> void:
 		&"plakat_a": _mat(Color(0.74, 0.71, 0.63), 0.9),
 		&"plakat_b": _mat(Color(0.60, 0.65, 0.60), 0.9),
 		&"fuge": _mat(Color(0.30, 0.30, 0.32), 0.95),
-		&"stern": _mat(Color(0.0, 0.0, 0.0), 1.0, Color(0.85, 0.88, 1.0), 1.2),
+		&"stern": _mat(Color(0.0, 0.0, 0.0), 1.0, Color(0.85, 0.88, 1.0), 0.55),
 		&"ampel_rot": _mat(Color(0.3, 0.02, 0.02), 0.4, Color(1.0, 0.08, 0.05), 3.0),
 	}
 	# Schotter ist matt — die Foto-Rauheitskarte von Gravel022 ist zu glatt,

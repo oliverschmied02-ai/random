@@ -9,7 +9,8 @@ das wichtige Momente unserer Beziehung als spielbare Szenen nacherzählt.
 "Vaccination Darts"). Weitere Kapitel sind konzeptionell vorgesehen, werden
 aber bewusst noch nicht gebaut.
 
-**Stand:** Stage 7 — Kapitel 1 spielt abends in Berlin: Fassaden, Straßen und
+**Stand:** Stage 7 — Kapitel 1 spielt in der frühen Abenddämmerung in Berlin
+(Abendrot hinter den Dächern, Laternen gerade an): Fassaden, Straßen und
 Gehwege tragen echte Foto-PBR-Materialien (ambientCG, CC0 — eingebaut über
 `tools/import_fototexturen.py`), nasser Asphalt mit Pfützen und Rissen, erleuchtete
 Fenster in dunklen Laibungen, Laternen mit sichtbaren Lichtkegeln (warmweiß
@@ -34,7 +35,9 @@ unterwegs, dazu drei optionale Erinnerungen am Weg), an der Dönerbude ankommen
 dort *Vaccination Darts* spielen — **zehn fallende FFP2-Masken, fünf müssen
 mit Impfspritzen abgeworfen werden** (Körbchen-FFP2 nach Foto-Vorlage:
 Rautennetz-Vlies, Ausatemventil mit blauem Rundaufdruck, graue Kopfbänder;
-Spritzen gibt es unbegrenzt, eine Dartscheibe gibt es nicht mehr) — und danach ein Schlussbild,
+Spritzen gibt es unbegrenzt, eine Dartscheibe gibt es nicht mehr). Nach dem
+Sieg gratuliert ein Übergangsbildschirm — *„Glückwunsch. Du hast es ins
+zweite Level geschafft."* — und danach ein Schlussbild,
 in dem die beiden miteinander reden, gefolgt vom Abspann. Straßenbäume
 säumen die Gehwege, vereinzelte Autos fahren mit Scheinwerferlicht durch
 die Nacht (und halten, wenn man die Straße quert).

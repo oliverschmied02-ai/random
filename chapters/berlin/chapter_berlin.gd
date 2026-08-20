@@ -210,8 +210,67 @@ func _gehe_zu(tween: Tween, figur: Node3D, ziel: Vector3) -> void:
 
 
 func _auf_runde_geschafft(_punkte: int) -> void:
+	await _level_uebergang()
 	await _abschluss_szene()
 	kapitel_abgeschlossen.emit()
+
+
+## Der Übergangsbildschirm nach dem Sieg: Schwarzblende, „Glückwunsch."
+## und die Zeile zum zweiten Level (Texte in dialogue_lines.gd). Klick,
+## Taste oder acht Sekunden führen weiter; die Schwarzblende löst sich
+## dann über der anlaufenden Schlussszene.
+func _level_uebergang() -> void:
+	# Das GESCHAFFT-Banner des Minispiels erst kurz wirken lassen.
+	await get_tree().create_timer(2.2).timeout
+
+	var schicht := CanvasLayer.new()
+	schicht.layer = 15
+	add_child(schicht)
+	var schwarz := ColorRect.new()
+	schwarz.color = Color(0, 0, 0, 0)
+	schwarz.set_anchors_preset(Control.PRESET_FULL_RECT)
+	schwarz.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	schicht.add_child(schwarz)
+
+	var mitte := VBoxContainer.new()
+	mitte.set_anchors_preset(Control.PRESET_FULL_RECT)
+	mitte.alignment = BoxContainer.ALIGNMENT_CENTER
+	mitte.add_theme_constant_override("separation", 30)
+	mitte.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	mitte.modulate.a = 0.0
+	schicht.add_child(mitte)
+	for daten in [
+		[BerlinDialogue.LEVEL_TITEL, 56, Color(0.96, 0.92, 0.84)],
+		[BerlinDialogue.LEVEL_ZEILE, 28, Color(0.78, 0.76, 0.72)],
+	]:
+		var feld := Label.new()
+		feld.text = daten[0]
+		feld.add_theme_font_size_override("font_size", daten[1])
+		feld.add_theme_color_override("font_color", daten[2])
+		feld.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		mitte.add_child(feld)
+
+	var auftritt := create_tween()
+	auftritt.tween_property(schwarz, ^"color:a", 1.0, 0.9)
+	auftritt.tween_property(mitte, ^"modulate:a", 1.0, 1.2)
+	await auftritt.finished
+
+	# Weiter per Eingabe oder nach acht Sekunden — die Prüfläufe drücken nichts.
+	var uhr := 0.0
+	while uhr < 8.0 and not Input.is_anything_pressed():
+		uhr += get_process_delta_time()
+		await get_tree().process_frame
+
+	var abgang := create_tween()
+	abgang.tween_property(mitte, ^"modulate:a", 0.0, 0.6)
+	await abgang.finished
+
+	# Die Schwarzblende bleibt liegen und löst sich über der anlaufenden
+	# Schlussszene — nebenläufig, damit die Kamerafahrt darunter beginnt.
+	var blende := create_tween()
+	blende.tween_interval(1.2)
+	blende.tween_property(schwarz, ^"color:a", 0.0, 1.6)
+	blende.tween_callback(schicht.queue_free)
 
 
 ## Der Abschluss: das Minispiel tritt ab, beide drehen sich zueinander, die

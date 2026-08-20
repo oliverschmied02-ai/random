@@ -137,3 +137,9 @@ const INTRO_GEDANKEN: Array[String] = [
 
 const WIDMUNG_TITEL: String = "Für Anne."
 const WIDMUNG_ZEILE: String = "Um dein Geschenk zu bekommen, musst du zuerst das Spiel unseres Lebens gewinnen."
+
+
+# --- Level-Übergang nach dem gewonnenen Minispiel ---------------------------
+
+const LEVEL_TITEL: String = "Glückwunsch."
+const LEVEL_ZEILE: String = "Du hast es ins zweite Level geschafft."
