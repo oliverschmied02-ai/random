@@ -103,7 +103,7 @@ Andockpunkte wie die Spielfigur.
 | **Typ** | Hand-mit-Handy-Modell, App-Oberfläche, Profilfotos |
 | **Stil** | Nahaufnahme, abends, warmes Bokeh; die App bewusst generisch („zünder") |
 | **Animation** | Daumen wischt mit, Hand atmet; Karten fliegen/federn |
-| **Platzhalter** | `assets/intro/hand_handy.glb` (Blender, `tools/make_intro_props.py`), Scherz-Profile als Silhouetten-Porträts, Olivers drei Fotos aus dem 3D-Modell gerendert (`tools/_foto_oliver.gd` + `make_tinder_fotos.py veredeln`) |
+| **Platzhalter** | `assets/intro/hand_handy.glb` — echtes WebXR-Handmodell (MIT, `assets/intro/quelle/`) in Griffpose gebogen (`tools/make_hand_echt.py`; Rückfallebene: Skin-Modifier-Hand aus `make_intro_props.py`), Scherz-Profile als Silhouetten-Porträts, Olivers drei Fotos aus dem 3D-Modell gerendert (`tools/_foto_oliver.gd` + `make_tinder_fotos.py veredeln`) |
 | **Priorität** | POLISH — trägt; echte Fotos der beiden würden die Match-Avatare ersetzen |
 
 ### Straßenzug Berlin-Mitte

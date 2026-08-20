@@ -54,6 +54,9 @@ var _knopf_x: Control
 var _knopf_herz: Control
 var _daumen: Node3D
 var _daumen_ruhe: Vector3
+# Bei der echten Hand ist der Daumen Teil des Netzes — dann schnipst beim
+# Wischen die ganze Hand (additiv auf die Atembewegung in _process).
+var _hand_schnipser := 0.0
 var _schirmlicht: OmniLight3D
 var _gedanken_feld: RichTextLabel
 var _hinweis: Label
@@ -863,6 +866,13 @@ func _stempel_dimmen() -> void:
 
 func _daumen_wischen(nach_rechts: bool) -> void:
 	if _daumen == null:
+		# Ganze Hand schnipst kurz in Wischrichtung.
+		var ziel := 4.0 if nach_rechts else -4.0
+		var schnipser := create_tween()
+		schnipser.tween_property(self, ^"_hand_schnipser", ziel, 0.14)\
+			.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		schnipser.tween_property(self, ^"_hand_schnipser", 0.0, 0.45)\
+			.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 		return
 	var weg := Vector3(0.022 if nach_rechts else -0.022, 0.0, 0.004)
 	var schwung := create_tween()
@@ -879,6 +889,7 @@ func _process(delta: float) -> void:
 		_hand.position.y = sin(_zeit * 1.4) * 0.0015
 		_hand.rotation_degrees.z = 3.0 + sin(_zeit * 0.9) * 0.6
 		_hand.rotation_degrees.x = -11.0 + sin(_zeit * 1.1) * 0.4
+		_hand.rotation_degrees.y = _hand_schnipser
 	# Das Bildschirmlicht flackert minimal, wie Bildwechsel eben leuchten.
 	if _schirmlicht != null:
 		_schirmlicht.light_energy = 0.3 + sin(_zeit * 7.3) * 0.02

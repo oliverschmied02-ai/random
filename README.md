@@ -50,8 +50,10 @@ ich ja nichts zu verlieren."), ein Wisch nach rechts, *Es ist ein Match!* —
 und Kapitel 1 beginnt. Gewischt wird per Maus-Ziehen, Pfeiltasten **oder den
 ✕-/Herz-Knöpfen auf dem Display** (der Klick wird auf die Bildschirmebene des
 Handys zurückgerechnet), ein Tipp aufs Foto blättert durch die Bilder, Esc
-überspringt die Intro. Die Hand ist organisch aus Skin-Modifier-Ketten
-gebaut, mit in Cycles gebackener Ambient Occlusion in der Hauttextur.
+überspringt die Intro. Die Hand ist ein **echtes anatomisches Handmodell**
+(das generische WebXR-Handnetz, MIT-Lizenz — siehe `assets/intro/quelle/`),
+das `tools/make_hand_echt.py` über sein Rig in die Griffpose biegt, mit in
+Cycles gebackener Ambient Occlusion in der Hauttextur.
 
 ## Starten
 

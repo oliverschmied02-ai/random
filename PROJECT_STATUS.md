@@ -156,16 +156,21 @@ in Berlin, mit gefangener Maus. Jetzt gibt es einen Anfang.
 **Wie alles anfing** — die spielbare Vorgeschichte, *Anfangen* startet sie vor
 Kapitel 1 (sie wechselt danach selbst nach Berlin, Esc überspringt):
 
-* **Nahaufnahme:** Annes rechte Hand mit dem Handy, in Blender gebaut
-  (`tools/make_intro_props.py` → `assets/intro/hand_handy.glb`) — **organisch
-  aus Skin-Modifier-Ketten** (je Wirbel ein Radius, Subdivision darüber),
-  mit **in Cycles gebackener Selbst-AO** in der Hauttextur. Zwei gelernte
-  Stolperfallen stecken als Kommentar im Werkzeug: an *Astpunkten* erzeugt
-  der Skin-Modifier verschränkte Flächen („Risse" auf der Haut — deshalb ist
-  jeder Finger eine eigene, astfreie Kette, die Ansätze verschwinden hinterm
-  Gehäuse), und beim Backen müssen fremde Körper versteckt sein, sonst
-  malen Durchdringungen pechschwarze Flecken. Der Daumen ist ein eigenes
-  Objekt und **wischt sichtbar mit**; die Hand atmet leicht. Hinter ihr
+* **Nahaufnahme:** Annes rechte Hand mit dem Handy — jetzt ein **echtes,
+  anatomisches Handmodell**: das generische WebXR-Handnetz (npm
+  `@webxr-input-profiles/assets`, MIT — Quelle und Lizenz liegen unter
+  `assets/intro/quelle/`), das `tools/make_hand_echt.py` über sein
+  25-Gelenke-Rig in die **Griffpose** biegt. Die Ausrichtung wird nicht
+  geraten, sondern aus den Knochen gemessen (Fingerrichtung ×
+  Handflächen-Normale → exakte Rotationsmatrix); die Beugung läuft um
+  **Welt-Achsen**, analytisch in die Kanal-Quaternionen zurückgerechnet
+  (die lokalen Achsen dieses Rigs sind unzuverlässig, und Pose-Matrizen
+  zu setzen oder zurückzulesen greift headless nicht — steht als
+  Kommentar im Werkzeug). Danach Pose einfrieren, Subdivision, offene
+  Kanten zunähen, **Selbst-AO in Cycles backen**. Der Daumen bleibt am
+  Netz (jede Abtrennung riss sichtbare Nähte) — beim Wischen **schnipst
+  die ganze Hand** kurz in Wischrichtung. Die alte Skin-Modifier-Hand
+  bleibt als Rückfallebene in `make_intro_props.py`. Hinter der Hand
   warme Bokeh-Lichter (weiche Kreistextur, additiv), ein kühler
   Fensterschimmer, das Bildschirmlicht flackert schwach auf den Fingern.
 * **Die App:** eine SubViewport-Textur (540 × 1170) auf der Bildfläche des
