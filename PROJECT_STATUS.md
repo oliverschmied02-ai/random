@@ -157,14 +157,25 @@ in Berlin, mit gefangener Maus. Jetzt gibt es einen Anfang.
 Kapitel 1 (sie wechselt danach selbst nach Berlin, Esc überspringt):
 
 * **Nahaufnahme:** Annes rechte Hand mit dem Handy, in Blender gebaut
-  (`tools/make_intro_props.py` → `assets/intro/hand_handy.glb`). Der Daumen
-  ist ein eigenes Objekt und **wischt sichtbar mit**; die Hand atmet leicht.
-  Hinter ihr warme Bokeh-Lichter (weiche Kreistextur, additiv), ein kühler
+  (`tools/make_intro_props.py` → `assets/intro/hand_handy.glb`) — **organisch
+  aus Skin-Modifier-Ketten** (je Wirbel ein Radius, Subdivision darüber),
+  mit **in Cycles gebackener Selbst-AO** in der Hauttextur. Zwei gelernte
+  Stolperfallen stecken als Kommentar im Werkzeug: an *Astpunkten* erzeugt
+  der Skin-Modifier verschränkte Flächen („Risse" auf der Haut — deshalb ist
+  jeder Finger eine eigene, astfreie Kette, die Ansätze verschwinden hinterm
+  Gehäuse), und beim Backen müssen fremde Körper versteckt sein, sonst
+  malen Durchdringungen pechschwarze Flecken. Der Daumen ist ein eigenes
+  Objekt und **wischt sichtbar mit**; die Hand atmet leicht. Hinter ihr
+  warme Bokeh-Lichter (weiche Kreistextur, additiv), ein kühler
   Fensterschimmer, das Bildschirmlicht flackert schwach auf den Fingern.
 * **Die App:** eine SubViewport-Textur (540 × 1170) auf der Bildfläche des
-  Modells — Statuszeile, „zünder"-Kopfzeile, Karten mit Foto, Name, Bio,
-  NEE-/GEFÄLLT-MIR-Stempeln beim Ziehen, Foto-Punkten und Knopfreihe. Alles
-  Godot-Controls, keine Bilddateien außer den Fotos.
+  Modells, mit **abgerundeten Display-Ecken** (Spatial-Shader) — Statuszeile,
+  „zünder"-Kopfzeile, Karten mit Foto, Name, Bio, NEE-/GEFÄLLT-MIR-Stempeln
+  beim Ziehen, Foto-Punkten und Knopfreihe. Alles Godot-Controls, keine
+  Bilddateien außer den Fotos. **✕ und ♥ sind klickbar:** der Mausklick wird
+  als Strahl auf die Bildschirmebene zurückgerechnet (`_schirm_punkt` —
+  Ebenenschnitt, lokale Quad-Koordinaten, Viewport-Pixel), der getroffene
+  Knopf pulst und wischt die Karte; ein Tipp aufs Foto blättert die Bilder.
 * **Ablauf:** drei Scherz-Profile (Angler Kevin, Auto-Marcel, Gym-Justin —
   stilisierte Silhouetten-Porträts aus `tools/make_tinder_fotos.py`) lassen
   sich **nur nach links** wischen; rechts federt zurück und Anne kommentiert.

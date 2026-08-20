@@ -49,6 +49,9 @@ var _stempel_nein: Label
 var _stempel_ja: Label
 var _match_schicht: Control
 var _hand: Node3D
+var _schirm_flaeche: MeshInstance3D
+var _knopf_x: Control
+var _knopf_herz: Control
 var _daumen: Node3D
 var _daumen_ruhe: Vector3
 var _schirmlicht: OmniLight3D
@@ -93,11 +96,13 @@ func _umgebung_bauen() -> void:
 	kamera.look_at(Vector3(0.0, -0.004, 0.0))
 	kamera.make_current()
 
-	# Warmes Zimmerlicht von oben links, kühler Rest von rechts.
+	# Warmes Zimmerlicht von oben links — mit Schatten, der erdet die Finger.
 	var lampe := OmniLight3D.new()
 	lampe.light_color = Color(1.0, 0.82, 0.6)
 	lampe.light_energy = 0.5
 	lampe.omni_range = 1.2
+	# Kein Echtzeit-Schatten: die grobe Shadow-Map zeichnet harte Kanten
+	# („Risse") auf Arm und Knöchel — die gebackene AO der Hand erdet schon.
 	add_child(lampe)
 	lampe.position = Vector3(-0.28, 0.3, 0.22)
 	var rest := OmniLight3D.new()
@@ -185,13 +190,28 @@ func _schirm_bauen() -> void:
 	add_child(_schirm)
 
 	# Die Bildfläche des Modells bekommt die Viewport-Textur — unbeleuchtet,
-	# damit sie unabhängig vom Zimmerlicht lesbar bleibt.
-	var flaeche := _hand.find_child("bildschirm", true, false) as MeshInstance3D
-	var stoff := StandardMaterial3D.new()
-	stoff.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	stoff.albedo_texture = _schirm.get_texture()
-	if flaeche != null:
-		flaeche.set_surface_override_material(0, stoff)
+	# damit sie unabhängig vom Zimmerlicht lesbar bleibt, und mit
+	# abgerundeten Ecken wie ein echtes Display.
+	_schirm_flaeche = _hand.find_child("bildschirm", true, false) as MeshInstance3D
+	var schatten := Shader.new()
+	schatten.code = """
+shader_type spatial;
+render_mode unshaded;
+uniform sampler2D bild : source_color;
+void fragment() {
+	vec2 mass = vec2(540.0, 1170.0);
+	vec2 p = UV * mass;
+	vec2 ecke = vec2(46.0);
+	vec2 q = min(p, mass - p);
+	if (q.x < ecke.x && q.y < ecke.y && length(q - ecke) > ecke.x) { discard; }
+	ALBEDO = texture(bild, UV).rgb;
+}
+"""
+	var stoff := ShaderMaterial.new()
+	stoff.shader = schatten
+	stoff.set_shader_parameter("bild", _schirm.get_texture())
+	if _schirm_flaeche != null:
+		_schirm_flaeche.set_surface_override_material(0, stoff)
 
 
 # --- Die App auf dem Bildschirm ----------------------------------------------
@@ -289,9 +309,12 @@ func _oberflaeche_bauen() -> void:
 	_stempel_ja.position = Vector2(30, 44)
 	innen.add_child(_stempel_ja)
 
-	# Knopfreihe unter der Karte — reine Deko, gewischt wird mit der Hand.
-	grund.add_child(_rundknopf(Vector2(140, 1035), Color(0.95, 0.35, 0.35), false))
-	grund.add_child(_rundknopf(Vector2(400, 1035), Color(0.3, 0.85, 0.45), true))
+	# Knopfreihe unter der Karte — klickbar: der Tipp wird über die
+	# Bildschirmebene zurückgerechnet (_tippen).
+	_knopf_x = _rundknopf(Vector2(140, 1035), Color(0.95, 0.35, 0.35), false)
+	grund.add_child(_knopf_x)
+	_knopf_herz = _rundknopf(Vector2(400, 1035), Color(0.3, 0.85, 0.45), true)
+	grund.add_child(_knopf_herz)
 
 	_match_bauen(grund)
 
@@ -514,7 +537,7 @@ func _einblenden() -> void:
 	schicht.add_child(_gedanken_feld)
 
 	_hinweis = Label.new()
-	_hinweis.text = "Ziehen oder ←/→ zum Wischen  ·  Esc überspringt"
+	_hinweis.text = "Ziehen, ←/→ oder die Knöpfe  ·  Esc überspringt"
 	_hinweis.add_theme_font_size_override("font_size", 20)
 	_hinweis.add_theme_color_override("font_color", Color(1, 1, 1, 0.45))
 	_hinweis.anchor_left = 0.5
@@ -675,7 +698,7 @@ func gedanke_weiter() -> void:
 		return
 	_zustand = Zustand.WISCHEN
 	_gedanke_loeschen()
-	_hinweis.text = "Tipp aufs Foto: nächstes Bild  ·  nach rechts: gefällt mir"
+	_hinweis.text = "Tipp aufs Foto: nächstes Bild  ·  Herz-Knopf: gefällt mir"
 	_hinweis.visible = true
 
 
@@ -755,7 +778,7 @@ func _unhandled_input(ereignis: InputEvent) -> void:
 				if _zustand == Zustand.WISCHEN and _karte_gesperrt == false:
 					_zug_zuruecksetzen()
 			elif absf(_zug) < 8.0:
-				naechstes_foto()
+				_tippen(ereignis.position)
 				_zug_zuruecksetzen()
 			else:
 				_zug_zuruecksetzen()
@@ -764,6 +787,62 @@ func _unhandled_input(ereignis: InputEvent) -> void:
 	if ereignis is InputEventMouseMotion and _zieht and not _karte_gesperrt:
 		_zug += ereignis.relative.x * 0.55
 		_zug = clampf(_zug, -420.0, 420.0)
+
+
+## Rechnet einen Fensterpunkt auf die Bildschirmebene des Handys zurück:
+## Kamerastrahl, Ebenenschnitt, lokale Quad-Koordinaten → Viewport-Pixel.
+## Liegt der Punkt nicht auf dem Display, kommt (-1, -1) zurück.
+func _schirm_punkt(fenster: Vector2) -> Vector2:
+	if _schirm_flaeche == null:
+		return Vector2(-1, -1)
+	var kamera := get_viewport().get_camera_3d()
+	if kamera == null:
+		return Vector2(-1, -1)
+	var von := kamera.project_ray_origin(fenster)
+	var richtung := kamera.project_ray_normal(fenster)
+	var lage := _schirm_flaeche.global_transform
+	var normale := lage.basis.z.normalized()
+	var nenner := normale.dot(richtung)
+	if absf(nenner) < 0.0001:
+		return Vector2(-1, -1)
+	var t := (normale.dot(lage.origin) - normale.dot(von)) / nenner
+	if t < 0.0:
+		return Vector2(-1, -1)
+	var lokal := lage.affine_inverse() * (von + richtung * t)
+	# Die Bildfläche ist 0,066 × 0,140 m groß, Mitte im Ursprung.
+	var u := (lokal.x + 0.033) / 0.066
+	var v := (0.070 - lokal.y) / 0.140
+	if u < 0.0 or u > 1.0 or v < 0.0 or v > 1.0:
+		return Vector2(-1, -1)
+	return Vector2(u * SCHIRM_BREITE, v * SCHIRM_HOEHE)
+
+
+func _tippen(fenster: Vector2) -> void:
+	var punkt := _schirm_punkt(fenster)
+	if punkt.x < 0.0:
+		return
+	tippe_auf_schirm(punkt)
+
+
+## Tipp in Viewport-Koordinaten der App (auch vom Prüflauf aufrufbar):
+## ✕ lehnt ab, das Herz liket, ein Tipp aufs Foto blättert.
+func tippe_auf_schirm(punkt: Vector2) -> void:
+	if _zustand != Zustand.WISCHEN:
+		return
+	if punkt.distance_to(Vector2(140, 1035)) < 62.0:
+		_knopf_druecken(_knopf_x, false)
+	elif punkt.distance_to(Vector2(400, 1035)) < 62.0:
+		_knopf_druecken(_knopf_herz, true)
+	elif punkt.y < 810.0:
+		naechstes_foto()
+
+
+func _knopf_druecken(knopf: Control, herz: bool) -> void:
+	var druck := create_tween()
+	druck.tween_property(knopf, ^"scale", Vector2(1.25, 1.25), 0.09)\
+		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	druck.tween_property(knopf, ^"scale", Vector2.ONE, 0.16)
+	wische(herz)
 
 
 func _zug_zuruecksetzen() -> void:

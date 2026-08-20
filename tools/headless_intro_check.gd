@@ -46,12 +46,34 @@ func _los() -> void:
 	_pruefe(szene.karten_index() == 0, "rechts auf Kevin federt zurück")
 	_pruefe(not szene.match_erreicht, "kein Match durch Zurückfedern")
 
-	# Die drei Scherz-Profile nach links.
-	for i in 3:
-		var flog: bool = szene.wische(false)
-		_pruefe(flog, "Karte %d fliegt nach links" % (i + 1))
-		await _ruhe()
-	_pruefe(szene.karten_index() == 3, "nach drei Wischen liegt Oliver")
+	# Der Herz-Knopf tut dasselbe wie der Rechtswisch: Kevin federt zurück.
+	szene.tippe_auf_schirm(Vector2(400, 1035))
+	await _ruhe()
+	_pruefe(szene.karten_index() == 0, "Herz-Knopf auf Kevin federt zurück")
+
+	# Der ✕-Knopf wischt nach links: Kevin fliegt, Marcel liegt.
+	szene.tippe_auf_schirm(Vector2(140, 1035))
+	await _ruhe()
+	_pruefe(szene.karten_index() == 1, "✕-Knopf wischt Kevin weg")
+
+	# Klick-Geometrie: ein Fensterpunkt über dem Herz-Knopf muss auf dessen
+	# Viewport-Koordinate zurückgerechnet werden (Strahl → Ebene → Pixel).
+	var kamera: Camera3D = root.get_viewport().get_camera_3d()
+	var lage: Transform3D = szene._schirm_flaeche.global_transform
+	var welt: Vector3 = lage * Vector3(
+		(400.0 / 540.0) * 0.066 - 0.033, 0.070 - (1035.0 / 1170.0) * 0.140, 0.0)
+	var punkt: Vector2 = szene._schirm_punkt(kamera.unproject_position(welt))
+	_pruefe(punkt.distance_to(Vector2(400, 1035)) < 3.0,
+		"Fensterklick trifft den Herz-Knopf (Abweichung %.1f px)"
+		% punkt.distance_to(Vector2(400, 1035)))
+
+	# Zurück auf Anfang für den Rest der Prüfung: Marcel liegt schon —
+	# der Stapel läuft einfach weiter, es fehlen noch zwei Linkswische.
+	szene.wische(false)
+	await _ruhe()
+	szene.wische(false)
+	await _ruhe()
+	_pruefe(szene.karten_index() == 3, "nach den Knöpfen und zwei Wischen liegt Oliver")
 
 	# Olivers Karte startet die Gedanken; Wischen ist derweil gesperrt.
 	_pruefe(szene.zustand() == szene.Zustand.GEDANKEN, "Gedanken beginnen von selbst")
@@ -62,7 +84,7 @@ func _los() -> void:
 
 	# Durch die Fotos blättern: drei Stück, dann wieder das erste.
 	_pruefe(szene.foto_index() == 0, "Foto 1 liegt zuerst")
-	szene.naechstes_foto()
+	szene.tippe_auf_schirm(Vector2(270, 400))  # Tipp mitten aufs Foto
 	szene.naechstes_foto()
 	_pruefe(szene.foto_index() == 2, "zweimal Tippen zeigt Foto 3")
 	szene.naechstes_foto()
@@ -74,10 +96,10 @@ func _los() -> void:
 	_pruefe(szene.karten_index() == 3, "links auf Oliver federt zurück")
 	_pruefe(not szene.match_erreicht, "noch kein Match")
 
-	# Rechts auf Oliver: Match.
-	szene.wische(true)
+	# Herz-Knopf auf Oliver: Match.
+	szene.tippe_auf_schirm(Vector2(400, 1035))
 	await _ruhe(1.2)
-	_pruefe(szene.match_erreicht, "rechts auf Oliver macht das Match")
+	_pruefe(szene.match_erreicht, "Herz-Knopf auf Oliver macht das Match")
 	_pruefe(szene.zustand() == szene.Zustand.MATCH, "Zustand steht auf MATCH")
 
 	if _fehler == 0:

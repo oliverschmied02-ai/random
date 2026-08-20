@@ -47,8 +47,11 @@ Profile, die niemand will (der Angler, der Auto-Typ, das Gym-Spiegel-Selfie),
 wischt man nach links — dann liegt Olivers Profil da: drei Fotos, auf jedem
 sieht er anders aus. Anne denkt laut nach („Na ja. Bei der Auswahl hier hab
 ich ja nichts zu verlieren."), ein Wisch nach rechts, *Es ist ein Match!* —
-und Kapitel 1 beginnt. Gewischt wird per Maus-Ziehen oder Pfeiltasten, ein
-Tipp aufs Foto blättert durch die Bilder, Esc überspringt die Intro.
+und Kapitel 1 beginnt. Gewischt wird per Maus-Ziehen, Pfeiltasten **oder den
+✕-/Herz-Knöpfen auf dem Display** (der Klick wird auf die Bildschirmebene des
+Handys zurückgerechnet), ein Tipp aufs Foto blättert durch die Bilder, Esc
+überspringt die Intro. Die Hand ist organisch aus Skin-Modifier-Ketten
+gebaut, mit in Cycles gebackener Ambient Occlusion in der Hauttextur.
 
 ## Starten
 
