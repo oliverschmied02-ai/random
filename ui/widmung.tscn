@@ -1,0 +1,67 @@
+[gd_scene load_steps=2 format=3 uid="uid://widmung_anne1"]
+
+[ext_resource type="Script" path="res://ui/widmung.gd" id="1_widmung"]
+
+[node name="Widmung" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("1_widmung")
+
+[node name="Grund" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.02, 0.018, 0.03, 1)
+
+[node name="Mitte" type="CenterContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="VBox" type="VBoxContainer" parent="Mitte"]
+layout_mode = 2
+theme_override_constants/separation = 34
+custom_minimum_size = Vector2(860, 0)
+
+[node name="Titel" type="Label" parent="Mitte/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 58
+theme_override_colors/font_color = Color(0.96, 0.92, 0.84, 1)
+horizontal_alignment = 1
+text = "Für Anne."
+
+[node name="Zeile" type="Label" parent="Mitte/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 27
+theme_override_colors/font_color = Color(0.78, 0.76, 0.72, 1)
+horizontal_alignment = 1
+autowrap_mode = 3
+text = ""
+
+[node name="Hinweis" type="Label" parent="."]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -200.0
+offset_right = 200.0
+offset_top = -64.0
+offset_bottom = -34.0
+theme_override_font_sizes/font_size = 18
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+horizontal_alignment = 1
+text = "Klick, um anzufangen"
+
+[node name="Schwarz" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+color = Color(0, 0, 0, 0)

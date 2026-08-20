@@ -231,9 +231,9 @@ func _maske_erledigt() -> void:
 ## benutzt (`tempo` 0 hält sie für deterministische Würfe fest).
 func maske_setzen(ort: Vector3, tempo: float = 0.0) -> void:
 	var teil := _MASKE.instantiate() as Node3D
-	# Das FFP2-Modell ist 16 cm breit — hochskaliert auf gut einen halben
-	# Meter, damit das fallende Ziel zur großzügigen Trefferzone passt.
-	teil.scale = Vector3.ONE * 3.2
+	# Das FFP2-Körbchen ist 13 cm breit — hochskaliert auf knapp einen
+	# halben Meter, damit das fallende Ziel zur Trefferzone passt.
+	teil.scale = Vector3.ONE * 3.6
 	_masken_wurzel.add_child(teil)
 	teil.global_position = ort
 	_masken.append({

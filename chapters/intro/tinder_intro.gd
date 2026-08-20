@@ -489,7 +489,9 @@ func _toene_bauen() -> void:
 	_ton_zurueck = _ton("res://audio/wisch_zurueck.wav", -8.0)
 	_ton_tipp = _ton("res://audio/handy_tipp.wav", -6.0)
 	_ton_match = _ton("res://audio/match.wav", -4.0)
-	var stadt := _ton("res://audio/stadt.wav", -22.0)
+	# Die echte Stadtaufnahme (ferne Sirenen, ruhige Straße) — gedämpft,
+	# als läge sie hinter Annes Fenster.
+	var stadt := _ton("res://audio/stadt_ambiente.mp3", -20.0)
 	stadt.play()
 
 	var laeufer := AudioStreamPlayer.new()

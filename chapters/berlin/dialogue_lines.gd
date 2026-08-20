@@ -131,3 +131,9 @@ const INTRO_GEDANKEN: Array[String] = [
 	"Aber er sieht auf jedem Bild anders aus…",
 	"Na ja. Bei der Auswahl hier hab ich ja nichts zu verlieren.",
 ]
+
+
+# --- Widmung (allererster Bildschirm) ---------------------------------------
+
+const WIDMUNG_TITEL: String = "Für Anne."
+const WIDMUNG_ZEILE: String = "Um dein Geschenk zu bekommen, musst du zuerst das Spiel unseres Lebens gewinnen."

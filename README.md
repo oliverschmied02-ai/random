@@ -32,14 +32,19 @@ seiner Bürotür abholen, zu zweit durch die Stadt laufen (zwei Gespräche
 unterwegs, dazu drei optionale Erinnerungen am Weg), an der Dönerbude ankommen
 (offener Verkaufsraum mit Verkäufer hinterm Tresen und drehendem Dönerspieß),
 dort *Vaccination Darts* spielen — **zehn fallende FFP2-Masken, fünf müssen
-mit Impfspritzen abgeworfen werden** (in Blender modellierte FFP2 mit
-Bootsfalte, Nasenbügel, Ohrschlaufen und Vlies-Textur; Spritzen gibt es
-unbegrenzt, eine Dartscheibe gibt es nicht mehr) — und danach ein Schlussbild,
+mit Impfspritzen abgeworfen werden** (Körbchen-FFP2 nach Foto-Vorlage:
+Rautennetz-Vlies, Ausatemventil mit blauem Rundaufdruck, graue Kopfbänder;
+Spritzen gibt es unbegrenzt, eine Dartscheibe gibt es nicht mehr) — und danach ein Schlussbild,
 in dem die beiden miteinander reden, gefolgt vom Abspann. Straßenbäume
 säumen die Gehwege, vereinzelte Autos fahren mit Scheinwerferlicht durch
 die Nacht (und halten, wenn man die Straße quert).
 Ausschließlich Platzhalter-Geometrie, alle Dialoge sind Platzhaltertexte, aller
 Ton ist synthetisch erzeugt.
+
+**Ganz am Anfang: die Widmung** — schwarzer Bildschirm, ferne Stadt,
+dann in Ruhe: *„Für Anne."* und *„Um dein Geschenk zu bekommen, musst du
+zuerst das Spiel unseres Lebens gewinnen."* Ein Klick führt zum Titel
+(die Texte stehen in `dialogue_lines.gd`).
 
 **Davor: die Tinder-Intro** — wie alles anfing. Eine Nahaufnahme von Annes
 Hand mit dem Handy (Blender-Modell, der Daumen wischt sichtbar mit), Bokeh-
@@ -149,7 +154,10 @@ Kapitelauftakt und die Schrittkadenz beim Gehen.
 
 ## Ton
 
-Alle Klänge sind synthetische Platzhalter und entstehen hier:
+Die Stadt-Ambience (`audio/stadt_ambiente.mp3` — ruhige Straße, ferne
+Sirenen; Aufnahme „city ambience" von Vincent Mets, von Oliver
+bereitgestellt) ist echt; alle übrigen Klänge sind synthetische
+Platzhalter und entstehen hier:
 
 ```bash
 python3 tools/make_placeholder_audio.py

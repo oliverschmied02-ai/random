@@ -143,6 +143,11 @@ Stühle und Absperrband auf dem Gehweg.
 Das Spiel fiel vorher mit der Tür ins Haus: Doppelklick, und man stand mitten
 in Berlin, mit gefangener Maus. Jetzt gibt es einen Anfang.
 
+* **Widmung als allererster Bildschirm** (`ui/widmung.tscn`, Hauptszene):
+  Schwarz, die echte Stadt-Ambience ganz leise, dann nacheinander
+  „Für Anne." und „Um dein Geschenk zu bekommen, musst du zuerst das
+  Spiel unseres Lebens gewinnen." — Klick (oder 18 s) führt zum Titel.
+  Die Texte stehen in `dialogue_lines.gd` (`WIDMUNG_TITEL`, `WIDMUNG_ZEILE`).
 * **Titelbildschirm** mit gezeichneter Dachlinie (`ui/skyline.gd`, `_draw()`
   statt Bilddatei — zwei Dutzend Rechtecke und ein Kreis, passt sich jeder
   Fenstergröße an), Titel, *Anfangen*, *Beenden* und leiser Musik. *Anfangen*
@@ -199,7 +204,10 @@ Kapitel 1 (sie wechselt danach selbst nach Berlin, Esc überspringt):
   setzt das Match. Die Logik schaltet sofort, Tweens sind nur Kosmetik.
 
 ### Ton (`audio/`, `systems/audio/`)
-Alle Klänge sind **synthetische Platzhalter** und entstehen in
+**Die Stadt-Ambience ist echt:** `audio/stadt_ambiente.mp3` (ruhige
+Straße, ferne Sirenen — Aufnahme von Vincent Mets, von Oliver
+bereitgestellt) loopt im Kapitel, in der Tinder-Intro und unter der
+Widmung. Alle übrigen Klänge sind **synthetische Platzhalter** und entstehen in
 `tools/make_placeholder_audio.py` — ohne Fremdmaterial, ohne Abhängigkeiten,
 reproduzierbar. Ein Schritt kürzer oder ein Einschlag trockener heißt: eine Zahl
 im Skript ändern und neu erzeugen. Ersetzen heißt: gleiche Datei, gleicher Name.
@@ -498,11 +506,12 @@ angekommen zählt eine als verpasst; sind alle zehn erledigt und die fünf
 Treffer nicht beisammen, endet die Runde mit einer freundlichen Zeile und
 beginnt von selbst neu. Der fünfte Treffer gewinnt sofort.
 
-**Die Masken sind echte FFP2** (`tools/make_maske.py` →
-`assets/props/atemmaske.glb`): die typische Bootsfalte als Gitter mit
-Wölbungsprofil, Nasenbügel, zwei Ohrschlaufen, dazu eine PIL-Vlies-Textur
-mit Faserrauschen, Faltlinie, gepunkteten Schweißnähten und dezentem
-„FFP2 NR"-Aufdruck. Sie fallen seitlich pendelnd und trudelnd wie Papier.
+**Die Masken sind Körbchen-FFP2 nach Foto-Vorlage** (`tools/make_maske.py`
+→ `assets/props/atemmaske.glb`; Vorbild ist Olivers hochgeladenes
+Produktfoto, der Markenname bleibt weg): Ellipsoid-Körbchen mit
+frontprojizierter Rautennetz-Vlies-Textur, Ausatemventil-Kuppel mit
+blauem Rundaufdruck („CE 0121 · EN149:2001 · FFP2 NR D", mittig „FFP2")
+und zwei grauen Kopfbändern. Sie fallen seitlich pendelnd und trudelnd.
 Stellschrauben: `masken_takt`, `masken_fall`, `masken_breite` am
 `DartsGame`, `MASKEN_PUNKTE`/`MASKEN_RADIUS` in `darts_config.gd`. Der
 Prüflauf setzt eigene, unbewegte Masken (`maske_setzen`,
