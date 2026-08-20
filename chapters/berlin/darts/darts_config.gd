@@ -6,33 +6,20 @@ extends RefCounted
 ## Wer die Schwierigkeit ändern will, ändert sie hier — im Spielcode steht
 ## keine einzige dieser Zahlen ein zweites Mal.
 
-## Würfe pro Runde.
-const WUERFE_PRO_RUNDE: int = 5
+## So viele Masken fallen in einer Runde. Sind alle unten oder abgeworfen,
+## endet die Runde.
+const MASKEN_PRO_RUNDE: int = 10
 
-## Punktzahl, ab der die Runde als geschafft gilt.
-const ZIELPUNKTZAHL: int = 60
+## So viele Treffer gewinnen die Runde.
+const TREFFER_ZIEL: int = 5
 
-## Radius der Scheibe in Metern. Etwas größer als eine echte Dartscheibe
-## (0,226 m) — das Spiel soll gutmütig sein.
-const SCHEIBEN_RADIUS: float = 0.30
-
-## Ringe von innen nach außen: [Radius in Metern, Punkte].
-##
-## Die Wertung ist bewusst freundlich: Wer überhaupt trifft, bekommt Punkte,
-## und fünf mittelmäßige Würfe reichen für die Zielpunktzahl.
-const RINGE: Array = [
-	[0.024, 50],
-	[0.054, 25],
-	[0.105, 20],
-	[0.165, 15],
-	[0.225, 10],
-	[0.300, 5],
-]
-
-## Punkte für eine abgeworfene Maske. Bei 60 Zielpunkten heißt das: drei
-## der fünf Würfe müssen sitzen — deutlich schwerer als die alte Scheibe,
-## denn die Ziele fallen.
+## Punkte für eine abgeworfene Maske.
 const MASKEN_PUNKTE: int = 20
+
+## Punktzahl, ab der die Runde als geschafft gilt — genau TREFFER_ZIEL
+## abgeworfene Masken. (Als Punktzahl gehalten, damit Anzeige und
+## Prüfläufe weiter mit `punkte` arbeiten können.)
+const ZIELPUNKTZAHL: int = TREFFER_ZIEL * MASKEN_PUNKTE
 
 ## Trefferradius um die Maskenmitte, in Metern. Großzügig — die Maske
 ## bewegt sich schließlich.
@@ -42,13 +29,10 @@ const MASKEN_RADIUS: float = 0.34
 ## Rückmeldung, mehr Partikel, kräftigeres Wackeln.
 const GUTER_TREFFER: int = 20
 
-
-## Punkte für einen Treffer im Abstand `radius` von der Scheibenmitte.
-static func punkte_fuer_radius(radius: float) -> int:
-	for ring in RINGE:
-		if radius <= float(ring[0]):
-			return int(ring[1])
-	return 0
+## Wie viele Spritzen sichtbar auf der Stehtonne bereitliegen. Reine
+## Ausstattung — geworfen werden darf unbegrenzt, der Vorrat füllt sich
+## nach (Oliver legt nach).
+const VORRAT_SPRITZEN: int = 5
 
 
 ## Text für die Trefferanzeige. Danebengeworfen wird nicht bestraft, nur

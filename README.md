@@ -31,9 +31,10 @@ fertigen App — SDFGI, Reflexionen und Nebel. Von Anfang bis Ende erzählt, mit
 seiner Bürotür abholen, zu zweit durch die Stadt laufen (zwei Gespräche
 unterwegs, dazu drei optionale Erinnerungen am Weg), an der Dönerbude ankommen
 (offener Verkaufsraum mit Verkäufer hinterm Tresen und drehendem Dönerspieß),
-dort *Vaccination Darts* spielen — **fallende Atemmasken mit Impfspritzen
-abwerfen**: die Spritzen liegen auf der Stehtonne bereit, drei von fünf
-Würfen müssen die pendelnden Masken treffen — und danach ein Schlussbild,
+dort *Vaccination Darts* spielen — **zehn fallende FFP2-Masken, fünf müssen
+mit Impfspritzen abgeworfen werden** (in Blender modellierte FFP2 mit
+Bootsfalte, Nasenbügel, Ohrschlaufen und Vlies-Textur; Spritzen gibt es
+unbegrenzt, eine Dartscheibe gibt es nicht mehr) — und danach ein Schlussbild,
 in dem die beiden miteinander reden, gefolgt vom Abspann. Straßenbäume
 säumen die Gehwege, vereinzelte Autos fahren mit Scheinwerferlicht durch
 die Nacht (und halten, wenn man die Straße quert).
@@ -126,9 +127,11 @@ godot --headless --path . --script res://tools/headless_intro_check.gd
 Der erste fährt die Figur über Bahn, Treppe und Rampe und prüft
 Geschwindigkeiten, Bremsweg, Bodenkontakt und Kameraposition.
 
-Der zweite wirft mit fest vorgegebenen Ziel- und Kraftwerten auf die
-Dartscheibe und prüft Wertung, Rundenende, Wiederholung und die Zusicherung,
-dass die Wurfkraft nur die Höhe des Treffers verändert.
+Der zweite wirft mit fest vorgegebenen Ziel- und Kraftwerten auf von Hand
+gesetzte, stillstehende Masken und prüft die Regeln: Fehlwürfe kosten nichts
+(Spritzen unbegrenzt), zehn erledigte Masken ohne fünf Treffer starten die
+Runde neu, der fünfte Treffer gewinnt sofort — und die Dartscheibe ist
+wirklich abgebaut.
 
 Der dritte spielt **das ganze Kapitel** mit simulierter Eingabe durch: zur
 Bürotür laufen, Oliver ansprechen, die Strecke ablaufen, alle vier Gespräche

@@ -147,8 +147,8 @@ Fläche — beim Austausch bitte erhalten.
 | **Platzhalter** | Offener Verkaufsraum (Rückwand, Seiten, Dach), Tresen, drehender Schichten-Spieß vor glühendem Heizelement, Verkäufer (Olivers Modell mit Schürze und Papiermütze), Lichterkette |
 | **Priorität** | IMPORTANT |
 
-Die Dartscheibe für Stage 4 gehört an diese Bude — beim Entwurf Platz dafür
-einplanen (Seitenwand oder überdachter Bereich daneben).
+Die Fallzone des Minispiels (fallende FFP2-Masken) liegt an der Seitenwand
+dieser Bude — beim Entwurf freie Wandfläche daneben einplanen.
 
 ### COVID-Requisiten
 | | |
@@ -201,19 +201,19 @@ wart. Verschieben heißt: Knoten unter `Erinnerungen` bewegen, sonst nichts.
 | **Platzhalter** | Erkennbare Spritze aus Grundkörpern: durchsichtiger Glaszylinder, oranges Serum, Gummistopfen, Fingerflansch, Kolbenstange, Kanüle mit Ansatz |
 | **Priorität** | IMPORTANT |
 
-### Dartscheibe an der Bude
+### FFP2-Masken (Ziele des Minispiels)
 | | |
 | --- | --- |
-| **Zweck** | Ziel des Minispiels |
-| **Szene** | `chapters/berlin/darts/darts_game.tscn` → `Scheibe` |
-| **Typ** | Scheibe mit Holzrückwand und Lampe |
-| **Stil** | Abgenutzt, Kneipenecke, warm beleuchtet |
-| **Animation** | Keine nötig |
-| **Platzhalter** | Sechs Ringe aus Zylindern auf einem Holzbrett |
-| **Priorität** | POLISH |
+| **Zweck** | Zehn fallende Ziele — fünf Treffer gewinnen |
+| **Szene** | `chapters/berlin/darts/darts_game.tscn` (gespawnt zur Laufzeit) |
+| **Typ** | FFP2-Maske mit Bootsfalte, Nasenbügel, Ohrschlaufen |
+| **Stil** | Weißes Vlies, dezenter Aufdruck, trudelt wie Papier |
+| **Animation** | Fallen, seitlich pendeln, trudeln (im Spielcode) |
+| **Platzhalter** | `assets/props/atemmaske.glb` aus `tools/make_maske.py` — Gitter mit Wölbungsprofil, PIL-Vlies-Textur (Fasern, Faltlinie, Nähte, „FFP2 NR") |
+| **Priorität** | POLISH — trägt |
 
-Die Ringradien in `darts_config.gd` und die Ringe in der Szene müssen
-zusammenpassen — wer die Optik ändert, ändert die Wertung mit.
+Trefferzone (`MASKEN_RADIUS`) und sichtbare Größe (Skalierung in
+`maske_setzen`) gehören zusammen — wer die Optik ändert, prüft die Wertung.
 
 ---
 

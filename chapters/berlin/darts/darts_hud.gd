@@ -24,12 +24,12 @@ func _ready() -> void:
 	_fadenkreuz.visible = false
 
 
-func setze_wurf(nummer: int, gesamt: int) -> void:
-	_wurf_label.text = "WURF %d / %d" % [nummer, gesamt]
+func setze_wurf(uebrig: int, gesamt: int) -> void:
+	_wurf_label.text = "MASKEN %d / %d" % [uebrig, gesamt]
 
 
-func setze_punkte(punkte: int, ziel: int) -> void:
-	_punkte_label.text = "PUNKTE: %d / %d" % [punkte, ziel]
+func setze_punkte(treffer: int, ziel: int) -> void:
+	_punkte_label.text = "TREFFER: %d / %d" % [treffer, ziel]
 
 
 ## Zeigt die Idealzone an, in der die Wurfkraft genau passt.

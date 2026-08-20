@@ -3,11 +3,17 @@ extends Node3D
 
 ## Vaccination Darts — das Minispiel an der Dönerbude.
 ##
+## **Zehn FFP2-Masken fallen, fünf Treffer gewinnen.** Eine Dartscheibe gibt
+## es nicht mehr — geworfen wird mit Impfspritzen auf die fallenden Masken,
+## Spritzen sind unbegrenzt (der Vorrat auf der Tonne füllt sich nach).
+## Sind alle zehn Masken unten oder abgeworfen und fehlen noch Treffer,
+## beginnt freundlich eine neue Runde.
+##
 ## Ablauf eines Wurfs: zielen, Maustaste halten, im grünen Bereich loslassen.
 ##
 ## Zwei Entscheidungen prägen das Spielgefühl:
 ##
-## 1. Das Fadenkreuz bewegt sich in der **Ebene der Scheibe**, nicht über den
+## 1. Das Fadenkreuz bewegt sich in der **Ebene der Fallzone**, nicht über den
 ##    Bildschirm. Dadurch ist die Zielhilfe unabhängig von Auflösung und
 ##    Bildwinkel, und ein Treffer sieht genau da aus, wo man hingezielt hat.
 ##
@@ -84,7 +90,11 @@ const _MASKE := preload("res://assets/props/atemmaske.glb")
 
 var zustand: Zustand = Zustand.INAKTIV
 var punkte: int = 0
-var wurf_nummer: int = 1
+## Wie viele Masken diese Runde schon erschienen sind (höchstens
+## MASKEN_PRO_RUNDE) und wie viele davon erledigt sind (getroffen oder
+## unten angekommen). Sind alle erledigt, endet die Runde.
+var masken_erschienen: int = 0
+var masken_erledigt: int = 0
 
 var _ziel: Vector2 = Vector2.ZERO
 var _kraft: float = 0.0
@@ -155,8 +165,8 @@ func _intro_zeigen() -> void:
 		return
 	_hud.zeige_banner(
 		"IMPFSPRITZEN WERFEN",
-		"Triff die fallenden Masken! Fünf Spritzen, %d Punkte. Taste halten, im grünen Bereich loslassen."
-			% DartsConfig.ZIELPUNKTZAHL
+		"%d Masken fallen — triff %d! Taste halten, im grünen Bereich loslassen. Spritzen gibt es genug."
+			% [DartsConfig.MASKEN_PRO_RUNDE, DartsConfig.TREFFER_ZIEL]
 	)
 	await get_tree().create_timer(intro_dauer).timeout
 	_hud.verstecke_banner()
@@ -168,9 +178,12 @@ func _intro_zeigen() -> void:
 
 ## Lässt in regelmäßigen, leicht verzitterten Abständen Masken fallen und
 ## bewegt sie: gemächlich abwärts, seitlich pendelnd wie Papier, mit
-## leichtem Trudeln. Unten angekommen verschwinden sie ungestraft.
+## leichtem Trudeln. Unten angekommen zählt die Maske als verpasst; sind
+## alle zehn erledigt und die Treffer reichen nicht, endet die Runde.
 func _masken_pflegen(delta: float) -> void:
-	if zustand != Zustand.INAKTIV and masken_spawn_aktiv:
+	var laeuft := zustand in [Zustand.ZIELEN, Zustand.LADEN, Zustand.FLUG]
+	if laeuft and masken_spawn_aktiv \
+			and masken_erschienen < DartsConfig.MASKEN_PRO_RUNDE:
 		_masken_uhr -= delta
 		if _masken_uhr <= 0.0:
 			_masken_uhr = masken_takt * _masken_zufall.randf_range(0.75, 1.3)
@@ -178,6 +191,10 @@ func _masken_pflegen(delta: float) -> void:
 			maske_setzen(
 				_mitte.global_position + Vector3(seitlich, masken_hoehe - _mitte.global_position.y, 0.0),
 				masken_fall * _masken_zufall.randf_range(0.85, 1.2))
+			masken_erschienen += 1
+			_hud.setze_wurf(
+				DartsConfig.MASKEN_PRO_RUNDE - masken_erledigt,
+				DartsConfig.MASKEN_PRO_RUNDE)
 
 	for eintrag in _masken.duplicate():
 		var teil: Node3D = eintrag["node"]
@@ -192,13 +209,31 @@ func _masken_pflegen(delta: float) -> void:
 			0.3 * sin(eintrag["zeit"] * 1.9))
 		if ort.y < 0.3:
 			_maske_entfernen(eintrag)
+			_maske_erledigt()
+
+	# Rundenende erst, wenn wirklich alle zehn durch sind und nichts mehr
+	# fliegt — ein spätes Sieg-Ende übernimmt _auf_einschlag selbst.
+	if laeuft and masken_spawn_aktiv \
+			and masken_erledigt >= DartsConfig.MASKEN_PRO_RUNDE \
+			and zustand != Zustand.FLUG:
+		_runde_beenden()
+
+
+## Eine Maske ist vom Tisch — getroffen oder unten angekommen.
+func _maske_erledigt() -> void:
+	masken_erledigt += 1
+	_hud.setze_wurf(
+		maxi(DartsConfig.MASKEN_PRO_RUNDE - masken_erledigt, 0),
+		DartsConfig.MASKEN_PRO_RUNDE)
 
 
 ## Setzt eine Maske an eine Weltposition — vom Spawner und von Prüfläufen
 ## benutzt (`tempo` 0 hält sie für deterministische Würfe fest).
 func maske_setzen(ort: Vector3, tempo: float = 0.0) -> void:
 	var teil := _MASKE.instantiate() as Node3D
-	teil.scale = Vector3.ONE * 1.9
+	# Das FFP2-Modell ist 16 cm breit — hochskaliert auf gut einen halben
+	# Meter, damit das fallende Ziel zur großzügigen Trefferzone passt.
+	teil.scale = Vector3.ONE * 3.2
 	_masken_wurzel.add_child(teil)
 	teil.global_position = ort
 	_masken.append({
@@ -224,6 +259,7 @@ func _maske_punkte(ort: Vector3) -> int:
 			_einschlag.global_position = teil.global_position
 			_einschlag.restart()
 			_maske_entfernen(eintrag)
+			_maske_erledigt()
 			return DartsConfig.MASKEN_PUNKTE
 	return 0
 
@@ -312,8 +348,11 @@ func _werfen() -> void:
 	_hud.setze_fadenkreuz(Vector2.ZERO, false)
 
 	# Eine Spritze vom Vorrat auf der Tonne nehmen — die fliegt jetzt.
+	# Ist die Tonne leer, legt Oliver nach: Spritzen sind unbegrenzt.
 	if _vorrat.get_child_count() > 0:
 		_vorrat.get_child(_vorrat.get_child_count() - 1).queue_free()
+	if _vorrat.get_child_count() <= 1:
+		_vorrat_fuellen()
 
 	var spritze: Syringe = _SYRINGE.instantiate()
 	_treffer.add_child(spritze)
@@ -347,7 +386,7 @@ func _auf_einschlag(_ring_punkte: int, ort: Vector3, _radius: float) -> void:
 	# die hängt nur noch als Zielwand dahinter.
 	var treffer_punkte := _maske_punkte(ort)
 	punkte += treffer_punkte
-	_hud.setze_punkte(punkte, DartsConfig.ZIELPUNKTZAHL)
+	_hud.setze_punkte(punkte / DartsConfig.MASKEN_PUNKTE, DartsConfig.TREFFER_ZIEL)
 	_hud.zeige_trefferpunkte(
 		DartsConfig.treffer_text(treffer_punkte),
 		kamera.unproject_position(ort) - Vector2(30, 40),
@@ -368,12 +407,14 @@ func _auf_einschlag(_ring_punkte: int, ort: Vector3, _radius: float) -> void:
 
 	await get_tree().create_timer(pause_nach_wurf).timeout
 
-	if wurf_nummer >= DartsConfig.WUERFE_PRO_RUNDE:
+	# Gewonnen wird sofort mit dem fünften Treffer; verloren erst, wenn alle
+	# Masken durch sind (das prüft _masken_pflegen). Ansonsten: weiterwerfen,
+	# Spritzen gehen nicht aus.
+	if punkte >= DartsConfig.ZIELPUNKTZAHL:
 		_runde_beenden()
 		return
-	wurf_nummer += 1
-	_hud.setze_wurf(wurf_nummer, DartsConfig.WUERFE_PRO_RUNDE)
-	zustand = Zustand.ZIELEN
+	if zustand == Zustand.FLUG:
+		zustand = Zustand.ZIELEN
 
 
 func _runde_beenden() -> void:
@@ -385,7 +426,8 @@ func _runde_beenden() -> void:
 		_gewonnenklang.play()
 		_hud.zeige_banner(
 			"GESCHAFFT",
-			"%d Punkte. Oliver ist beeindruckt und wird es nie zugeben." % punkte
+			"%d Masken abgeworfen. Oliver ist beeindruckt und wird es nie zugeben."
+				% DartsConfig.TREFFER_ZIEL
 		)
 		runde_geschafft.emit(punkte)
 		return
@@ -393,7 +435,9 @@ func _runde_beenden() -> void:
 	# Scheitern bleibt leicht: kurze freundliche Zeile, sofort neue Runde.
 	_hud.zeige_banner(
 		"Fast — noch eine Runde?",
-		"%d von %d Punkten." % [punkte, DartsConfig.ZIELPUNKTZAHL]
+		"%d von %d Masken getroffen. Es fallen gleich wieder %d."
+			% [punkte / DartsConfig.MASKEN_PUNKTE, DartsConfig.TREFFER_ZIEL,
+				DartsConfig.MASKEN_PRO_RUNDE]
 	)
 	await get_tree().create_timer(pause_nach_runde).timeout
 	_hud.verstecke_banner()
@@ -403,7 +447,8 @@ func _runde_beenden() -> void:
 
 func _neue_runde() -> void:
 	punkte = 0
-	wurf_nummer = 1
+	masken_erschienen = 0
+	masken_erledigt = 0
 	_ziel = Vector2.ZERO
 	for spritze in _treffer.get_children():
 		spritze.queue_free()
@@ -411,19 +456,20 @@ func _neue_runde() -> void:
 		_maske_entfernen(eintrag)
 	_masken_uhr = 0.6
 	_vorrat_fuellen()
-	_hud.setze_wurf(wurf_nummer, DartsConfig.WUERFE_PRO_RUNDE)
-	_hud.setze_punkte(punkte, DartsConfig.ZIELPUNKTZAHL)
+	_hud.setze_wurf(DartsConfig.MASKEN_PRO_RUNDE, DartsConfig.MASKEN_PRO_RUNDE)
+	_hud.setze_punkte(punkte / DartsConfig.MASKEN_PUNKTE, DartsConfig.TREFFER_ZIEL)
 
 
-## Legt für jeden Wurf der Runde eine Spritze auf die Stehtonne neben dem
-## Wurfpunkt — leicht aufgefächert, wie hingelegt statt einsortiert.
+## Legt Spritzen auf die Stehtonne neben dem Wurfpunkt — leicht
+## aufgefächert, wie hingelegt statt einsortiert. Reine Ausstattung, der
+## Nachschub ist unbegrenzt.
 func _vorrat_fuellen() -> void:
 	for alt in _vorrat.get_children():
 		alt.queue_free()
-	for i in DartsConfig.WUERFE_PRO_RUNDE:
+	for i in DartsConfig.VORRAT_SPRITZEN:
 		var spritze := _SYRINGE.instantiate() as Node3D
 		_vorrat.add_child(spritze)
-		var mitte := i - (DartsConfig.WUERFE_PRO_RUNDE - 1) * 0.5
+		var mitte := i - (DartsConfig.VORRAT_SPRITZEN - 1) * 0.5
 		spritze.position = Vector3(mitte * 0.075, 0.034, mitte * 0.03)
 		spritze.rotation = Vector3(0.0, -PI * 0.5 + mitte * 0.14, 0.0)
 

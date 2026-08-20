@@ -477,37 +477,37 @@ Spielerin. Steigt Stufen wie die Spielerin (derselbe `StepClimber`). Bewusst
 keine autonome KI.
 
 ### Minispiel Vaccination Darts (`chapters/berlin/darts/`)
-Fünf Würfe, Zielpunktzahl 60, beides in `darts_config.gd` — im Spielcode steht
-keine dieser Zahlen ein zweites Mal.
+**Zehn FFP2-Masken fallen, fünf Treffer gewinnen** — beides in
+`darts_config.gd` (`MASKEN_PRO_RUNDE`, `TREFFER_ZIEL`), im Spielcode steht
+keine dieser Zahlen ein zweites Mal. Die Dartscheibe ist komplett abgebaut;
+gezielt wird auf die fallenden Masken vor der Budenwand.
 
 Ablauf eines Wurfs: mit der Maus zielen, Taste halten, im grünen Bereich des
 Kraftbalkens loslassen. Zwei Entscheidungen prägen das Gefühl:
 
-* Das Fadenkreuz bewegt sich in der **Ebene der Scheibe**, nicht über den
+* Das Fadenkreuz bewegt sich in der **Ebene der Fallzone**, nicht über den
   Bildschirm. Dadurch ist das Zielen unabhängig von Auflösung und Bildwinkel.
 * Die Wurfkraft wirkt **nur auf die Höhe**, nie auf die Seite. Das folgt daraus,
   dass die ganze Anfangsgeschwindigkeit skaliert wird: waagerechter Weg und
-  Flugzeit ändern sich gegenläufig und heben sich exakt auf. Der Prüflauf misst
-  0,0000 m seitliche Abweichung zwischen vollem und leerem Ladebalken. Zwei
-  getrennte, verständliche Fehlerquellen statt einer diffusen.
+  Flugzeit ändern sich gegenläufig und heben sich exakt auf. Zwei getrennte,
+  verständliche Fehlerquellen statt einer diffusen.
 
-Die Wertung ist absichtlich gutmütig: sechs Ringe von 5 bis 50 Punkten, und
-selbst der schlechteste Ladestand landet noch im 15-Punkte-Ring. Wer die
-Scheibe trifft, schafft die 60 also praktisch immer — Scheitern erfordert
-Danebenzielen und wird mit einer freundlichen Zeile und sofortigem Neustart
-quittiert.
+**Spritzen sind unbegrenzt** — der sichtbare Vorrat auf der Stehtonne füllt
+sich nach (Oliver legt nach). Die Knappheit sind die Masken: unten
+angekommen zählt eine als verpasst; sind alle zehn erledigt und die fünf
+Treffer nicht beisammen, endet die Runde mit einer freundlichen Zeile und
+beginnt von selbst neu. Der fünfte Treffer gewinnt sofort.
 
-**Seit dem Schwierigkeits-Umbau sind die Ziele beweglich:** Vor der Zielwand
-fallen **Atemmasken** (in Blender modellierte OP-Masken, leicht selbstleuchtend,
-seitlich pendelnd und trudelnd wie Papier) — abgeworfen wird, was das
-Fadenkreuz im richtigen Moment trifft. Eine getroffene Maske bringt 20 Punkte,
-die alte Ringscheibe hängt nur noch als Kulisse dahinter. Bei 60 Zielpunkten
-müssen also drei der fünf Würfe sitzen, auf fallende Ziele — deutlich
-schwerer als vorher. Stellschrauben: `masken_takt`, `masken_fall`,
-`masken_breite` am `DartsGame`, `MASKEN_PUNKTE`/`MASKEN_RADIUS` in
-`darts_config.gd`. Der Prüflauf setzt eigene, unbewegte Masken
-(`maske_setzen`, `masken_spawn_aktiv = false`) und misst Treffer, Fehlwurf,
-Rundenneustart und Gewinn deterministisch.
+**Die Masken sind echte FFP2** (`tools/make_maske.py` →
+`assets/props/atemmaske.glb`): die typische Bootsfalte als Gitter mit
+Wölbungsprofil, Nasenbügel, zwei Ohrschlaufen, dazu eine PIL-Vlies-Textur
+mit Faserrauschen, Faltlinie, gepunkteten Schweißnähten und dezentem
+„FFP2 NR"-Aufdruck. Sie fallen seitlich pendelnd und trudelnd wie Papier.
+Stellschrauben: `masken_takt`, `masken_fall`, `masken_breite` am
+`DartsGame`, `MASKEN_PUNKTE`/`MASKEN_RADIUS` in `darts_config.gd`. Der
+Prüflauf setzt eigene, unbewegte Masken (`maske_setzen`,
+`masken_spawn_aktiv = false`) und misst Fehlwürfe, Verlieren, Neustart und
+den Sofort-Sieg beim fünften Treffer deterministisch.
 
 Rückmeldung: Einschlagpartikel, aufsteigende Punktzahl, Kamerawackeln,
 Konfetti und Banner beim Gewinn.

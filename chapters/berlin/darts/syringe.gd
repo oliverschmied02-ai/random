@@ -76,7 +76,9 @@ func _setze_lage(t: float) -> void:
 func _einschlagen() -> void:
 	var versatz := global_position - scheiben_mitte
 	var radius := Vector2(versatz.x, versatz.y).length()
-	eingeschlagen.emit(DartsConfig.punkte_fuer_radius(radius), global_position, radius)
+	# Der erste Wert war einmal die Ringwertung der alten Dartscheibe —
+	# gezählt werden heute nur noch abgeworfene Masken (im Spielcode).
+	eingeschlagen.emit(0, global_position, radius)
 	_stecken_bleiben()
 
 

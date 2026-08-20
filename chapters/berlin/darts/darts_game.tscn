@@ -1,4 +1,4 @@
-[gd_scene load_steps=22 format=3]
+[gd_scene load_steps=14 format=3]
 
 [ext_resource type="Script" path="res://chapters/berlin/darts/darts_game.gd" id="1_darts"]
 [ext_resource type="PackedScene" path="res://chapters/berlin/darts/darts_hud.tscn" id="2_hud"]
@@ -6,37 +6,6 @@
 [ext_resource type="AudioStream" path="res://audio/laden.wav" id="4_laden"]
 [ext_resource type="AudioStream" path="res://audio/treffer_gut.wav" id="5_treffer"]
 [ext_resource type="AudioStream" path="res://audio/gewonnen.wav" id="6_gewonnen"]
-
-[sub_resource type="StandardMaterial3D" id="Mat_wandbrett"]
-albedo_color = Color(0.231373, 0.176471, 0.145098, 1)
-roughness = 0.9
-
-[sub_resource type="StandardMaterial3D" id="Mat_rahmen"]
-albedo_color = Color(0.156863, 0.145098, 0.133333, 1)
-roughness = 0.85
-
-[sub_resource type="StandardMaterial3D" id="Mat_dunkel"]
-albedo_color = Color(0.109804, 0.117647, 0.129412, 1)
-roughness = 0.8
-
-[sub_resource type="StandardMaterial3D" id="Mat_hell"]
-albedo_color = Color(0.925490, 0.878431, 0.764706, 1)
-roughness = 0.8
-
-[sub_resource type="StandardMaterial3D" id="Mat_gruen"]
-albedo_color = Color(0.203922, 0.505882, 0.290196, 1)
-roughness = 0.75
-
-[sub_resource type="StandardMaterial3D" id="Mat_rot"]
-albedo_color = Color(0.784314, 0.196078, 0.192157, 1)
-roughness = 0.7
-
-[sub_resource type="StandardMaterial3D" id="Mat_bull"]
-albedo_color = Color(0.870588, 0.219608, 0.180392, 1)
-roughness = 0.6
-emission_enabled = true
-emission = Color(0.870588, 0.219608, 0.180392, 1)
-emission_energy_multiplier = 0.3
 
 [sub_resource type="StandardMaterial3D" id="Mat_partikel"]
 shading_mode = 0
@@ -67,60 +36,6 @@ gradient = SubResource("Gradient_konfetti")
 script = ExtResource("1_darts")
 
 [node name="Scheibe" type="Node3D" parent="."]
-
-[node name="Wandbrett" type="CSGBox3D" parent="Scheibe"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 132, 1.7, -243.99)
-size = Vector3(1.05, 1.15, 0.08)
-material = SubResource("Mat_wandbrett")
-
-[node name="Rahmen" type="CSGCylinder3D" parent="Scheibe"]
-transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, 132, 1.73, -243.97)
-radius = 0.335
-height = 0.05
-sides = 32
-material = SubResource("Mat_rahmen")
-
-[node name="Ring5" type="CSGCylinder3D" parent="Scheibe"]
-transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, 132, 1.73, -243.95)
-radius = 0.3
-height = 0.012
-sides = 32
-material = SubResource("Mat_dunkel")
-
-[node name="Ring10" type="CSGCylinder3D" parent="Scheibe"]
-transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, 132, 1.73, -243.942)
-radius = 0.225
-height = 0.012
-sides = 32
-material = SubResource("Mat_hell")
-
-[node name="Ring15" type="CSGCylinder3D" parent="Scheibe"]
-transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, 132, 1.73, -243.934)
-radius = 0.165
-height = 0.012
-sides = 32
-material = SubResource("Mat_gruen")
-
-[node name="Ring20" type="CSGCylinder3D" parent="Scheibe"]
-transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, 132, 1.73, -243.926)
-radius = 0.105
-height = 0.012
-sides = 32
-material = SubResource("Mat_hell")
-
-[node name="Ring25" type="CSGCylinder3D" parent="Scheibe"]
-transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, 132, 1.73, -243.918)
-radius = 0.054
-height = 0.012
-sides = 24
-material = SubResource("Mat_rot")
-
-[node name="Bull" type="CSGCylinder3D" parent="Scheibe"]
-transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, 132, 1.73, -243.91)
-radius = 0.024
-height = 0.012
-sides = 16
-material = SubResource("Mat_bull")
 
 [node name="Mitte" type="Marker3D" parent="Scheibe"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 132, 1.73, -243.9)
