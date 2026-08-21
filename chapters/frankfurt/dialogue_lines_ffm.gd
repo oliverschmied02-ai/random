@@ -49,6 +49,30 @@ const GEWONNEN: Array[Dictionary] = [
 	{"speaker": "ANNE", "text": "Dann verlierst du eben traditionell."},
 ]
 
+## --- Erinnerungen am Weg -----------------------------------------------------
+##
+## Drei Fundstücke in der Gasse, die niemand sehen muss. Wie in Kapitel 1
+## halten sie den Weg nicht an, sie warten darauf, angesprochen zu werden.
+## Hier gehören Insider hin — Orte, an denen ihr wirklich wart.
+
+## Das Umzugsrad, das mit nach Frankfurt kam.
+const ERINNERUNG_FAHRRAD: Array[Dictionary] = [
+	{"speaker": "ANNE", "text": "Dein Rad hat den Umzug überlebt."},
+	{"speaker": "OLIVER", "text": "Das Rad überlebt alles. Nur der Sattel nicht."},
+]
+
+## Der Bembel im Kneipenfenster.
+const ERINNERUNG_BEMBEL: Array[Dictionary] = [
+	{"speaker": "ANNE", "text": "Der Krug im Fenster ist größer als unser erster Küchentisch."},
+	{"speaker": "OLIVER", "text": "Der Krug war auch teurer."},
+]
+
+## Die Tische auf dem Gehweg.
+const ERINNERUNG_TISCHE: Array[Dictionary] = [
+	{"speaker": "ANNE", "text": "Zwei Stühle. Immer genau zwei."},
+	{"speaker": "OLIVER", "text": "Mehr haben wir bis jetzt nie gebraucht."},
+]
+
 ## Die Kapitelkarte. Das Jahr ist ein Platzhalter — bitte korrigieren,
 ## falls der Umzug in einem anderen Jahr war.
 const KARTE_TITEL: String = "KAPITEL 2"

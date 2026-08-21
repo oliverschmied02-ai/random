@@ -25,6 +25,16 @@ const _ANKUNFT_OLIVER := Vector3(205.0, 0.25, -0.8)
 const _KNEIPE_ANNE := Vector3(399.2, 0.3, -98.4)
 const _KNEIPE_OLIVER := Vector3(401.6, 0.25, -98.4)
 
+## Die optionalen Fundstücke in der Gasse — Knotenname unter `Erinnerungen`
+## und die Zeilen dazu. Sie halten den Lauf nicht an, sie warten aufs
+## Ansprechen. Ein weiteres ergänzt man mit einer Instanz von
+## `memory_point.tscn` und einer Zeile hier.
+const _ERINNERUNGEN := [
+	{"node": "ErinnerungFahrrad", "lines": FrankfurtDialogue.ERINNERUNG_FAHRRAD},
+	{"node": "ErinnerungBembel", "lines": FrankfurtDialogue.ERINNERUNG_BEMBEL},
+	{"node": "ErinnerungTische", "lines": FrankfurtDialogue.ERINNERUNG_TISCHE},
+]
+
 @onready var _player: Player = $Player
 @onready var _oliver: Companion = $Oliver
 @onready var _kamera_rig: Node3D = $ThirdPersonCamera
@@ -53,6 +63,16 @@ func _ready() -> void:
 	tuer.body_entered.connect(func(koerper: Node3D) -> void:
 		if koerper == _player:
 			_tuer_erreicht = true)
+
+	for fundstueck in _ERINNERUNGEN:
+		var punkt := get_node_or_null(
+			"Erinnerungen/%s" % fundstueck["node"]) as Interactable
+		if punkt == null:
+			push_warning("Kapitel Frankfurt: Erinnerung '%s' fehlt."
+				% fundstueck["node"])
+			continue
+		punkt.interacted.connect(_auf_erinnerung.bind(fundstueck["lines"], punkt))
+
 	_ablauf.call_deferred()
 
 
@@ -123,6 +143,22 @@ func _ablauf() -> void:
 	kapitel_abgeschlossen.emit()
 	if not test_schnell:
 		get_tree().change_scene_to_file("res://ui/title_screen.tscn")
+
+
+# --- Erinnerungen am Weg -------------------------------------------------------
+
+
+## Ein Fundstück wurde angesprochen. Bewusst viel leichter als eine
+## Sequenz: niemand wird umgestellt, die Kamera bleibt stehen, nur die
+## Steuerung ruht für die zwei Sätze.
+func _auf_erinnerung(_wer: Node3D, zeilen: Array, _punkt: Node3D) -> void:
+	if not _player.input_enabled or _dialogue.is_playing():
+		return
+	_player.input_enabled = false
+	await _dialogue.play(zeilen)
+	# Nach dem Sieg gehört die Steuerung dem Spiel — dann nicht zurückgeben.
+	if _krug.zustand == KrugSpiel.Zustand.INAKTIV and not _tuer_erreicht:
+		_player.input_enabled = true
 
 
 # --- Sequenzen -----------------------------------------------------------------

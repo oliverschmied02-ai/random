@@ -289,13 +289,18 @@ def litfass():
     _exportieren("litfass")
 
 
-def baum():
+def baum(name="baum", laub_farbe=(0.10, 0.13, 0.08), streuung=11):
     """Straßenbaum: konischer Stamm, drei Astansätze, klumpige Krone aus
     verformten Kugeln, dunkle Baumscheibe. Bewusst unter den Oberleitungen
-    bleibend (~5,2 m). Nachts zählt die Silhouette, nicht das Blattwerk."""
+    bleibend (~5,2 m). Nachts zählt die Silhouette, nicht das Blattwerk.
+
+    Bei Tag zählt sie nicht: dasselbe Laub, das nachts als Silhouette
+    funktioniert, ist im Sonnenlicht ein schwarzer Klumpen. Kapitel 2 lädt
+    deshalb `baum_tag` mit hellerem, wärmerem Grün und einer anderen
+    Kronenstreuung (zwei gleiche Bäume nebeneinander fallen auf)."""
     _leeren()
     rinde = _material("rinde", (0.21, 0.16, 0.12), 0.9)
-    laub = _material("laub", (0.10, 0.13, 0.08), 0.95)
+    laub = _material("laub", laub_farbe, 0.95)
     erde = _material("baumscheibe", (0.09, 0.08, 0.07), 0.95)
 
     _kasten((1.5, 1.5, 0.06), (0, 0, 0.03), erde, 0.01)
@@ -309,7 +314,7 @@ def baum():
     wolken = bpy.data.textures.new("kronenform", type="CLOUDS")
     wolken.noise_scale = 0.6
     import random as zufall
-    zufall.seed(11)
+    zufall.seed(streuung)
     for i in range(6):
         ort = (zufall.uniform(-0.7, 0.7), zufall.uniform(-0.7, 0.7),
                3.9 + zufall.uniform(-0.3, 0.6))
@@ -322,7 +327,11 @@ def baum():
         beule.strength = 0.45
         _zuweisen(kugel, laub)
         _glatt(kugel, 60)
-    _exportieren("baum")
+    _exportieren(name)
+
+
+def baum_tag():
+    baum("baum_tag", (0.26, 0.34, 0.16), streuung=27)
 
 
 def atemmaske():
@@ -359,6 +368,6 @@ def atemmaske():
 
 if __name__ == "__main__":
     for bau in [laterne, auto, bank, ampel, muelleimer, poller, litfass, baum,
-                atemmaske]:
+                baum_tag, atemmaske]:
         bau()
     print("fertig")

@@ -1,4 +1,4 @@
-[gd_scene load_steps=20 format=3 uid="uid://ffm_kapitel_2a"]
+[gd_scene load_steps=23 format=3 uid="uid://ffm_kapitel_2a"]
 
 [ext_resource type="Script" path="res://chapters/frankfurt/chapter_frankfurt.gd" id="1_chapter"]
 [ext_resource type="PackedScene" path="res://actors/player/player.tscn" id="2_player"]
@@ -14,9 +14,14 @@
 [ext_resource type="AudioStream" path="res://audio/stadt_ambiente.mp3" id="12_stadt"]
 [ext_resource type="AudioStream" path="res://audio/motor.wav" id="13_motor"]
 [ext_resource type="AudioStream" path="res://audio/kneipe.wav" id="14_kneipe"]
+[ext_resource type="Shader" path="res://ui/vignette.gdshader" id="15_vignette"]
+[ext_resource type="PackedScene" path="res://systems/interaction/memory_point.tscn" id="16_memory"]
+
+[sub_resource type="ShaderMaterial" id="Mat_vignette"]
+shader = ExtResource("15_vignette")
 
 [sub_resource type="BoxShape3D" id="Tuer_zone"]
-size = Vector3(6, 3, 4)
+size = Vector3(3, 3, 1.4)
 
 [sub_resource type="StandardMaterial3D" id="Boden_mat"]
 albedo_color = Color(0.36, 0.38, 0.34, 1)
@@ -35,18 +40,24 @@ sky_material = SubResource("Himmel_tag")
 background_mode = 2
 sky = SubResource("Sky_tag")
 ambient_light_source = 3
-ambient_light_energy = 1.1
+ambient_light_energy = 0.95
 tonemap_mode = 2
 fog_enabled = true
 fog_light_color = Color(0.74, 0.80, 0.88, 1)
 fog_light_energy = 1.0
-fog_density = 0.0004
-fog_aerial_perspective = 0.6
-fog_sky_affect = 0.1
+fog_density = 0.0012
+fog_aerial_perspective = 0.85
+fog_sky_affect = 0.25
+glow_enabled = true
+glow_intensity = 0.18
+glow_strength = 0.9
+glow_bloom = 0.05
+glow_blend_mode = 1
+glow_hdr_threshold = 1.45
 adjustment_enabled = true
-adjustment_brightness = 1.05
-adjustment_contrast = 1.03
-adjustment_saturation = 1.05
+adjustment_brightness = 1.02
+adjustment_contrast = 1.06
+adjustment_saturation = 1.02
 
 [node name="FrankfurtChapter" type="Node3D"]
 script = ExtResource("1_chapter")
@@ -54,10 +65,16 @@ script = ExtResource("1_chapter")
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("Umgebung_tag")
 
+[node name="Fuelllicht" type="DirectionalLight3D" parent="."]
+transform = Transform3D(-0.87, 0.28, -0.4, 0, 0.82, 0.57, 0.49, 0.5, -0.71, 0, 30, 0)
+light_color = Color(1, 0.93, 0.82, 1)
+light_energy = 0.35
+shadow_enabled = false
+
 [node name="SunLight" type="DirectionalLight3D" parent="."]
 transform = Transform3D(0.82, -0.42, 0.39, 0, 0.68, 0.73, -0.57, -0.6, 0.56, 0, 40, 0)
 light_color = Color(1, 0.95, 0.86, 1)
-light_energy = 1.25
+light_energy = 1.0
 shadow_enabled = true
 shadow_blur = 1.4
 directional_shadow_max_distance = 220.0
@@ -87,16 +104,39 @@ current = true
 [node name="KrugSpiel" type="Node3D" parent="."]
 script = ExtResource("11_krug")
 
+[node name="Erinnerungen" type="Node3D" parent="."]
+
+[node name="ErinnerungFahrrad" parent="Erinnerungen" instance=ExtResource("16_memory")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 251, 0.9, -6.4)
+
+[node name="ErinnerungBembel" parent="Erinnerungen" instance=ExtResource("16_memory")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 295.6, 1.1, 7.1)
+
+[node name="ErinnerungTische" parent="Erinnerungen" instance=ExtResource("16_memory")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 296.8, 0.9, 5.6)
+
 [node name="Triggers" type="Node3D" parent="."]
 
 [node name="KneipenTuer" type="Area3D" parent="Triggers"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 300, 1.5, 6.2)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 300, 1.5, 7.7)
 collision_mask = 2
 
 [node name="Form" type="CollisionShape3D" parent="Triggers/KneipenTuer"]
 shape = SubResource("Tuer_zone")
 
 [node name="UI" type="Node" parent="."]
+
+[node name="Vignette" type="CanvasLayer" parent="UI"]
+layer = 0
+
+[node name="Abdunkler" type="ColorRect" parent="UI/Vignette"]
+material = SubResource("Mat_vignette")
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
 
 [node name="DialogueBox" parent="UI" instance=ExtResource("5_dialogue")]
 

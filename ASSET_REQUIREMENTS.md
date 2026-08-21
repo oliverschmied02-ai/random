@@ -220,8 +220,41 @@ wart. Verschieben heißt: Knoten unter `Erinnerungen` bewegen, sonst nichts.
 | **Typ** | Fachwerkzeile, Putzhäuser, Kneipenfront, holzvertäfelte Stube |
 | **Stil** | Tageslicht, warm; die Bankentürme im Dunst dahinter |
 | **Animation** | Keine nötig |
-| **Platzhalter** | PIL-Texturen (Fachwerk, Skyline, Dielen) + Fassaden-Kit-Fenster; Stube mit Tresen, Tischen, Bänken, Bembel-Regal |
+| **Platzhalter** | Foto-PBR (ambientCG: Kopfstein, Platten, Putz, Asphalt) + Fassaden-Kit-Fenster + Fachwerkbalken als Geometrie + Satteldächer; Stube mit Tresen, Tischen, Bänken, Bembel-Regal |
 | **Priorität** | POLISH — trägt |
+
+### Straßenmöbel der Gasse
+| | |
+| --- | --- |
+| **Zweck** | Aus dem Durchgang einen Ort machen |
+| **Szene** | `chapters/frankfurt/kulisse_ffm.gd` |
+| **Typ** | Bistrotische, Stühle, Blumenkästen, Fahrräder, Auslegerschild |
+| **Stil** | Hessische Wirtshausgasse, benutzt statt aufgeräumt |
+| **Animation** | Keine nötig |
+| **Platzhalter** | Blender-Requisiten aus `tools/make_ffm_props.py` |
+| **Priorität** | POLISH — trägt |
+
+### Passanten
+| | |
+| --- | --- |
+| **Zweck** | Die Gasse soll bewohnt wirken |
+| **Szene** | `chapters/frankfurt/passant.gd`, gesetzt in der Kulisse |
+| **Typ** | Vier Menschen am Rand der Gasse |
+| **Stil** | Beiläufig, aus Spielentfernung — nie in einer Nahaufnahme |
+| **Animation** | Mocap „auf den Bus warten" (Gewicht verlagern, umschauen) |
+| **Platzhalter** | **Umgefärbte Kopien von Anne und Oliver** — anderes Haar, andere Kleidung, andere Körpergröße |
+| **Priorität** | IMPORTANT — hier fehlen echte eigene Modelle |
+
+Es gibt keine freie, in dieser Umgebung erreichbare Quelle für geriggte
+Menschmodelle in dieser Qualität: Mixamo und die Avatar-Generatoren
+brauchen einen Browser mit Konto, die CC0-Sammlungen (Quaternius, Kenney)
+liegen auf Anbieter-CDNs, die hier gesperrt sind. Erreichbar wäre
+**CesiumMan** aus `KhronosGroup/glTF-Sample-Assets` (geriggt, mit
+Laufzyklus) — ein grob aufgelöster Klotzmensch, der neben den echten
+Modellen von Anne und Oliver auffälliger wäre als eine umgefärbte Kopie.
+Wer echte Statisten will: dieselben Anbieter wie für Anne und Oliver
+(MetaPerson, Avaturn) — je Figur eine `.glb` nach `actors/models/`, dann
+in `_passanten_setzen` den Pfad tauschen.
 
 ### Kapitel-2-Klänge
 | | |

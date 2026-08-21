@@ -257,6 +257,47 @@ Der Umzug, bei Tag, bewusst als **Sequenzkette** erzählt
 Die Kulisse (`kulisse_ffm.gd`) baut alle vier Schauplätze prozedural:
 Abschiedsstraße, Autobahn, Sachsenhausen, Kneipenstube (Tresen, runde
 Tische mit Bembeln, Bänke, Regal, warmes Licht, Tageslichtfenster).
+
+**Tageslicht-Politur (zweiter Durchgang).** Der erste Aufbau lief auf
+flachen Farbflächen und sah neben Kapitel 1 billig aus. Behoben:
+
+* **Foto-PBR statt Farbflächen:** Kopfsteinpflaster (`schotter`),
+  Gehwegplatten (`beton_platten`), Bordsteine (`beton_rau`), Putzfassaden
+  (`putz`) und trockener Tagesasphalt (`asphalt`) — dieselben
+  ambientCG-Sätze, die Berlin trägt, nur heller getönt.
+* **Echtes Fachwerk statt aufgemalter Textur:** Schwelle, Riegel, Rähm,
+  Ständer und Andreaskreuze sind Geometrie und werfen Schatten
+  (`_fachwerk_balken`, alle Balken einer Front in einem MultiMesh). Die
+  Fensterachsen liegen bewusst in den Feldern *ohne* Strebe — sonst
+  kreuzt ein Balken mitten durchs Fenster.
+* **Satteldächer** auf allen Häusern (`_satteldach`) und zwei
+  quergestellte Häuser, die die Gasse an beiden Enden schließen. Vorher
+  endete der Blick in der weißen Bodenplatte.
+* **Tagesbäume:** `baum_tag.glb` mit hellerem Grün und anderer
+  Kronenstreuung — das Nachtlaub aus Kapitel 1 ist im Sonnenlicht ein
+  schwarzer Klumpen.
+* **Belichtung:** Sonne und Umgebungslicht eine Blende zurück, Glühen
+  erst ab 1,45 — die Sonnenseiten waren weiß ausgebrannt und ohne
+  Textur. Dazu ein **warmes Fülllicht ohne Schatten** von der Gegenseite:
+  das Himmelslicht färbt sonst jeden Schatten kräftig blau. Vignette
+  mit Filmkorn wie in Kapitel 1, mehr Luftperspektive im Dunst.
+
+**Belebtes Sachsenhausen.** Die Gasse war ein Durchgang, kein Ort:
+
+* **Außenbestuhlung** vor der Kneipe (drei Bistrotische mit je zwei
+  Stühlen, leicht verdreht aufgestellt), **Blumenkästen** unter den
+  Fenstern der Nordzeile, drei **abgestellte Fahrräder**, ein
+  **Auslegerschild** mit Bembel-Zeichen über der Tür. Alle vier sind
+  neue Blender-Requisiten in `tools/make_ffm_props.py`.
+* **Vier Passanten** (`passant.gd`): es gibt kein drittes
+  Personenmodell, also sind es umgefärbte Kopien von Anne und Oliver —
+  andere Kleidung, anderes Haar, andere Körpergröße, am Rand der Gasse.
+  Bewegung kommt gratis aus der Mocap-Aufnahme „auf den Bus warten".
+  Die Grenzen des Verfahrens stehen als Kommentar in der Datei.
+* **Drei Erinnerungen am Weg** wie in Kapitel 1 (Umzugsrad, Bembel im
+  Fenster, die zwei Stühle) — optional, ansprechbar, Texte in
+  `dialogue_lines_ffm.gd`. Der Prüflauf spricht jede an und verlangt die
+  Steuerung zurück.
 LKW (rote Kabine, weißer Koffer) und Bembel (grauer Steinzeugkrug mit
 blauem Dekor, per PIL gebackene Textur) entstehen in Blender
 (`tools/make_ffm_props.py`), ebenso die Texturen: blaue Autobahnschilder,
@@ -773,6 +814,25 @@ immer in die volle Frist von 2,5 s, statt loszulegen, sobald Oliver steht; und
 im Prüflauf zählte der Schrittzähler ins Leere und meldete „gar kein Ton". Beide
 Stellen benutzen jetzt ein Dictionary bzw. ein Feld — beides wird als Referenz
 gefangen.
+
+**Die Außentische der Kneipe zogen einen in die Kneipe.** Der Auslöser an
+der Tür war 6 × 4 m groß und deckte damit den halben Gehweg samt
+Bestuhlung ab — wer sich einen Tisch ansehen wollte, stand plötzlich
+drinnen im Minispiel. Aufgefallen ist es erst, als der Prüflauf das
+dritte Fundstück ansprach und die Steuerung nie zurückbekam. Der Bereich
+ist jetzt türbreit und liegt direkt an der Wand, die Tische stehen neben
+dem Weg zur Tür.
+
+**Streben, die aus dem Haus ragten.** `Basis.scaled()` streckt einen
+bereits gedrehten Balken entlang der **Welt**achsen — aus einer
+Diagonalstrebe wurde damit ein schiefer Stab, der über das Dach
+hinausstand. Richtig ist `scaled_local()`, das im gedrehten System
+skaliert.
+
+**Passanten mit jeansfarbener Haut.** Die Modelle nennen ihre Flächen
+`haircut`, `outfit` und `AvatarBody`. Ein Stichwort-Treffer auf „body"
+färbte damit die Haut mit der Kleidungsfarbe. Es wird jetzt exakt
+zugeordnet statt per Teilwort geraten.
 
 **Der Wurfball im Krug-Spiel traf nie.** Drei Ursachen übereinander: die
 Krugtürme standen schon umgekippt da, weil sich die Stapel starrer Körper

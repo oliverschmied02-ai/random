@@ -53,7 +53,13 @@ Autobahn (Mitfahrkamera neben dem rollenden LKW, ein Telefonat unterwegs,
 blaue Kilometerschilder Richtung Frankfurt, dann die feste Einstellung am
 Schild, an dem er vorbeizieht), Blende, *„FRANKFURT AM MAIN"* — Anne kommt
 bei Tag in Sachsenhausen an: Fachwerkzeile, Putzhäuser mit den
-Fassaden-Kit-Fenstern, die Bankentürme im Dunst dahinter. Von dort läuft
+Fassaden-Kit-Fenstern, die Bankentürme im Dunst dahinter. Die Gasse
+trägt echte Foto-PBR-Materialien (Kopfsteinpflaster, Gehwegplatten, Putz),
+**Fachwerk als echte Balken mit Andreaskreuzen** statt aufgemalter Textur,
+Satteldächer, Blumenkästen, abgestellte Fahrräder, Außenbestuhlung vor der
+Kneipe und **vier Passanten** (umgefärbte Kopien der beiden Modelle — es
+gibt kein drittes, siehe `ASSET_REQUIREMENTS.md`). Wie in Kapitel 1
+liegen **drei optionale Erinnerungen** am Weg. Von dort läuft
 man frei zur Apfelweinkneipe **„Zum Gerippten"**, tritt ein — und in der
 holzvertäfelten Stube wartet das Minispiel **Krug-Werfen**: drei
 Bembel-Pyramiden (3+2+1) stehen auf dem Wurftisch, geworfen wird mit

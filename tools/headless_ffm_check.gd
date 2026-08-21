@@ -63,8 +63,35 @@ func _los() -> void:
 	_pruefe(spieler.input_enabled,
 		"Abschied, Autobahn und Ankunft laufen bis zur Steuerungs-Übergabe")
 
+	# Die drei Fundstücke in der Gasse: ansprechen, reden lassen, Steuerung
+	# zurückbekommen. Sie dürfen den Lauf nicht verschlucken.
+	for punkt in szene.get_node("Erinnerungen").get_children():
+		var marke: Node3D = punkt
+		spieler.velocity = Vector3.ZERO
+		spieler.global_position = marke.global_position + Vector3.UP * 0.3
+		for i in 12:
+			await physics_frame
+		_druecke(&"interact")
+		frames = 0
+		while not dialog.is_playing() and frames < 180:
+			frames += 1
+			await physics_frame
+		_pruefe(dialog.is_playing(), "Erinnerung '%s' spricht" % marke.name)
+		frames = 0
+		while dialog.is_playing() and frames < 900:
+			frames += 1
+			if frames % 14 == 0:
+				_druecke(&"interact")
+			await physics_frame
+		frames = 0
+		while not spieler.input_enabled and frames < 180:
+			frames += 1
+			await physics_frame
+		_pruefe(spieler.input_enabled,
+			"Erinnerung '%s' gibt die Steuerung zurück" % marke.name)
+
 	# Zur Kneipentür — der Prüflauf teleportiert, der Trigger muss greifen.
-	spieler.global_position = Vector3(300.0, 0.5, 6.2)
+	spieler.global_position = Vector3(300.0, 0.5, 7.7)
 	frames = 0
 	while spieler.input_enabled and frames < 900:
 		frames += 1

@@ -57,7 +57,7 @@ func _los() -> void:
 			_druecke()
 		await process_frame
 
-	spieler.global_position = Vector3(300.0, 0.5, 6.2)
+	spieler.global_position = Vector3(300.0, 0.5, 7.7)
 	frames = 0
 	while krug.zustand != krug.Zustand.ZIELEN and frames < 4000:
 		frames += 1

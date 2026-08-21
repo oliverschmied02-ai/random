@@ -302,9 +302,190 @@ def holz():
     print("  texturen/ffm/holz.png")
 
 
+# --- Straßenmöbel für Sachsenhausen -------------------------------------------
+
+
+def _rohr(radius, laenge, ort, material, achse="Z", seiten=10, name="rohr"):
+    """Ein Rohr entlang einer Weltachse. Für Stuhlbeine, Rahmen, Ausleger —
+    alles, was in dieser Gasse aus Rundstahl oder Holzstab besteht."""
+    drehung = {"Z": (0, 0, 0),
+               "X": (0, math.radians(90), 0),
+               "Y": (math.radians(90), 0, 0)}[achse]
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=laenge,
+                                        location=ort, rotation=drehung,
+                                        vertices=seiten)
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.data.materials.append(material)
+    bpy.ops.object.shade_smooth()
+    return obj
+
+
+def bistrotisch():
+    """Runder Wirtshaustisch: Gussfuß, Säule, Holzplatte. 72 cm hoch."""
+    bpy.ops.wm.read_factory_settings(use_empty=True)
+    guss = _material("guss", (0.13, 0.13, 0.14), rauheit=0.7)
+    platte_holz = _material("tischholz", (0.42, 0.28, 0.17), rauheit=0.55)
+
+    teile = [
+        _rohr(0.24, 0.03, (0, 0, 0.015), guss, name="fuss"),
+        _rohr(0.035, 0.70, (0, 0, 0.35), guss, name="saeule"),
+        _rohr(0.34, 0.04, (0, 0, 0.70), platte_holz, seiten=24, name="platte"),
+    ]
+    _export([_verbinden(teile, "bistrotisch")], "bistrotisch")
+
+
+def bistrostuhl():
+    """Wirtshausstuhl: vier Beine, Sitzfläche, Lehne mit zwei Sprossen.
+    Rückenlehne zeigt nach +Y, damit der Stuhl mit Blick nach -Y (Godot: +Z)
+    am Tisch steht wie alle anderen Requisiten."""
+    bpy.ops.wm.read_factory_settings(use_empty=True)
+    holz = _material("stuhlholz", (0.38, 0.25, 0.15), rauheit=0.6)
+
+    teile = []
+    for x in (-0.17, 0.17):
+        for y in (-0.17, 0.17):
+            teile.append(_rohr(0.018, 0.45, (x, y, 0.225), holz, name="bein"))
+    teile.append(_kasten((0.42, 0.42, 0.035), (0, 0, 0.465), fase=0.01,
+                         name="sitz"))
+    teile[-1].data.materials.append(holz)
+    # Lehne: zwei Pfosten und zwei waagerechte Sprossen.
+    for x in (-0.17, 0.17):
+        teile.append(_rohr(0.018, 0.50, (x, 0.19, 0.72), holz, name="pfosten"))
+    for z in (0.78, 0.92):
+        teile.append(_rohr(0.016, 0.36, (0, 0.19, z), holz, achse="X",
+                           name="sprosse"))
+    _export([_verbinden(teile, "bistrostuhl")], "bistrostuhl")
+
+
+def blumenkasten():
+    """Fensterblumenkasten: Holztrog mit Erde und drei Blütenbüscheln.
+    Sitzt unter den Fenstermodulen der Putzhäuser."""
+    bpy.ops.wm.read_factory_settings(use_empty=True)
+    trog = _material("trog", (0.34, 0.24, 0.16), rauheit=0.8)
+    erde = _material("erde", (0.10, 0.08, 0.06), rauheit=0.95)
+    gruen = _material("blattwerk", (0.24, 0.36, 0.15), rauheit=0.9)
+    # Zwei Blütentöne — ein Kasten in einer Farbe wirkt wie ein Farbklecks.
+    rot = _material("bluete_rot", (0.72, 0.16, 0.14), rauheit=0.85)
+    weiss = _material("bluete_weiss", (0.90, 0.88, 0.80), rauheit=0.85)
+
+    teile = [_kasten((0.90, 0.20, 0.18), (0, 0, 0.09), fase=0.01, name="trog")]
+    teile[0].data.materials.append(trog)
+    teile.append(_kasten((0.84, 0.15, 0.03), (0, 0, 0.185), name="erdreich"))
+    teile[-1].data.materials.append(erde)
+
+    import random as zufall
+    zufall.seed(5)
+    for i in range(9):
+        ort = (-0.36 + i * 0.09, zufall.uniform(-0.04, 0.04),
+               0.24 + zufall.uniform(-0.02, 0.05))
+        bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=1,
+                                              radius=zufall.uniform(0.05, 0.08),
+                                              location=ort)
+        busch = bpy.context.active_object
+        busch.name = "busch"
+        busch.data.materials.append(gruen)
+        bpy.ops.object.shade_smooth()
+        teile.append(busch)
+        bpy.ops.mesh.primitive_ico_sphere_add(
+            subdivisions=1, radius=0.032,
+            location=(ort[0], ort[1], ort[2] + 0.055))
+        bluete = bpy.context.active_object
+        bluete.name = "bluete"
+        bluete.data.materials.append(rot if i % 3 else weiss)
+        bpy.ops.object.shade_smooth()
+        teile.append(bluete)
+    _export([_verbinden(teile, "blumenkasten")], "blumenkasten")
+
+
+def fahrrad():
+    """Abgestelltes Stadtrad: zwei Speichenräder, Rahmen, Lenker, Sattel.
+    Steht auf dem Ständer, leicht schräg — senkrecht sieht es aus wie
+    hingestellt statt abgestellt. Fahrtrichtung -Y."""
+    bpy.ops.wm.read_factory_settings(use_empty=True)
+    gummi = _material("reifen", (0.06, 0.06, 0.065), rauheit=0.95)
+    stahl = _material("rahmen", (0.16, 0.32, 0.42), rauheit=0.45, metall=0.4)
+    chrom = _material("chrom", (0.62, 0.63, 0.66), rauheit=0.3, metall=0.6)
+    leder = _material("sattel", (0.20, 0.13, 0.09), rauheit=0.7)
+
+    teile = []
+    for y in (-0.53, 0.53):
+        bpy.ops.mesh.primitive_torus_add(
+            major_radius=0.33, minor_radius=0.022,
+            location=(0, y, 0.33), rotation=(0, math.radians(90), 0),
+            major_segments=28, minor_segments=8)
+        reifen = bpy.context.active_object
+        reifen.name = "reifen"
+        reifen.data.materials.append(gummi)
+        bpy.ops.object.shade_smooth()
+        teile.append(reifen)
+        for i in range(6):
+            w = math.pi * i / 6
+            teile.append(_rohr(0.005, 0.62, (0, y, 0.33), chrom, achse="Z",
+                               seiten=6, name="speiche"))
+            teile[-1].rotation_euler = (w, 0, 0)
+    # Rahmen: Unterrohr, Oberrohr, Sattelrohr, Gabel, Steuerrohr.
+    for anfang, ende, dicke in [((0, -0.42, 0.30), (0, 0.30, 0.28), 0.020),
+                                ((0, -0.36, 0.62), (0, 0.16, 0.58), 0.018),
+                                ((0, 0.16, 0.58), (0, 0.36, 0.30), 0.018),
+                                ((0, -0.42, 0.30), (0, -0.50, 0.68), 0.020),
+                                ((0, 0.36, 0.30), (0, 0.53, 0.33), 0.016)]:
+        mitte = tuple((a + b) / 2 for a, b in zip(anfang, ende))
+        laenge = math.dist(anfang, ende)
+        rohr = _rohr(dicke, laenge, mitte, stahl, name="rahmenrohr")
+        rohr.rotation_euler = (
+            math.atan2(ende[1] - anfang[1], ende[2] - anfang[2]) * -1.0, 0, 0)
+        teile.append(rohr)
+    teile.append(_rohr(0.014, 0.44, (0, -0.50, 0.86), chrom, achse="X",
+                       name="lenker"))
+    teile.append(_kasten((0.10, 0.22, 0.05), (0, 0.20, 0.68), fase=0.02,
+                         name="sattel"))
+    teile[-1].data.materials.append(leder)
+
+    modell = _verbinden(teile, "fahrrad")
+    # Leicht angelehnt — die Neigung macht aus „hingestellt" „abgestellt".
+    modell.rotation_euler = (0, math.radians(7), 0)
+    _export([modell], "fahrrad")
+
+
+def wirtshausschild():
+    """Auslegerschild über der Kneipentür: Wandhalter, Streben, hängende
+    Tafel mit Bembel-Silhouette. Die Tafel steht quer zur Fassade, damit
+    man sie schon aus der Gasse liest."""
+    bpy.ops.wm.read_factory_settings(use_empty=True)
+    eisen = _material("schmiedeeisen", (0.09, 0.09, 0.10), rauheit=0.6)
+    tafel_holz = _material("tafel", (0.16, 0.13, 0.10), rauheit=0.7)
+    gold = _material("gold", (0.72, 0.58, 0.24), rauheit=0.35, metall=0.7)
+
+    teile = [
+        _rohr(0.03, 0.30, (0, -0.15, 1.10), eisen, achse="Y", name="wandarm"),
+        _rohr(0.022, 0.90, (0, -0.30, 0.70), eisen, achse="Y", name="ausleger"),
+        _rohr(0.016, 0.42, (0, -0.16, 0.92), eisen, name="strebe"),
+    ]
+    teile[-1].rotation_euler = (math.radians(38), 0, 0)
+    for y in (-0.12, -0.66):
+        teile.append(_rohr(0.008, 0.16, (0, y, 0.62), eisen, name="kettchen"))
+    # Die Tafel selbst: quer zur Fassade (Fläche in der YZ-Ebene).
+    teile.append(_kasten((0.04, 0.70, 0.46), (0, -0.39, 0.31), fase=0.02,
+                         name="tafel"))
+    teile[-1].data.materials.append(tafel_holz)
+    # Bembel-Silhouette in Gold: Bauch, Hals, Henkel.
+    for masse, ort in [((0.03, 0.26, 0.20), (0.03, -0.39, 0.26)),
+                       ((0.03, 0.11, 0.10), (0.03, -0.39, 0.41)),
+                       ((0.03, 0.05, 0.14), (0.03, -0.25, 0.28))]:
+        teile.append(_kasten(masse, ort, fase=0.015, name="zeichen"))
+        teile[-1].data.materials.append(gold)
+    _export([_verbinden(teile, "wirtshausschild")], "wirtshausschild")
+
+
 if __name__ == "__main__":
     lkw()
     bembel()
+    bistrotisch()
+    bistrostuhl()
+    blumenkasten()
+    fahrrad()
+    wirtshausschild()
     schilder()
     fachwerk()
     skyline()
