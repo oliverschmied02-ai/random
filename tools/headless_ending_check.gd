@@ -147,7 +147,9 @@ func _abschluss_pruefen() -> void:
 
 	# Den Übergang so auslösen, wie ihn die Ankunft an der Dönerbude auslöst,
 	# und dann eine Runde gewinnen lassen — ohne Würfe, die prüft der
-	# Dart-Check. Interessant ist hier nur, was danach passiert.
+	# Dart-Check. Interessant ist hier nur, was danach passiert. Der Sprung
+	# ins nächste Kapitel bleibt aus, die Messungen brauchen die Szene.
+	chapter.weiter_nach_gewinn = false
 	chapter._minispiel_starten()
 	var gewartet := 0
 	while _darts.zustand != DartsGame.Zustand.ZIELEN and gewartet < 900:

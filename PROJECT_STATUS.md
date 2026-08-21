@@ -1,15 +1,16 @@
 # Project Status
 
-**Spiel:** Our Story — Kapitel 1: Berlin
+**Spiel:** Our Story — Kapitel 1: Berlin · Kapitel 2: Frankfurt
 **Engine:** Godot 4.5 (GDScript)
-**Aktuelle Stufe:** Stage 7 — Berlin bei Nacht, zweiter Durchgang: die
-Realismus-Liste (Oberflächen, nasser Asphalt, Dächer, Fenstertiefe, Himmel,
-Oberleitung, Straßenleben, Plakate, lebendiges Licht) ist umgesetzt, dazu der
-Feinschliff an der Bude (Verkaufsraum, Verkäufer, drehender Spieß) und am
-Minispiel (erkennbare Spritzen, Vorrat auf der Tonne, Einblendung). Wartet auf
-Probespielen. Stage 1 bis 4 abgenommen, Stage 5 und 6 ausgeliefert.
+**Aktuelle Stufe:** Kapitel 2 „Frankfurt" ist gebaut und hängt an Kapitel 1:
+nach dem Level-Übergangsbildschirm wechselt das Spiel in den Umzug —
+Abschiedsrede, LKW-Fahrt auf der A5, Ankunft in Sachsenhausen, freier Lauf
+zur Apfelweinkneipe, Krug-Werfen, „Du hast es ins dritte Level geschafft."
+Wartet auf Probespielen. Das Umzugsjahr auf der Kapitelkarte
+(„FRANKFURT — 2021") ist ein **Platzhalter**, bis Oliver das echte Jahr
+nennt.
 
-**Kapitel 1 ist damit von Anfang bis Ende erzählt:** abholen, laufen, ankommen,
+**Kapitel 1 ist von Anfang bis Ende erzählt:** abholen, laufen, ankommen,
 werfen, gewinnen — und danach ein Schlussbild, in dem die beiden miteinander
 reden, gefolgt vom Abspann.
 
@@ -216,6 +217,59 @@ zweite Level geschafft."** (Texte in `dialogue_lines.gd`: `LEVEL_TITEL`,
 Schwarzblende löst sich über der anlaufenden Schlussszene — die beiden am
 Tresen, Dialog, Abspann wie gehabt. Das „zweite Level" ist der Teaser für
 Kapitel 2.
+
+### Kapitel 2 — Frankfurt (`chapters/frankfurt/`)
+Der Umzug, bei Tag, bewusst als **Sequenzkette** erzählt
+(`chapter_frankfurt.gd`, `_ablauf()` liest sich von oben nach unten):
+
+1. **Abschied** vor der Berliner Wohnung — die beiden am beladenen LKW,
+   feste Filmkamera, sechs Zeilen Dialog (Platzhalter, mit
+   Wasserkocher-Witz).
+2. **Schwarzblende mit Zwischentitel** *„A5 — RICHTUNG SÜDEN"* — die
+   Blenden (`_abblenden`/`_aufblenden`/`_zwischentitel`) liegen auf einer
+   eigenen CanvasLayer-Schicht und tragen alle Schnitte des Kapitels.
+3. **Autobahnfahrt:** der LKW rollt wirklich (die `_process`-Schleife
+   schiebt ihn, `fahrt_tempo` 21 m/s), die Kamera fährt seitlich mit;
+   unterwegs ein Telefonat (die Mitfahrkamera läuft dabei nebenläufig
+   weiter), dann die feste Einstellung am blauen Schild, an dem er
+   vorbeizieht. Gegenverkehr, Leitplanken, MultiMesh-Fahrbahnmarkierung,
+   Böschungsbäume, drei Kilometerschilder Richtung Frankfurt.
+4. Blende, *„FRANKFURT AM MAIN"* — **Ankunft in Sachsenhausen**: kurzer
+   Dialog, dann Übergabe an die Spielerin.
+5. **Freier Lauf zur Kneipe** (Zielzeile oben links): Fachwerkzeile im
+   Süden, Putzhäuser mit Fassaden-Kit-Fenstern im Norden, Gehwege,
+   Straßenmöbel, die Bankentürme im Tageslicht-Dunst dahinter. Die
+   Kneipenfront „ZUM GERIPPTEN — APFELWEIN" mit warmer Lampe und zwei
+   Deko-Bembeln; die Tür ist ein Area3D-Trigger.
+6. **Krug-Werfen** (`krug_spiel.gd`): drei Bembel-Pyramiden (3+2+1) auf
+   dem Wurftisch in der holzvertäfelten Stube. Zielen und Werfen fühlen
+   sich an wie das Spritzen-Werfen aus Kapitel 1 (Fadenkreuz in der Ebene
+   der Türme, Kraftbalken mit grüner Zone, Kraft wirkt nur auf die Höhe) —
+   aber die Krüge sind **echte starre Körper**: Treffer kippen, schieben
+   und räumen ab. Bälle unbegrenzt, **leerer Tisch gewinnt** (ein Krug
+   gilt als gefallen ab 0,35 m Verschiebung). Die Krüge sind eingefroren,
+   bis das Spiel beginnt — sonst setzen sich die Stapel während der langen
+   Sequenzen davor von selbst. Der Wurfball fliegt mit `continuous_cd`
+   und ohne Dämpfung, sonst tunnelt er oder sackt vor dem Tisch ab.
+7. **Sieg-Dialog, Level-Übergang** (*„Glückwunsch. Du hast es ins dritte
+   Level geschafft."*), Abspann, zurück zum Titel.
+
+Die Kulisse (`kulisse_ffm.gd`) baut alle vier Schauplätze prozedural:
+Abschiedsstraße, Autobahn, Sachsenhausen, Kneipenstube (Tresen, runde
+Tische mit Bembeln, Bänke, Regal, warmes Licht, Tageslichtfenster).
+LKW (rote Kabine, weißer Koffer) und Bembel (grauer Steinzeugkrug mit
+blauem Dekor, per PIL gebackene Textur) entstehen in Blender
+(`tools/make_ffm_props.py`), ebenso die Texturen: blaue Autobahnschilder,
+Fachwerk, Skyline-Glasraster, Dielenholz. Motor-, Kneipen- und
+Klirr-Klang sind synthetische Platzhalter (`make_placeholder_audio.py`).
+
+Die Dialoge stehen in `dialogue_lines_ffm.gd` (Abschied, Telefonat,
+Ankunft, Kneipentür, Sieg — alles Platzhalter in der beabsichtigten
+Tonlage). Der Prüflauf `tools/headless_ffm_check.gd` spielt die Kette mit
+gerafften Wartezeiten durch (`test_schnell` am Kapitelknoten) und
+verlangt: Steuerungs-Übergabe nach den Sequenzen, greifende Kneipentür,
+stehende Krüge zu Spielbeginn, einen echten Wurf, der Krüge fällt, den
+Sieg bei leerem Tisch und den gemeldeten Kapitelabschluss.
 
 ### Ton (`audio/`, `systems/audio/`)
 **Die Stadt-Ambience ist echt:** `audio/stadt_ambiente.mp3` (ruhige
@@ -720,6 +774,16 @@ im Prüflauf zählte der Schrittzähler ins Leere und meldete „gar kein Ton". 
 Stellen benutzen jetzt ein Dictionary bzw. ein Feld — beides wird als Referenz
 gefangen.
 
+**Der Wurfball im Krug-Spiel traf nie.** Drei Ursachen übereinander: die
+Krugtürme standen schon umgekippt da, weil sich die Stapel starrer Körper
+während der Minuten davor von selbst setzten (jetzt `freeze = true` bis
+Spielbeginn); die Kneipentür reagierte nicht, weil die Spielerin auf
+Kollisionsebene 2 liegt und der Trigger nur Ebene 1 abhörte; und der Ball
+selbst flog bei Schwerkraft 18 und Wurftempo 9 einen so hohen Bogen, dass
+ihn die Vorgabe-Dämpfung vor dem Tisch absacken ließ — er landete am Fuß
+des Turms statt in der zweiten Reihe. Jetzt: flachere Bahn (Tempo 13),
+`linear_damp = 0` und `continuous_cd` am Ball.
+
 **Die Schleifen liefen nicht.** Godots WAV-Importeur nummeriert
 `edit/loop_mode` anders als die Laufzeit-Aufzählung: *0 = aus der WAV lesen,
 1 = aus, 2 = vorwärts*. Mit der naheliegenden 1 blieb die Titelmusik nach einem
@@ -850,7 +914,12 @@ statt synthetischer Klänge, Kameraübergänge, Pacing, Dialogtiming. Dazu die
 gesammelten Punkte: eine Reaktion zwischen den Würfen, ein echter Weg statt des
 Gleitens auf die Abschlussmarken.
 
-Nicht begonnen und bewusst nicht vorbereitet: spätere Kapitel.
+**Kapitel 2 (Frankfurt) ist gebaut** — offen dort: das echte Umzugsjahr
+für die Kapitelkarte (aktuell Platzhalter „2021"), echte Dialogtexte,
+Probespielen der Sequenz-Zeiten (Fahrtdauer, Blendenlängen) und des
+Wurfgefühls (`wurf_tempo`, `ladezeit`, `GEFALLEN_WEG`). Als mögliches
+Finale ist die **Hochzeit 2023** (Brautstrauß-Fangen) besprochen, aber
+nicht begonnen.
 
 ### Falls das Fahrgefühl nachjustiert werden soll
 

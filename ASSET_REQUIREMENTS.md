@@ -188,6 +188,58 @@ wart. Verschieben heißt: Knoten unter `Erinnerungen` bewegen, sonst nichts.
 
 ---
 
+## Kapitel 2 — Frankfurt
+
+### Umzugs-LKW
+| | |
+| --- | --- |
+| **Zweck** | Trägt die Abschieds- und die Autobahn-Sequenz |
+| **Szene** | `chapters/frankfurt/frankfurt_chapter.tscn` → Kulisse |
+| **Typ** | 7,5-Tonner mit Kofferaufbau |
+| **Stil** | Leicht stilisiert, Mietwagen-Look |
+| **Animation** | Fährt (Kapitelskript schiebt ihn); Räder drehen wäre Feinschliff |
+| **Platzhalter** | `assets/props/lkw.glb` aus `tools/make_ffm_props.py`: rote Kabine, weißer Koffer mit orangen Streifen, sechs Räder |
+| **Priorität** | POLISH — trägt |
+
+### Bembel (Apfelweinkrug)
+| | |
+| --- | --- |
+| **Zweck** | Die Wurfziele des Minispiels und Deko in der Kneipe |
+| **Szene** | `chapters/frankfurt/krug_spiel.gd` (Türme), Kulisse (Deko) |
+| **Typ** | Steinzeugkrug mit Henkel, grau mit blauem Dekor |
+| **Stil** | Erkennbar hessisch, leicht überzeichnet |
+| **Animation** | Starre Körper — kippen und fallen echt |
+| **Platzhalter** | `assets/props/bembel.glb` aus `tools/make_ffm_props.py` mit gebackener Sprenkel-und-Ringe-Textur |
+| **Priorität** | POLISH — trägt |
+
+### Sachsenhausen und Kneipenstube
+| | |
+| --- | --- |
+| **Zweck** | Ankunftsort und Schauplatz des Krug-Werfens |
+| **Szene** | `chapters/frankfurt/kulisse_ffm.gd` (prozedural) |
+| **Typ** | Fachwerkzeile, Putzhäuser, Kneipenfront, holzvertäfelte Stube |
+| **Stil** | Tageslicht, warm; die Bankentürme im Dunst dahinter |
+| **Animation** | Keine nötig |
+| **Platzhalter** | PIL-Texturen (Fachwerk, Skyline, Dielen) + Fassaden-Kit-Fenster; Stube mit Tresen, Tischen, Bänken, Bembel-Regal |
+| **Priorität** | POLISH — trägt |
+
+### Kapitel-2-Klänge
+| | |
+| --- | --- |
+| **Zweck** | Motor auf der Autobahn, Stubenmurmeln, Klirren der Krüge |
+| **Szene** | `chapters/frankfurt/frankfurt_chapter.tscn` → `Klang` |
+| **Typ** | Motorschleife, Kneipenschleife, Klirr-Einschlag |
+| **Stil** | Unaufdringlich; das Klirren satt, aber nicht scherbig |
+| **Animation** | — |
+| **Platzhalter** | Synthetisch aus `tools/make_placeholder_audio.py` (`motor`, `kneipe`, `klirren`) |
+| **Priorität** | IMPORTANT |
+
+**Offen und nur von Oliver zu beantworten: das Umzugsjahr.** Die
+Kapitelkarte zeigt derzeit „FRANKFURT — 2021" als Platzhalter
+(`KARTE_ZEILE` in `chapters/frankfurt/dialogue_lines_ffm.gd`).
+
+---
+
 ## Minispiel
 
 ### Impfspritze

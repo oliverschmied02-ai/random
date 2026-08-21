@@ -209,10 +209,18 @@ func _gehe_zu(tween: Tween, figur: Node3D, ziel: Vector3) -> void:
 		)
 
 
+## Nach dem Abspann geht es weiter ins nächste Kapitel — Prüfläufe
+## schalten das ab, damit die Szene für ihre Messungen stehen bleibt.
+@export var weiter_nach_gewinn: bool = true
+
+
 func _auf_runde_geschafft(_punkte: int) -> void:
 	await _level_uebergang()
 	await _abschluss_szene()
 	kapitel_abgeschlossen.emit()
+	if weiter_nach_gewinn:
+		get_tree().change_scene_to_file(
+			"res://chapters/frankfurt/frankfurt_chapter.tscn")
 
 
 ## Der Übergangsbildschirm nach dem Sieg: Schwarzblende, „Glückwunsch."

@@ -343,6 +343,65 @@ def match_klang():
     schreibe("match.wav", spur, 0.5)
 
 
+def motor():
+    """Der LKW auf der Autobahn: tiefes Brummen mit Lastwechseln.
+
+    Zwei tiefe, leicht verstimmte Sinusschichten plus gefiltertes Rauschen
+    für Reifen und Wind — als Schleife fürs Fahr-Zwischenspiel."""
+    random.seed(21)
+    dauer = 6.0
+    grund = mische(
+        sinus(84.0, dauer),
+        [s * 0.6 for s in sinus(126.5, dauer)],
+        [s * 0.35 for s in sinus(63.2, dauer)],
+    )
+    # Lastwechsel: ganz langsame Amplitudenwelle.
+    spur = []
+    for i, s in enumerate(grund):
+        t = i / RATE
+        spur.append(s * (0.8 + 0.2 * math.sin(t * 0.9)))
+    wind = tiefpass(rauschen(dauer), 900)
+    spur = mische(spur, [s * 0.5 for s in wind])
+    schreibe("motor.wav", schleife_schliessen(spur, 0.8), 0.5)
+
+
+def kneipe():
+    """Kneipenstube: warmes Murmeln, ab und zu ein Gläserklingen."""
+    random.seed(22)
+    dauer = 8.0
+    murmeln = tiefpass(rauschen(dauer), 480)
+    spur = []
+    for i, s in enumerate(murmeln):
+        t = i / RATE
+        spur.append(s * (0.7 + 0.3 * math.sin(t * 0.7) * math.sin(t * 1.9)))
+    for versatz in (1.3, 3.1, 4.8, 6.6):
+        klang = huellkurve(sinus(random.choice([1180.0, 1560.0, 1920.0]), 0.4),
+                           0.004, 0.3)
+        start = int(versatz * RATE)
+        for j, s in enumerate(klang):
+            if start + j < len(spur):
+                spur[start + j] += s * 0.10
+    schreibe("kneipe.wav", schleife_schliessen(spur, 1.0), 0.4)
+
+
+def klirren():
+    """Steinzeug-Krüge stürzen: dumpfe Schläge plus helle Scherbentöne."""
+    random.seed(23)
+    dauer = 0.8
+    spur = [0.0] * int(dauer * RATE)
+    for versatz in (0.0, 0.05, 0.11, 0.19, 0.28):
+        schlag = huellkurve(tiefpass(rauschen(0.12), 700), 0.002, 0.09)
+        start = int(versatz * RATE)
+        for j, s in enumerate(schlag):
+            if start + j < len(spur):
+                spur[start + j] += s * 0.7
+        ton = huellkurve(sinus(random.uniform(1400.0, 2600.0), 0.25), 0.002, 0.18)
+        for j, s in enumerate(ton):
+            if start + j < len(spur):
+                spur[start + j] += s * 0.22
+    schreibe("klirren.wav", spur, 0.55)
+
+
 if __name__ == "__main__":
     os.makedirs(AUS, exist_ok=True)
     schritte()

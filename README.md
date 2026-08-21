@@ -6,8 +6,10 @@ das wichtige Momente unserer Beziehung als spielbare Szenen nacherzählt.
 ## Aktueller Umfang
 
 **Kapitel 1 — Berlin** (COVID-Zeit, Alexanderplatz-Spaziergang, Minispiel
-"Vaccination Darts"). Weitere Kapitel sind konzeptionell vorgesehen, werden
-aber bewusst noch nicht gebaut.
+"Vaccination Darts") und **Kapitel 2 — Frankfurt** (der Umzug: Abschied,
+LKW-Fahrt auf der A5, Ankunft in Sachsenhausen, Apfelweinkneipe mit
+Krug-Werfen). Weitere Kapitel sind konzeptionell vorgesehen, werden bewusst
+noch nicht gebaut.
 
 **Stand:** Stage 7 — Kapitel 1 spielt in der frühen Abenddämmerung in Berlin
 (Abendrot hinter den Dächern, Laternen gerade an): Fassaden, Straßen und
@@ -43,6 +45,25 @@ säumen die Gehwege, vereinzelte Autos fahren mit Scheinwerferlicht durch
 die Nacht (und halten, wenn man die Straße quert).
 Ausschließlich Platzhalter-Geometrie, alle Dialoge sind Platzhaltertexte, aller
 Ton ist synthetisch erzeugt.
+
+**Kapitel 2 — Frankfurt** ist als **Sequenzkette** erzählt: kurze
+Abschiedsrede vor der Berliner Wohnung (der beladene LKW steht schon da),
+Schwarzblende mit Zwischentitel *„A5 — RICHTUNG SÜDEN"*, die Fahrt auf der
+Autobahn (Mitfahrkamera neben dem rollenden LKW, ein Telefonat unterwegs,
+blaue Kilometerschilder Richtung Frankfurt, dann die feste Einstellung am
+Schild, an dem er vorbeizieht), Blende, *„FRANKFURT AM MAIN"* — Anne kommt
+bei Tag in Sachsenhausen an: Fachwerkzeile, Putzhäuser mit den
+Fassaden-Kit-Fenstern, die Bankentürme im Dunst dahinter. Von dort läuft
+man frei zur Apfelweinkneipe **„Zum Gerippten"**, tritt ein — und in der
+holzvertäfelten Stube wartet das Minispiel **Krug-Werfen**: drei
+Bembel-Pyramiden (3+2+1) stehen auf dem Wurftisch, geworfen wird mit
+Bällen, die Krüge sind echte starre Körper — Treffer kippen und räumen ab,
+Bälle gibt es unbegrenzt, leerer Tisch gewinnt. Danach Sieg-Dialog,
+*„Glückwunsch. Du hast es ins dritte Level geschafft."* und der Abspann.
+Das Umzugsjahr auf der Kapitelkarte („FRANKFURT — 2021") ist ein
+Platzhalter, bis das echte Jahr feststeht. LKW und Bembel sind
+Blender-Requisiten (`tools/make_ffm_props.py`), Motor-, Kneipen- und
+Klirr-Klänge synthetische Platzhalter.
 
 **Ganz am Anfang: die Widmung** — schwarzer Bildschirm, ferne Stadt,
 dann in Ruhe: *„Für Anne."* und *„Um dein Geschenk zu bekommen, musst du
@@ -130,6 +151,7 @@ godot --headless --path . --script res://tools/headless_ending_check.gd
 godot --headless --path . --script res://tools/headless_rahmen_check.gd
 godot --headless --path . --script res://tools/headless_figur_check.gd
 godot --headless --path . --script res://tools/headless_intro_check.gd
+godot --headless --path . --script res://tools/headless_ffm_check.gd
 ```
 
 Der erste fährt die Figur über Bahn, Treppe und Rampe und prüft
@@ -155,6 +177,11 @@ zugewandt, ganz im Bild.
 Der fünfte nimmt den Rahmen: Audiobusse, Lautstärkeregler, Titelbildschirm,
 Kapitelauftakt und die Schrittkadenz beim Gehen.
 
+Der letzte spielt **Kapitel 2** mit gerafften Wartezeiten durch: die
+Sequenzkette bis zur Steuerungs-Übergabe, die Kneipentür, das Krug-Spiel
+(ein echter Wurf muss Krüge fällen, leerer Tisch gewinnt) und den
+Kapitelabschluss.
+
 ## Ton
 
 Die Stadt-Ambience (`audio/stadt_ambiente.mp3` — ruhige Straße, ferne
@@ -178,15 +205,18 @@ actors/companion/  Begleitfigur
 actors/models/     Platz für die Personenmodelle (siehe README dort)
 camera/            Third-Person-Kamerarig
 systems/           Wiederverwendbare Systeme (Interaktion, Dialog, Bewegung)
+chapters/intro/    Tinder-Intro (Hand, Handy, App)
 chapters/berlin/   Kapitel 1: Szene, Ablauf, Dialogtexte
+chapters/frankfurt/ Kapitel 2: Szene, Kulisse, Krug-Spiel, Dialogtexte
 audio/             Klänge und Musik (synthetische Platzhalter)
 scenes/            Testfläche zum Beurteilen der Bewegung
 ui/                Titelbildschirm und Oberfläche (Ziel, Dialog, Pause, Kapitelkarte, Debug)
 tools/             Entwicklungswerkzeuge (headless Prüfläufe)
 ```
 
-Dialogtexte stehen in `chapters/berlin/dialogue_lines.gd` — reiner Inhalt,
-ohne Logik, gefahrlos zu ändern.
+Dialogtexte stehen in `chapters/berlin/dialogue_lines.gd` und
+`chapters/frankfurt/dialogue_lines_ffm.gd` — reiner Inhalt, ohne Logik,
+gefahrlos zu ändern.
 
 ## Dokumentation
 

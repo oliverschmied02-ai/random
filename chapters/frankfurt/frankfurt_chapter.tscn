@@ -1,0 +1,124 @@
+[gd_scene load_steps=20 format=3 uid="uid://ffm_kapitel_2a"]
+
+[ext_resource type="Script" path="res://chapters/frankfurt/chapter_frankfurt.gd" id="1_chapter"]
+[ext_resource type="PackedScene" path="res://actors/player/player.tscn" id="2_player"]
+[ext_resource type="PackedScene" path="res://actors/companion/companion.tscn" id="3_companion"]
+[ext_resource type="PackedScene" path="res://camera/third_person_camera.tscn" id="4_camera"]
+[ext_resource type="PackedScene" path="res://systems/dialogue/dialogue_box.tscn" id="5_dialogue"]
+[ext_resource type="PackedScene" path="res://ui/objective_label.tscn" id="6_objective"]
+[ext_resource type="PackedScene" path="res://ui/interaction_prompt.tscn" id="7_prompt"]
+[ext_resource type="PackedScene" path="res://ui/chapter_card.tscn" id="8_karte"]
+[ext_resource type="PackedScene" path="res://ui/pause_menu.tscn" id="9_pause"]
+[ext_resource type="Script" path="res://chapters/frankfurt/kulisse_ffm.gd" id="10_kulisse"]
+[ext_resource type="Script" path="res://chapters/frankfurt/krug_spiel.gd" id="11_krug"]
+[ext_resource type="AudioStream" path="res://audio/stadt_ambiente.mp3" id="12_stadt"]
+[ext_resource type="AudioStream" path="res://audio/motor.wav" id="13_motor"]
+[ext_resource type="AudioStream" path="res://audio/kneipe.wav" id="14_kneipe"]
+
+[sub_resource type="BoxShape3D" id="Tuer_zone"]
+size = Vector3(6, 3, 4)
+
+[sub_resource type="StandardMaterial3D" id="Boden_mat"]
+albedo_color = Color(0.36, 0.38, 0.34, 1)
+roughness = 1.0
+
+[sub_resource type="ProceduralSkyMaterial" id="Himmel_tag"]
+sky_top_color = Color(0.22, 0.42, 0.72, 1)
+sky_horizon_color = Color(0.72, 0.80, 0.88, 1)
+ground_bottom_color = Color(0.35, 0.36, 0.33, 1)
+ground_horizon_color = Color(0.68, 0.72, 0.72, 1)
+
+[sub_resource type="Sky" id="Sky_tag"]
+sky_material = SubResource("Himmel_tag")
+
+[sub_resource type="Environment" id="Umgebung_tag"]
+background_mode = 2
+sky = SubResource("Sky_tag")
+ambient_light_source = 3
+ambient_light_energy = 1.1
+tonemap_mode = 2
+fog_enabled = true
+fog_light_color = Color(0.74, 0.80, 0.88, 1)
+fog_light_energy = 1.0
+fog_density = 0.0004
+fog_aerial_perspective = 0.6
+fog_sky_affect = 0.1
+adjustment_enabled = true
+adjustment_brightness = 1.05
+adjustment_contrast = 1.03
+adjustment_saturation = 1.05
+
+[node name="FrankfurtChapter" type="Node3D"]
+script = ExtResource("1_chapter")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Umgebung_tag")
+
+[node name="SunLight" type="DirectionalLight3D" parent="."]
+transform = Transform3D(0.82, -0.42, 0.39, 0, 0.68, 0.73, -0.57, -0.6, 0.56, 0, 40, 0)
+light_color = Color(1, 0.95, 0.86, 1)
+light_energy = 1.25
+shadow_enabled = true
+shadow_blur = 1.4
+directional_shadow_max_distance = 220.0
+
+[node name="Ground" type="CSGBox3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 180, -0.5, 100)
+use_collision = true
+size = Vector3(1400, 1, 1100)
+material = SubResource("Boden_mat")
+
+[node name="Kulisse" type="Node3D" parent="."]
+script = ExtResource("10_kulisse")
+
+[node name="Player" parent="." instance=ExtResource("2_player")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 202, 0.3, 0.5)
+
+[node name="Oliver" parent="." instance=ExtResource("3_companion")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 205, 0.25, -0.8)
+
+[node name="ThirdPersonCamera" parent="." instance=ExtResource("4_camera")]
+
+[node name="Filmkamera" type="Camera3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.6, 0)
+fov = 50.0
+current = true
+
+[node name="KrugSpiel" type="Node3D" parent="."]
+script = ExtResource("11_krug")
+
+[node name="Triggers" type="Node3D" parent="."]
+
+[node name="KneipenTuer" type="Area3D" parent="Triggers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 300, 1.5, 6.2)
+collision_mask = 2
+
+[node name="Form" type="CollisionShape3D" parent="Triggers/KneipenTuer"]
+shape = SubResource("Tuer_zone")
+
+[node name="UI" type="Node" parent="."]
+
+[node name="DialogueBox" parent="UI" instance=ExtResource("5_dialogue")]
+
+[node name="ObjectiveLabel" parent="UI" instance=ExtResource("6_objective")]
+
+[node name="InteractionPrompt" parent="UI" instance=ExtResource("7_prompt")]
+
+[node name="ChapterCard" parent="UI" instance=ExtResource("8_karte")]
+
+[node name="PauseMenu" parent="UI" instance=ExtResource("9_pause")]
+
+[node name="Klang" type="Node" parent="."]
+
+[node name="Stadtluft" type="AudioStreamPlayer" parent="Klang"]
+stream = ExtResource("12_stadt")
+volume_db = -18.0
+autoplay = true
+
+[node name="Motor" type="AudioStreamPlayer" parent="Klang"]
+stream = ExtResource("13_motor")
+volume_db = -8.0
+
+[node name="Kneipenluft" type="AudioStreamPlayer" parent="Klang"]
+stream = ExtResource("14_kneipe")
+volume_db = -10.0
