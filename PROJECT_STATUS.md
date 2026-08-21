@@ -282,6 +282,67 @@ flachen Farbflächen und sah neben Kapitel 1 billig aus. Behoben:
   das Himmelslicht färbt sonst jeden Schatten kräftig blau. Vignette
   mit Filmkorn wie in Kapitel 1, mehr Luftperspektive im Dunst.
 
+**Die Kneipenstube (dritter Durchgang).** Aus dem Raum mit Möbeln ist eine
+Wirtsstube geworden:
+
+* **Holzvertäfelung** bis Brusthöhe mit Abschlussleiste, rings um alle vier
+  Wände — der größte Einzelunterschied zwischen „Stube" und „weißer Raum".
+* **Schanktresen** (Blender-Requisit: Korpus mit Kassettenfront,
+  überstehende Platte, Messing-Fußreling), dahinter ein **Rückbuffet** mit
+  32 Flaschen auf zwei Brettern, Gläser und Bembel auf dem Tresen.
+* **Der Wirt** (`wirt.gd`) hinter dem Tresen — dasselbe Verfahren wie beim
+  Dönermann in Kapitel 1: Olivers Modell, dunkler getöntes Haar, blaue
+  Schürze, Handtuch am Schulterknochen. Er sieht auf, wenn jemand nah ist.
+* **Das Geripptes** (`gerippte.glb`): das gerippte Apfelweinglas mit
+  Bernsteininhalt. Die Rippen sind Geometrie, nicht Textur — eine
+  Rippentextur verschwindet aus zwei Metern, eine Rippensilhouette nicht.
+  Es steht auf allen Tischen, auf dem Tresen und den Fensterbänken.
+* **Gedeckte Tische** (Bembel, zwei Geripptes, Bierdeckel), **drei
+  gerahmte Bilder** mit gebackenen Sepia-Motiven, **Garderobe mit zwei
+  Jacken**, **echte Fenster** mit Rahmen, Sprossen, Bank und Gläsern
+  darauf — vorher war das Fenster eine leuchtende Platte in der Wand.
+* **Sichtbare Pendellampen** über Tischen und Wurftisch. Ein warmer
+  Lichtfleck ohne Lampe darüber liest sich als Fehler.
+
+**Das Krug-Werfen (Feinschliff).**
+
+* **Zwölf statt achtzehn Krüge** in zwei Pyramiden, und die Krüge sind
+  ein Viertel größer (ein echter Bembel ist gut 30 cm hoch). Die
+  Steinzeug-Textur ist dunkler und trägt jetzt das klassische
+  **kobaltblaue Rautenband**.
+* **Der Wurfball** ist ein Requisit mit Ledernähten und bekommt
+  Vorwärtsdrall — an den Nähten sieht man ihn rollen.
+* **Trefferrückmeldung:** Klirren mit gestreuter Tonhöhe und Lautstärke
+  nach Wucht, Staubwolke am Einschlag, Kamerastoß (nur Position, nie
+  Blickrichtung — eine verdrehte Kamera macht das Zielen unmöglich).
+* **Oliver ruft dazu** („Sitzt.", „Der ganze Turm!", „Einer noch!") — als
+  einblendende Zeile über der Anzeige, bewusst *nicht* über die
+  Dialogbox: die hält das Spiel an und machte jeden Treffer zur
+  Unterbrechung.
+* **Der Zielvorschlag wird gerechnet**, nicht eingetippt: `zielvorschlag()`
+  liefert Mitte und Höhe der unteren Reihe. Nach zwei Umbauten (weniger
+  Türme, größere Krüge) zeigte eine festgeschriebene Zielmarke zweimal
+  daneben.
+
+**Die LKW-Fahrt.**
+
+* **Die Räder drehen sich** (eigene Knoten im Modell, `rad_0` … `rad_5`),
+  bewusst gebremst mit Faktor 0,45: bei 21 m/s und 52 cm Radius wären es
+  40 rad/s, und ein Rad, das im Stroboskop rückwärts läuft, ist schlimmer
+  als ein zu langsames. Felgen und Radbolzen auf **beiden** Radseiten,
+  sonst ist die Drehung unsichtbar.
+* **Die Karosserie arbeitet** auf der Federung (zwei überlagerte
+  Schwingungen: Fahrbahnwellen und Motor).
+* **Eine Einstellung aus der Kabine:** Armaturenbrett, Lenkrad,
+  A-Säule, Innenspiegel, und durch die Frontscheibe die Autobahn. Das
+  Telefonat läuft von hier — man sieht, was er sieht. Das Fahrerhaus ist
+  dafür eine **echte Hülle** mit Fensteröffnung; als massiver Klotz
+  filmte die Kamera gegen die Innenseite der Vorderwand.
+* **Eine Brücke über der A5**, unter der der LKW durchzieht — fünf Kästen
+  für den stärksten Fahr-Eindruck, den es für das Geld gibt.
+* Dazu **Leitplankenpfosten** alle 4 m, **Leitpfosten mit rotem
+  Rückstrahler** alle 50 m, **Reifenspuren** und **Querfugen** im Beton.
+
 **Belebtes Sachsenhausen.** Die Gasse war ein Durchgang, kein Ort:
 
 * **Außenbestuhlung** vor der Kneipe (drei Bistrotische mit je zwei
@@ -814,6 +875,39 @@ immer in die volle Frist von 2,5 s, statt loszulegen, sobald Oliver steht; und
 im Prüflauf zählte der Schrittzähler ins Leere und meldete „gar kein Ton". Beide
 Stellen benutzen jetzt ein Dictionary bzw. ein Feld — beides wird als Referenz
 gefangen.
+
+**Ein Wurf räumte einen Krug und ließ den Turm stehen.** Gemessen: der Ball
+schlug den getroffenen Krug 1,4 m weit aus dem Stapel und rührte die
+Nachbarn um keine zwei Zentimeter an; die Etagen darüber verloren ihre
+Auflage, fielen 32 cm senkrecht und standen dann **aufrecht** auf dem
+Tisch. Für starre Zylinder ist das korrekt gerechnet und als Spiel
+unbrauchbar — man müsste jeden der zwölf Krüge einzeln treffen. Drei
+Änderungen, alle in `krug_spiel.gd` dokumentiert:
+
+1. **Der Zähler war falsch.** Er maß nur die Verschiebung, also galt ein
+   flach auf dem Tisch liegender Krug als unangetastet. Jetzt zählt auch
+   „umgekippt" (die eigene Y-Achse zeigt nicht mehr nach oben) und „vom
+   Tisch".
+2. **Die Wucht war falsch gemessen.** `body_entered` wird erst nach der
+   aufgelösten Kollision ausgeliefert — dort stand in `linear_velocity`
+   nur noch der Rest (gemessen: 6,6 statt 19 m/s). Das Abwurftempo hängt
+   jetzt als Metadatum am Ball.
+3. **Die Krüge schliefen.** Ein ruhender `RigidBody3D` nimmt keinen
+   Impuls an; die Kettenreaktion traf schlafende Körper, die einfach
+   stehen blieben. `can_sleep = false`, und vor jedem Stoß
+   `sleeping = false`.
+
+Dazu die eigentliche Kettenreaktion: ein kleiner Stoß auf alle Krüge nah
+am Einschlag, **über** dem Schwerpunkt angesetzt, damit sie kippen statt
+zu rutschen. Ergebnis: ein guter Treffer räumt einen ganzen Turm, zwei
+Würfe gewinnen. Das ist nachgeholfene Physik, und genau so soll es sein —
+sichtbar ist nur, dass ein Treffer wirkt.
+
+**Die Kamera in der Kabine filmte eine weiße Wand.** Zwei Fehler
+übereinander: die Kameraposition wurde in **Weltkoordinaten** zum
+LKW addiert, obwohl der LKW gedreht ist (jetzt `lkw.to_global` in
+Modellkoordinaten) — und das Fahrerhaus war ein massiver Kasten ohne
+Fensteröffnung.
 
 **Die Außentische der Kneipe zogen einen in die Kneipe.** Der Auslöser an
 der Tür war 6 × 4 m groß und deckte damit den halben Gehweg samt

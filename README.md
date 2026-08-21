@@ -61,10 +61,17 @@ Kneipe und **vier Passanten** (umgefärbte Kopien der beiden Modelle — es
 gibt kein drittes, siehe `ASSET_REQUIREMENTS.md`). Wie in Kapitel 1
 liegen **drei optionale Erinnerungen** am Weg. Von dort läuft
 man frei zur Apfelweinkneipe **„Zum Gerippten"**, tritt ein — und in der
-holzvertäfelten Stube wartet das Minispiel **Krug-Werfen**: drei
+holzvertäfelten Stube wartet das Minispiel **Krug-Werfen**: zwei
 Bembel-Pyramiden (3+2+1) stehen auf dem Wurftisch, geworfen wird mit
-Bällen, die Krüge sind echte starre Körper — Treffer kippen und räumen ab,
-Bälle gibt es unbegrenzt, leerer Tisch gewinnt. Danach Sieg-Dialog,
+Bällen, die Krüge sind echte starre Körper — ein guter Treffer räumt einen
+ganzen Turm, Bälle gibt es unbegrenzt, leerer Tisch gewinnt. Dazu Klirren,
+Staub, Kamerastoß und Zurufe von Oliver. Die **Stube** hat Vertäfelung,
+einen Schanktresen mit Flaschenregal und **Wirt**, Pendellampen, gerahmte
+Bilder, gedeckte Tische mit Bembel und **Gerippten** (dem geriffelten
+Apfelweinglas) und echte Fenster. Auf der Autobahn **drehen sich die
+Räder**, die Karosserie arbeitet auf der Federung, eine **Brücke** zieht
+über einen weg — und eine Einstellung filmt **aus der Kabine** heraus,
+über Lenkrad und Armaturenbrett auf die A5. Danach Sieg-Dialog,
 *„Glückwunsch. Du hast es ins dritte Level geschafft."* und der Abspann.
 Das Umzugsjahr auf der Kapitelkarte („FRANKFURT — 2021") ist ein
 Platzhalter, bis das echte Jahr feststeht. LKW und Bembel sind

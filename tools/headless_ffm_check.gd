@@ -115,8 +115,10 @@ func _los() -> void:
 		await physics_frame
 	_pruefe(krug.gefallen_zaehler() == 0, "alle Krüge stehen zu Beginn")
 
-	# Ein echter Wurf mitten auf den mittleren Turm muss Krüge fällen.
-	krug._ziel = Vector2(0.0, -0.1)
+	# Ein echter Wurf auf einen Turm muss Krüge fällen. Das Ziel rechnet das
+	# Spiel selbst aus (`zielvorschlag`) — eine festgeschriebene Marke zeigte
+	# nach jeder Änderung am Aufbau daneben.
+	krug._ziel = krug.zielvorschlag()
 	krug._kraft = 0.5
 	krug._werfen()
 	var uhr := create_timer(2.0)

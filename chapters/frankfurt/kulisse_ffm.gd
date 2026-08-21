@@ -31,11 +31,23 @@ const _STUHL := preload("res://assets/props/bistrostuhl.glb")
 const _BLUMEN := preload("res://assets/props/blumenkasten.glb")
 const _FAHRRAD := preload("res://assets/props/fahrrad.glb")
 const _WIRTSSCHILD := preload("res://assets/props/wirtshausschild.glb")
+const _GERIPPTE := preload("res://assets/props/gerippte.glb")
+const _TRESEN := preload("res://assets/props/tresen.glb")
+const _BILDERRAHMEN := preload("res://assets/props/bilderrahmen.glb")
+const _PENDELLAMPE := preload("res://assets/props/pendellampe.glb")
 
 ## Vom Kapitel animiert: der LKW auf der Autobahn.
 var lkw_fahrt: Node3D
 ## Gegenverkehr auf der Autobahn, fährt von selbst.
 var _gegenverkehr: Array = []
+## Die sechs Räder des fahrenden LKW, für die Drehung.
+var _lkw_raeder: Array[Node3D] = []
+## Karosserie des fahrenden LKW, für das Wippen der Federung.
+var _lkw_karosserie: Node3D
+var _lkw_ruhelage: Vector3 = Vector3.ZERO
+## Tempo des LKW in m/s — das Kapitel setzt es beim Fahren.
+var lkw_tempo: float = 0.0
+var _wipp_uhr: float = 0.0
 
 const PUTZTOENE: Array[Color] = [
 	Color(0.78, 0.70, 0.55), Color(0.72, 0.66, 0.58), Color(0.77, 0.72, 0.60),
@@ -54,6 +66,31 @@ func _process(delta: float) -> void:
 		auto.position.x -= 22.0 * delta
 		if auto.position.x < -290.0:
 			auto.position.x = 290.0
+	_lkw_beleben(delta)
+
+
+## Was einen fahrenden LKW von einem geschobenen Klotz unterscheidet:
+## drehende Räder und eine Karosserie, die auf der Federung arbeitet.
+##
+## Die Räder drehen sich um ihre eigene X-Achse mit `Tempo / Radius`; bei
+## 21 m/s und 52 cm Radius sind das gut 40 rad/s. Das ist schneller, als
+## 60 Bilder je Sekunde zeigen können (Stroboskop) — deshalb läuft die
+## Drehung bewusst **gebremst** mit Faktor 0,45. Sie soll nach Fahrt
+## aussehen, nicht stimmen; ein Rad, das rückwärts zu laufen scheint,
+## ist schlimmer als ein zu langsames.
+func _lkw_beleben(delta: float) -> void:
+	if lkw_tempo <= 0.01 or _lkw_karosserie == null:
+		return
+	var winkel := lkw_tempo / 0.52 * 0.45 * delta
+	for rad in _lkw_raeder:
+		rad.rotate_x(winkel)
+	_wipp_uhr += delta
+	# Zwei überlagerte Schwingungen: die lange ist die Federung über
+	# Fahrbahnwellen, die kurze der Motor im Standgas.
+	var heben := sin(_wipp_uhr * 2.3) * 0.022 + sin(_wipp_uhr * 17.0) * 0.004
+	var neigen := sin(_wipp_uhr * 1.7 + 0.8) * 0.0045
+	_lkw_karosserie.position = _lkw_ruhelage + Vector3(0.0, heben, 0.0)
+	_lkw_karosserie.rotation.z = neigen
 
 
 # --- Werkzeuge ----------------------------------------------------------------
@@ -191,8 +228,82 @@ func _autobahn_bauen() -> void:
 	_kasten(Vector3(0, 0.01, 295.5), Vector3(620, 0.06, 1.6), gras)      # Mittelstreifen
 	_kasten(Vector3(0, 0.005, 322.0), Vector3(620, 0.03, 36.0), gras)
 	_kasten(Vector3(0, 0.005, 270.0), Vector3(620, 0.03, 36.0), gras)
+	# Leitplanken mit Pfosten. Ein durchgehendes Band ohne Pfosten ist das,
+	# woran eine Autobahnkulisse als Kulisse auffällt — die Pfosten geben
+	# der Fahrt außerdem ihren Takt.
 	for z in [295.0, 296.0]:
-		_kasten(Vector3(0, 0.62, z), Vector3(620, 0.28, 0.07), metall)   # Leitplanken
+		_kasten(Vector3(0, 0.62, z), Vector3(620, 0.28, 0.07), metall)
+	var pfosten := MultiMesh.new()
+	pfosten.transform_format = MultiMesh.TRANSFORM_3D
+	var pfahl := BoxMesh.new()
+	pfahl.size = Vector3(0.10, 0.62, 0.10)
+	pfahl.material = _mat(Color(0.50, 0.52, 0.54), 0.5)
+	pfosten.mesh = pfahl
+	var pfahl_orte: Array[Vector3] = []
+	var px := -300.0
+	while px < 300.0:
+		pfahl_orte.append(Vector3(px, 0.31, 295.0))
+		pfahl_orte.append(Vector3(px, 0.31, 296.0))
+		px += 4.0
+	pfosten.instance_count = pfahl_orte.size()
+	for i in pfahl_orte.size():
+		pfosten.set_instance_transform(i,
+			Transform3D(Basis.IDENTITY, pfahl_orte[i]))
+	var pfostentraeger := MultiMeshInstance3D.new()
+	pfostentraeger.multimesh = pfosten
+	add_child(pfostentraeger)
+
+	# Leitpfosten am Fahrbahnrand mit rotem Rückstrahler — das deutscheste
+	# Detail einer Autobahn, alle 50 m, und sie zählen die Fahrt mit.
+	var leit := MultiMesh.new()
+	leit.transform_format = MultiMesh.TRANSFORM_3D
+	var pfahl2 := BoxMesh.new()
+	pfahl2.size = Vector3(0.12, 1.00, 0.08)
+	pfahl2.material = _mat(Color(0.90, 0.89, 0.86), 0.6)
+	leit.mesh = pfahl2
+	var leit_orte: Array[Vector3] = []
+	px = -300.0
+	while px < 300.0:
+		leit_orte.append(Vector3(px, 0.50, 304.4))
+		leit_orte.append(Vector3(px, 0.50, 286.6))
+		px += 50.0
+	leit.instance_count = leit_orte.size()
+	for i in leit_orte.size():
+		leit.set_instance_transform(i, Transform3D(Basis.IDENTITY, leit_orte[i]))
+	var leittraeger := MultiMeshInstance3D.new()
+	leittraeger.multimesh = leit
+	add_child(leittraeger)
+	for ort in leit_orte:
+		_kasten(ort + Vector3(0, 0.32, -0.05 if ort.z > 295.0 else 0.05),
+			Vector3(0.09, 0.10, 0.02),
+			_mat(Color(0.62, 0.10, 0.08), 0.3, Color(0.7, 0.1, 0.08), 0.6))
+
+	# Reifenspuren: zwei dunklere Bahnen je Fahrbahn. Frischer Asphalt ohne
+	# Spuren sieht aus wie am Tag der Eröffnung.
+	var spur := _mat(Color(0.34, 0.34, 0.36), 0.85)
+	for z in [298.0, 301.6, 289.4, 293.0]:
+		_kasten(Vector3(0, 0.045, z), Vector3(620, 0.005, 0.9), spur)
+	# Querfugen im Beton, alle 12 m.
+	var fugen := MultiMesh.new()
+	fugen.transform_format = MultiMesh.TRANSFORM_3D
+	var fuge := BoxMesh.new()
+	fuge.size = Vector3(0.06, 0.008, 8.0)
+	fuge.material = _mat(Color(0.28, 0.28, 0.30), 0.9)
+	fugen.mesh = fuge
+	var fugen_orte: Array[Vector3] = []
+	px = -300.0
+	while px < 300.0:
+		fugen_orte.append(Vector3(px, 0.05, 300.0))
+		fugen_orte.append(Vector3(px, 0.05, 291.0))
+		px += 12.0
+	fugen.instance_count = fugen_orte.size()
+	for i in fugen_orte.size():
+		fugen.set_instance_transform(i, Transform3D(Basis.IDENTITY, fugen_orte[i]))
+	var fugentraeger := MultiMeshInstance3D.new()
+	fugentraeger.multimesh = fugen
+	add_child(fugentraeger)
+
+	_autobahnbruecke(78.0)
 
 	# Fahrbahnmarkierung: gestrichelt, als MultiMesh.
 	var striche := MultiMesh.new()
@@ -231,9 +342,47 @@ func _autobahn_bauen() -> void:
 	# Fahrtrichtung +X (der Gegenverkehr fährt -X, also -PI/2).
 	lkw_fahrt = _prop(_LKW, Vector3(-240.0, 0, 300.0), PI / 2.0)
 	lkw_fahrt.name = "LkwFahrt"
+	# Räder und Karosserie merken, damit `_lkw_beleben` sie bewegen kann.
+	# Das Modell liefert sie als eigene Knoten (`rad_0` … `rad_5`).
+	for kind in lkw_fahrt.get_children():
+		var teil := kind as Node3D
+		if teil == null:
+			continue
+		if String(teil.name).begins_with("rad_"):
+			_lkw_raeder.append(teil)
+		elif String(teil.name).begins_with("karosserie"):
+			_lkw_karosserie = teil
+			_lkw_ruhelage = teil.position
+	# Innenlicht für die Kabinen-Einstellung: unter dem Dach kommt kein
+	# Sonnenlicht an, das Armaturenbrett wäre eine schwarze Fläche.
+	if lkw_fahrt != null:
+		var kabinenlicht := OmniLight3D.new()
+		kabinenlicht.light_color = Color(0.90, 0.93, 1.0)
+		kabinenlicht.light_energy = 1.5
+		kabinenlicht.omni_range = 3.2
+		kabinenlicht.shadow_enabled = false
+		lkw_fahrt.add_child(kabinenlicht)
+		kabinenlicht.position = Vector3(0.0, 2.25, 3.2)
 	for i in 3:
 		var auto := _prop(_AUTO, Vector3(-120.0 + i * 170.0, 0, 291.0), -PI / 2.0)
 		_gegenverkehr.append(auto)
+
+
+## Eine Brücke über die Autobahn. Sie kostet fünf Kästen und ist der
+## stärkste Fahr-Eindruck, den es für das Geld gibt: etwas kommt heran,
+## huscht über einen weg und ist vorbei. Ohne so etwas wirkt eine geraden
+## Autobahn wie ein Laufband.
+func _autobahnbruecke(x: float) -> void:
+	var beton := _foto_mat("beton_rau", Color(0.72, 0.71, 0.68), 0.22, 0.8)
+	var kappe := _mat(Color(0.66, 0.65, 0.62), 0.8)
+	# Überbau, leicht überhöht, plus Geländer.
+	_kasten(Vector3(x, 6.30, 295.5), Vector3(9.0, 0.95, 42.0), beton)
+	_kasten(Vector3(x - 4.6, 6.95, 295.5), Vector3(0.35, 1.05, 42.0), kappe)
+	_kasten(Vector3(x + 4.6, 6.95, 295.5), Vector3(0.35, 1.05, 42.0), kappe)
+	# Widerlager außerhalb der Fahrbahnen, dazu ein Mittelpfeiler.
+	for z in [316.0, 275.0]:
+		_kasten(Vector3(x, 2.90, z), Vector3(8.4, 6.80, 4.0), beton)
+	_kasten(Vector3(x, 2.90, 295.5), Vector3(7.0, 6.80, 1.4), beton)
 
 
 func _schild(x: float, textur: String) -> void:
@@ -552,9 +701,11 @@ func _skyline_bauen() -> void:
 
 
 func _kneipe_bauen() -> void:
-	var wand := _mat(Color(0.82, 0.74, 0.60), 0.95)
-	var holz := _tex_mat("res://assets/texturen/ffm/holz.png", 0.5)
-	var balken := _mat(Color(0.30, 0.21, 0.14), 0.9)
+	var wand := _foto_mat("putz", Color(0.80, 0.72, 0.58), 0.34, 0.8)
+	var holz := _tex_mat("res://assets/texturen/ffm/holz.png", 0.5,
+		Color(0.58, 0.47, 0.38))
+	var balken := _mat(Color(0.26, 0.17, 0.11), 0.85)
+	var vertaefelung := _mat(Color(0.34, 0.21, 0.13), 0.6)
 
 	_kasten(Vector3(400, 0.05, -100), Vector3(13, 0.1, 9.5), holz)          # Boden
 	_kasten(Vector3(400, 3.55, -100), Vector3(13, 0.2, 9.5), balken)        # Decke
@@ -565,14 +716,139 @@ func _kneipe_bauen() -> void:
 	for x in [396.0, 400.0, 404.0]:
 		_kasten(Vector3(x, 3.35, -100), Vector3(0.25, 0.25, 9.5), balken)   # Deckenbalken
 
-	# Ein „Fenster" mit Tageslicht: leuchtende Scheibe an der Ostwand.
-	var tag := _kasten(Vector3(406.44, 1.9, -98.0), Vector3(0.05, 1.4, 2.2),
-		_mat(Color(0.95, 0.97, 1.0), 0.4, Color(0.9, 0.95, 1.0), 1.6))
-	tag.rotation.y = 0.0
+	# Holzvertäfelung bis Brusthöhe mit Abschlussleiste — der Unterschied
+	# zwischen „Wirtsstube" und „weißer Raum mit Möbeln". Sie läuft rings
+	# um alle vier Wände, knapp vor dem Putz.
+	for daten in [
+			[Vector3(400, 0.60, -104.58), Vector3(12.6, 1.20, 0.06)],
+			[Vector3(400, 0.60, -95.42), Vector3(12.6, 1.20, 0.06)],
+			[Vector3(393.58, 0.60, -100), Vector3(0.06, 1.20, 9.2)],
+			[Vector3(406.42, 0.60, -100), Vector3(0.06, 1.20, 9.2)]]:
+		_kasten(daten[0], daten[1], vertaefelung)
+	for daten in [
+			[Vector3(400, 1.23, -104.55), Vector3(12.6, 0.08, 0.10)],
+			[Vector3(400, 1.23, -95.45), Vector3(12.6, 0.08, 0.10)],
+			[Vector3(393.55, 1.23, -100), Vector3(0.10, 0.08, 9.2)],
+			[Vector3(406.45, 1.23, -100), Vector3(0.10, 0.08, 9.2)]]:
+		_kasten(daten[0], daten[1], balken)
 
-	# Tresen, Tische, Bänke, Bembel-Regal.
-	_kasten(Vector3(395.0, 0.55, -96.6), Vector3(2.8, 1.1, 0.8), balken)
-	for daten in [[397.5, -101.8], [401.5, -101.2]]:
+	_kneipenfenster_bauen()
+	_schankraum_bauen()
+	_stube_moeblieren(holz, balken)
+
+	# Pendellampen: sichtbare Leuchten über den Tischen und dem Wurftisch.
+	# Ein warmer Lichtfleck ohne Lampe darüber liest sich als Fehler.
+	for x in [396.6, 400.0, 403.4]:
+		_prop(_PENDELLAMPE, Vector3(x, 3.42, -100.0))
+		var lampe := OmniLight3D.new()
+		lampe.light_color = Color(1.0, 0.80, 0.52)
+		lampe.light_energy = 1.5
+		lampe.omni_range = 6.5
+		lampe.shadow_enabled = true
+		add_child(lampe)
+		lampe.position = Vector3(x, 2.85, -100.0)
+	# Über dem Wurftisch hängt eine eigene, tiefer sitzende Lampe.
+	_prop(_PENDELLAMPE, Vector3(400.0, 3.42, -103.0))
+	var wurflicht := OmniLight3D.new()
+	wurflicht.light_color = Color(1.0, 0.86, 0.62)
+	wurflicht.light_energy = 2.2
+	wurflicht.omni_range = 5.0
+	add_child(wurflicht)
+	wurflicht.position = Vector3(400.0, 2.85, -103.0)
+
+
+## Das Fenster zur Gasse: Rahmen, Sprossen, Bank und dahinter der helle
+## Tag. Vorher stand hier eine leuchtende Platte in der Wand — von innen
+## sah das aus wie ein Loch mit Licht dahinter, was es ja auch war.
+func _kneipenfenster_bauen() -> void:
+	var rahmen := _mat(Color(0.86, 0.83, 0.76), 0.7)
+	var tageslicht := _mat(Color(0.95, 0.97, 1.0), 0.4,
+		Color(0.90, 0.94, 1.0), 2.2)
+	for z in [-97.6, -101.4]:
+		# Die Scheibe sitzt in der Laibung, nicht in der Wandfläche.
+		var scheibe := _kasten(Vector3(406.30, 1.95, z),
+			Vector3(0.04, 1.30, 1.90), tageslicht)
+		scheibe.rotation.y = 0.0
+		for teil in [
+				[Vector3(406.24, 2.66, z), Vector3(0.14, 0.12, 2.10)],
+				[Vector3(406.24, 1.24, z), Vector3(0.16, 0.14, 2.10)],
+				[Vector3(406.24, 1.95, z - 1.02), Vector3(0.14, 1.54, 0.12)],
+				[Vector3(406.24, 1.95, z + 1.02), Vector3(0.14, 1.54, 0.12)],
+				[Vector3(406.22, 1.95, z), Vector3(0.10, 1.30, 0.05)],
+				[Vector3(406.22, 1.95, z), Vector3(0.10, 0.05, 1.90)]]:
+			_kasten(teil[0], teil[1], rahmen)
+		# Fensterbank mit zwei Gläsern darauf.
+		_kasten(Vector3(406.12, 1.20, z), Vector3(0.34, 0.06, 2.10), rahmen)
+		_prop(_GERIPPTE, Vector3(406.10, 1.23, z - 0.35), 0.4)
+		_prop(_GERIPPTE, Vector3(406.10, 1.23, z + 0.28), 2.1)
+
+
+## Der Schankraum: Tresen, Rückbuffet mit Flaschen und Gläsern, Bembel
+## auf dem Tresen, der Wirt dahinter.
+func _schankraum_bauen() -> void:
+	var tresen := _prop(_TRESEN, Vector3(395.6, 0.0, -96.9), PI)
+	tresen.rotation.y = PI
+
+	# Rückbuffet an der Rückwand: zwei Regalbretter mit Flaschen.
+	var brett := _mat(Color(0.28, 0.18, 0.12), 0.7)
+	for hoehe in [1.55, 1.95]:
+		_kasten(Vector3(395.6, hoehe, -95.62), Vector3(3.2, 0.05, 0.30), brett)
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 8814
+	var flaschentoene: Array[Color] = [
+		Color(0.07, 0.13, 0.06), Color(0.16, 0.10, 0.04),
+		Color(0.05, 0.09, 0.12), Color(0.20, 0.14, 0.05),
+	]
+	for hoehe in [1.58, 1.98]:
+		for i in 16:
+			var x := 394.15 + i * 0.19 + rng.randf_range(-0.02, 0.02)
+			# Bauch und Hals getrennt — ein einzelner Kegel liest sich als
+			# Kegel, nicht als Flasche.
+			var glasfarbe := _mat(
+				flaschentoene[rng.randi() % flaschentoene.size()], 0.22)
+			var bauch := MeshInstance3D.new()
+			var unten := CylinderMesh.new()
+			unten.top_radius = 0.036
+			unten.bottom_radius = 0.039
+			unten.height = 0.22
+			unten.material = glasfarbe
+			bauch.mesh = unten
+			add_child(bauch)
+			bauch.position = Vector3(x, hoehe + 0.11, -95.62)
+			var hals := MeshInstance3D.new()
+			var oben := CylinderMesh.new()
+			oben.top_radius = 0.012
+			oben.bottom_radius = 0.018
+			oben.height = 0.09
+			oben.material = glasfarbe
+			hals.mesh = oben
+			add_child(hals)
+			hals.position = Vector3(x, hoehe + 0.265, -95.62)
+	# Gläser und Bembel auf dem Tresen.
+	for i in 6:
+		_prop(_GERIPPTE, Vector3(394.5 + i * 0.28, 1.09, -97.15),
+			rng.randf() * TAU)
+	_prop(_BEMBEL, Vector3(396.6, 1.09, -97.05), 0.7)
+	_prop(_BEMBEL, Vector3(396.95, 1.09, -96.75), 2.4)
+
+	# Der Wirt hinter dem Tresen. Er sieht auf, wenn jemand nah ist.
+	var wirt := Wirt.new()
+	wirt.modell_pfad = "res://actors/models/oliver.glb"
+	wirt.zielhoehe = 1.79
+	wirt.blickziel_pfad = ^"../../Player"
+	add_child(wirt)
+	wirt.position = Vector3(395.6, 0.0, -96.15)
+	# Blick in den Gastraum (Godot schaut nach -Z), nicht zur Rückwand.
+	wirt.rotation.y = 0.0
+
+
+## Tische, Bänke, Bilder, Garderobe, Bembel-Regal.
+func _stube_moeblieren(holz: Material, balken: Material) -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 4711
+	# Zwei runde Tische, gedeckt: Bembel und je zwei Geripptes. Ein leerer
+	# Tisch sieht aus wie eine geschlossene Kneipe.
+	for daten in [[397.5, -101.8], [401.6, -101.2]]:
 		var fuss := MeshInstance3D.new()
 		var rohr := CylinderMesh.new()
 		rohr.top_radius = 0.06
@@ -591,23 +867,52 @@ func _kneipe_bauen() -> void:
 		platte.mesh = scheibe
 		add_child(platte)
 		platte.position = Vector3(daten[0], 0.85, daten[1])
-		_prop(_BEMBEL, Vector3(daten[0] + 0.15, 0.88, daten[1] - 0.1), 0.8)
+		_prop(_BEMBEL, Vector3(daten[0] + 0.16, 0.88, daten[1] - 0.10), 0.8)
+		for versatz in [Vector3(-0.24, 0.0, 0.16), Vector3(0.02, 0.0, 0.30)]:
+			_prop(_GERIPPTE,
+				Vector3(daten[0], 0.88, daten[1]) + versatz, rng.randf() * TAU)
+		# Zwei Bierdeckel — kleines Detail, große Wirkung auf einem Tisch.
+		for versatz in [Vector3(-0.30, 0.0, -0.10), Vector3(0.20, 0.0, 0.24)]:
+			var deckel := _kasten(
+				Vector3(daten[0], 0.879, daten[1]) + versatz,
+				Vector3(0.10, 0.004, 0.10), _mat(Color(0.80, 0.76, 0.66), 0.95))
+			deckel.rotation.y = rng.randf() * TAU
 	_prop(_BANK, Vector3(397.5, 0.1, -100.4), 0.0)
-	_prop(_BANK, Vector3(401.5, 0.1, -99.9), 0.0)
+	_prop(_BANK, Vector3(401.6, 0.1, -99.9), 0.0)
+	_prop(_STUHL, Vector3(398.2, 0.05, -102.7), rng.randf_range(2.6, 3.6))
+	_prop(_STUHL, Vector3(402.4, 0.05, -102.2), rng.randf_range(2.6, 3.6))
 
 	# Regal mit Bembeln an der Westwand.
 	_kasten(Vector3(393.7, 1.5, -100.5), Vector3(0.25, 0.06, 3.4), balken)
 	for i in 5:
 		_prop(_BEMBEL, Vector3(393.7, 1.53, -102.0 + i * 0.7), i * 1.1)
 
-	# Warmes Licht.
-	for x in [397.0, 403.0]:
-		var lampe := OmniLight3D.new()
-		lampe.light_color = Color(1.0, 0.82, 0.55)
-		lampe.light_energy = 1.6
-		lampe.omni_range = 7.0
-		add_child(lampe)
-		lampe.position = Vector3(x, 3.0, -100)
+	# Drei gerahmte Bilder auf der Vertäfelung. Jeder Rahmen bekommt eine
+	# eigene Textur — dreimal dasselbe Bild fällt sofort auf.
+	var bilder: Array = [
+		[Vector3(397.8, 1.92, -95.36), 0.0, 1],
+		[Vector3(402.6, 1.92, -95.36), 0.0, 2],
+		[Vector3(393.62, 1.92, -98.4), PI / 2.0, 3],
+	]
+	for eintrag: Array in bilder:
+		var rahmen := _prop(_BILDERRAHMEN, eintrag[0], eintrag[1])
+		var flaeche := rahmen.get_node_or_null("bild") as MeshInstance3D
+		if flaeche != null:
+			var leinwand := StandardMaterial3D.new()
+			leinwand.albedo_texture = load(
+				"res://assets/texturen/ffm/wandbild_%d.png" % eintrag[2])
+			leinwand.roughness = 0.85
+			flaeche.material_override = leinwand
+
+	# Garderobenhaken mit zwei Jacken neben der Tür.
+	_kasten(Vector3(404.8, 1.72, -95.42), Vector3(1.20, 0.08, 0.06), balken)
+	for daten in [[404.42, Color(0.20, 0.22, 0.28)],
+			[405.18, Color(0.30, 0.18, 0.14)]]:
+		var haken := _kasten(Vector3(daten[0], 1.66, -95.34),
+			Vector3(0.04, 0.14, 0.04), balken)
+		haken.rotation.x = 0.3
+		_kasten(Vector3(daten[0], 1.30, -95.30), Vector3(0.34, 0.62, 0.12),
+			_mat(daten[1], 0.95))
 
 	# Banden, damit in der Stube niemand durch Wände läuft.
 	_bande(Vector3(400, 1.8, -104.6), Vector3(13, 3.6, 0.4))

@@ -256,6 +256,32 @@ Wer echte Statisten will: dieselben Anbieter wie für Anne und Oliver
 (MetaPerson, Avaturn) — je Figur eine `.glb` nach `actors/models/`, dann
 in `_passanten_setzen` den Pfad tauschen.
 
+### Inventar der Kneipenstube
+| | |
+| --- | --- |
+| **Zweck** | Aus dem Raum mit Möbeln eine Wirtsstube machen |
+| **Szene** | `chapters/frankfurt/kulisse_ffm.gd` → `_kneipe_bauen` |
+| **Typ** | Geripptes, Schanktresen, Pendellampe, Bilderrahmen, Wurfball |
+| **Stil** | Hessische Apfelweinwirtschaft, benutzt und warm |
+| **Animation** | Keine nötig |
+| **Platzhalter** | Blender-Requisiten aus `tools/make_ffm_props.py`; Wandbilder als gebackene Sepia-Motive (PIL) |
+| **Priorität** | POLISH — trägt |
+
+Das **Geripptes** ist das wiedererkennbarste Detail des Kapitels: die
+Rippen sind Geometrie, keine Textur. Wer es austauscht, sollte das
+beibehalten — eine Rippentextur verschwindet aus zwei Metern Entfernung.
+
+### Der Wirt
+| | |
+| --- | --- |
+| **Zweck** | Hinter dem Tresen soll jemand stehen |
+| **Szene** | `chapters/frankfurt/wirt.gd` |
+| **Typ** | Wirt mit Schürze und Handtuch |
+| **Stil** | Beiläufig, im Halbdunkel hinter dem Tresen |
+| **Animation** | Mocap-Ruhehaltung; sieht auf, wenn jemand nah ist |
+| **Platzhalter** | Olivers Modell, dunkler getöntes Haar, blaue Schürze, Handtuch am Schulterknochen |
+| **Priorität** | IMPORTANT — wie bei den Passanten fehlt ein eigenes Modell |
+
 ### Kapitel-2-Klänge
 | | |
 | --- | --- |

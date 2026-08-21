@@ -22,8 +22,12 @@ const _ABSCHIED_ANNE := Vector3(-0.5, 0.3, -4.0)
 const _ABSCHIED_OLIVER := Vector3(1.2, 0.25, -4.3)
 const _ANKUNFT_ANNE := Vector3(202.0, 0.3, 0.5)
 const _ANKUNFT_OLIVER := Vector3(205.0, 0.25, -0.8)
-const _KNEIPE_ANNE := Vector3(399.2, 0.3, -98.4)
-const _KNEIPE_OLIVER := Vector3(401.6, 0.25, -98.4)
+## Beim Werfen stehen die beiden neben der Wurfbahn (die läuft bei
+## x 399,2–400,8), im Schlussbild dann einander zugewandt in der Mitte.
+const _KNEIPE_ANNE := Vector3(398.5, 0.3, -97.9)
+const _KNEIPE_OLIVER := Vector3(401.9, 0.25, -98.2)
+const _SCHLUSS_ANNE := Vector3(399.2, 0.3, -98.4)
+const _SCHLUSS_OLIVER := Vector3(401.6, 0.25, -98.4)
 
 ## Die optionalen Fundstücke in der Gasse — Knotenname unter `Erinnerungen`
 ## und die Zeilen dazu. Sie halten den Lauf nicht an, sie warten aufs
@@ -133,6 +137,8 @@ func _ablauf() -> void:
 	_krug.abschluss_uebernehmen()
 
 	# 6. Sieg-Sequenz: die beiden in der Stube, dann der Level-Übergang.
+	_player.global_position = _SCHLUSS_ANNE
+	_oliver.global_position = _SCHLUSS_OLIVER
 	_player.rotation.y = -PI / 2.0
 	_oliver.rotation.y = PI / 2.0
 	# Nicht weiter zurück: die Innenkante der Vorderwand liegt bei z = -95,35.
@@ -174,11 +180,14 @@ func _autobahn_sequenz() -> void:
 	var lkw: Node3D = _kulisse.lkw_fahrt
 	lkw.position.x = -240.0
 	_fahrt_laeuft = true
+	# Die Kulisse dreht die Räder und lässt die Federung arbeiten, solange
+	# hier ein Tempo steht.
+	_kulisse.lkw_tempo = fahrt_tempo
 	_motor.play()
 
 	# Einstellung 1: die Kamera fährt seitlich mit.
 	var uhr := 0.0
-	var dauer := _wartezeit(5.0)
+	var dauer := _wartezeit(4.0)
 	while uhr < dauer:
 		uhr += get_process_delta_time()
 		_filmkamera.global_position = lkw.global_position + Vector3(-5.0, 2.6, 8.5)
@@ -186,32 +195,54 @@ func _autobahn_sequenz() -> void:
 		_filmkamera.current = true
 		await get_tree().process_frame
 
-	# Das Telefonat läuft, während er weiterfährt (Kamera folgt weiter).
+	# Einstellung 2: aus der Kabine. Das Telefonat läuft von hier — man
+	# sieht, was er sieht, während er mit ihr spricht.
 	_mitfahrt = true
-	_anruf_begleiten()
+	_kabine_begleiten()
 	await _dialogue.play(FrankfurtDialogue.ANRUF)
 	_mitfahrt = false
 
-	# Einstellung 2: fest am Schild, der LKW zieht vorbei.
-	_film(Vector3(140.0, 1.6, 307.5), Vector3(170.0, 2.4, 302.0))
+	# Einstellung 3: fest an der Brücke, der LKW zieht darunter durch.
+	_film(Vector3(96.0, 2.2, 308.0), Vector3(70.0, 3.4, 300.0))
 	uhr = 0.0
 	dauer = _wartezeit(4.5)
 	while uhr < dauer:
 		uhr += get_process_delta_time()
 		await get_tree().process_frame
 	_fahrt_laeuft = false
+	_kulisse.lkw_tempo = 0.0
 	var leiser := create_tween()
 	leiser.tween_property(_motor, ^"volume_db", -40.0, 1.0)
 	leiser.tween_callback(_motor.stop)
 
 
-## Hält die Mitfahr-Kamera am LKW, solange die Mitfahrt läuft — nebenläufig
-## zum wartenden Telefonat-Dialog.
-func _anruf_begleiten() -> void:
+## Die Kamera sitzt in der Kabine, hinter dem Lenkrad — nebenläufig zum
+## wartenden Telefonat-Dialog.
+##
+## Das Fahrgefühl kommt hier fast ausschließlich aus dem **Wackeln**: drei
+## überlagerte Sinusschwingungen (Fahrbahn, Federung, Motor) auf Position
+## und Neigung. Der Blick geht bewusst leicht nach rechts vorn, damit
+## Leitplanken und Leitpfosten durchs Bild ziehen — eine Kamera, die
+## genau nach vorn schaut, sieht auf einer geraden Autobahn wie ein
+## Standbild aus.
+func _kabine_begleiten() -> void:
 	var lkw: Node3D = _kulisse.lkw_fahrt
+	var uhr := 0.0
 	while _mitfahrt:
-		_filmkamera.global_position = lkw.global_position + Vector3(-5.0, 2.6, 8.5)
-		_filmkamera.look_at(lkw.global_position + Vector3(2.0, 1.4, 0.0))
+		uhr += get_process_delta_time()
+		var ruckeln := Vector3(
+			sin(uhr * 13.0) * 0.006,
+			sin(uhr * 9.3) * 0.010 + sin(uhr * 24.0) * 0.003,
+			sin(uhr * 7.1) * 0.005)
+		# Der Sitzplatz **in Modellkoordinaten**: links, hinter dem Lenkrad.
+		# Der LKW ist im Weltraum gedreht — wer hier Weltachsen addiert,
+		# landet im Koffer und filmt eine weiße Wand (genau so passiert).
+		_filmkamera.global_position = lkw.to_global(
+			Vector3(-0.52, 2.16, 3.05) + ruckeln)
+		_filmkamera.look_at(lkw.to_global(Vector3(
+			-0.15, 0.60 + sin(uhr * 5.0) * 0.08, 45.0)))
+		_filmkamera.rotation.z = sin(uhr * 3.7) * 0.006
+		_filmkamera.current = true
 		await get_tree().process_frame
 
 
