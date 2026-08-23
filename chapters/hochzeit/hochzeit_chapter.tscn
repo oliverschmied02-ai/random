@@ -1,0 +1,157 @@
+[gd_scene load_steps=19 format=3 uid="uid://hz_kapitel_3a"]
+
+[ext_resource type="Script" path="res://chapters/hochzeit/chapter_hochzeit.gd" id="1_chapter"]
+[ext_resource type="PackedScene" path="res://actors/player/player.tscn" id="2_player"]
+[ext_resource type="PackedScene" path="res://actors/companion/companion.tscn" id="3_companion"]
+[ext_resource type="PackedScene" path="res://camera/third_person_camera.tscn" id="4_camera"]
+[ext_resource type="PackedScene" path="res://systems/dialogue/dialogue_box.tscn" id="5_dialogue"]
+[ext_resource type="PackedScene" path="res://ui/objective_label.tscn" id="6_objective"]
+[ext_resource type="PackedScene" path="res://ui/interaction_prompt.tscn" id="7_prompt"]
+[ext_resource type="PackedScene" path="res://ui/chapter_card.tscn" id="8_karte"]
+[ext_resource type="PackedScene" path="res://ui/pause_menu.tscn" id="9_pause"]
+[ext_resource type="Script" path="res://chapters/hochzeit/kulisse_hochzeit.gd" id="10_kulisse"]
+[ext_resource type="Script" path="res://chapters/hochzeit/strauss_spiel.gd" id="11_strauss"]
+[ext_resource type="AudioStream" path="res://audio/menge.wav" id="12_menge"]
+[ext_resource type="AudioStream" path="res://audio/jubel.wav" id="13_jubel"]
+[ext_resource type="Shader" path="res://ui/vignette.gdshader" id="14_vignette"]
+
+[sub_resource type="ShaderMaterial" id="Mat_vignette"]
+shader = ExtResource("14_vignette")
+
+[sub_resource type="BoxShape3D" id="Bogen_zone"]
+size = Vector3(9, 3, 4)
+
+[sub_resource type="ProceduralSkyMaterial" id="Himmel_sommer"]
+sky_top_color = Color(0.12, 0.36, 0.72, 1)
+sky_horizon_color = Color(0.66, 0.79, 0.9, 1)
+sky_curve = 0.18
+ground_bottom_color = Color(0.3, 0.34, 0.32, 1)
+ground_horizon_color = Color(0.64, 0.72, 0.76, 1)
+sun_angle_max = 6.0
+sun_curve = 0.08
+
+[sub_resource type="Sky" id="Sky_sommer"]
+sky_material = SubResource("Himmel_sommer")
+
+[sub_resource type="Environment" id="Umgebung_sommer"]
+background_mode = 2
+sky = SubResource("Sky_sommer")
+ambient_light_source = 3
+ambient_light_energy = 1.0
+reflected_light_source = 2
+tonemap_mode = 2
+tonemap_white = 1.1
+ssr_enabled = true
+ssr_max_steps = 32
+ssr_fade_in = 0.4
+ssr_fade_out = 12.0
+glow_enabled = true
+glow_intensity = 0.2
+glow_strength = 0.9
+glow_bloom = 0.05
+glow_blend_mode = 1
+glow_hdr_threshold = 1.4
+fog_enabled = true
+fog_light_color = Color(0.72, 0.8, 0.88, 1)
+fog_light_energy = 1.0
+fog_density = 0.0016
+fog_aerial_perspective = 0.9
+fog_sky_affect = 0.2
+adjustment_enabled = true
+adjustment_brightness = 1.02
+adjustment_contrast = 1.05
+adjustment_saturation = 1.06
+
+[sub_resource type="StandardMaterial3D" id="Boden_mat"]
+albedo_color = Color(0.34, 0.36, 0.3, 1)
+roughness = 1.0
+
+[node name="HochzeitChapter" type="Node3D"]
+script = ExtResource("1_chapter")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Umgebung_sommer")
+
+[node name="SunLight" type="DirectionalLight3D" parent="."]
+transform = Transform3D(0.74, -0.44, 0.51, 0, 0.76, 0.65, -0.67, -0.48, 0.56, 0, 40, 0)
+light_color = Color(1, 0.96, 0.88, 1)
+light_energy = 1.1
+shadow_enabled = true
+directional_shadow_max_distance = 160.0
+
+[node name="Fuelllicht" type="DirectionalLight3D" parent="."]
+transform = Transform3D(-0.87, 0.28, -0.4, 0, 0.82, 0.57, 0.49, 0.5, -0.71, 0, 30, 0)
+light_color = Color(0.94, 0.96, 1, 1)
+light_energy = 0.32
+shadow_enabled = false
+
+[node name="Ground" type="CSGBox3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 25)
+use_collision = true
+size = Vector3(220, 1, 50)
+material = SubResource("Boden_mat")
+
+[node name="Kulisse" type="Node3D" parent="."]
+script = ExtResource("10_kulisse")
+
+[node name="Player" parent="." instance=ExtResource("2_player")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.5, 0.3, 16)
+
+[node name="Oliver" parent="." instance=ExtResource("3_companion")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 0.25, 16.8)
+target_path = NodePath("../Player")
+
+[node name="ThirdPersonCamera" parent="." instance=ExtResource("4_camera")]
+target_path = NodePath("../Player")
+
+[node name="Filmkamera" type="Camera3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.6, 1.75, 18.4)
+current = true
+fov = 58.0
+
+[node name="StraussSpiel" type="Node3D" parent="."]
+script = ExtResource("11_strauss")
+
+[node name="Triggers" type="Node3D" parent="."]
+
+[node name="BogenZone" type="Area3D" parent="Triggers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 6.5)
+collision_layer = 0
+collision_mask = 2
+
+[node name="Form" type="CollisionShape3D" parent="Triggers/BogenZone"]
+shape = SubResource("Bogen_zone")
+
+[node name="UI" type="Node" parent="."]
+
+[node name="Vignette" type="CanvasLayer" parent="UI"]
+layer = 0
+
+[node name="Abdunkler" type="ColorRect" parent="UI/Vignette"]
+material = SubResource("Mat_vignette")
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="DialogueBox" parent="UI" instance=ExtResource("5_dialogue")]
+
+[node name="ObjectiveLabel" parent="UI" instance=ExtResource("6_objective")]
+
+[node name="InteractionPrompt" parent="UI" instance=ExtResource("7_prompt")]
+
+[node name="ChapterCard" parent="UI" instance=ExtResource("8_karte")]
+
+[node name="PauseMenu" parent="UI" instance=ExtResource("9_pause")]
+
+[node name="Klang" type="Node" parent="."]
+
+[node name="Menge" type="AudioStreamPlayer" parent="Klang"]
+stream = ExtResource("12_menge")
+volume_db = -14.0
+
+[node name="Jubel" type="AudioStreamPlayer" parent="Klang"]
+stream = ExtResource("13_jubel")
+volume_db = -7.0

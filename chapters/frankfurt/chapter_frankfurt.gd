@@ -148,7 +148,8 @@ func _ablauf() -> void:
 	await _karte.abspann(FrankfurtDialogue.KARTE_TITEL, FrankfurtDialogue.KARTE_ZEILE)
 	kapitel_abgeschlossen.emit()
 	if not test_schnell:
-		get_tree().change_scene_to_file("res://ui/title_screen.tscn")
+		get_tree().change_scene_to_file(
+			"res://chapters/hochzeit/hochzeit_chapter.tscn")
 
 
 # --- Erinnerungen am Weg -------------------------------------------------------

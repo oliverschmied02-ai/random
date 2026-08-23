@@ -1,7 +1,10 @@
 # Project Status
 
-**Spiel:** Our Story — Kapitel 1: Berlin · Kapitel 2: Frankfurt
+**Spiel:** Our Story — Kapitel 1: Berlin · Kapitel 2: Frankfurt ·
+Kapitel 3: Hochzeit
 **Engine:** Godot 4.5 (GDScript)
+**Das Spiel ist von der Widmung bis zum Abspann durchspielbar.** Drei
+Kapitel, drei Minispiele, ein Finale mit Geschenkbildschirm.
 **Aktuelle Stufe:** Kapitel 2 „Frankfurt" ist gebaut und hängt an Kapitel 1:
 nach dem Level-Übergangsbildschirm wechselt das Spiel in den Umzug —
 Abschiedsrede, LKW-Fahrt auf der A5, Ankunft in Sachsenhausen, freier Lauf
@@ -372,6 +375,65 @@ gerafften Wartezeiten durch (`test_schnell` am Kapitelknoten) und
 verlangt: Steuerungs-Übergabe nach den Sequenzen, greifende Kneipentür,
 stehende Krüge zu Spielbeginn, einen echten Wurf, der Krüge fällt, den
 Sieg bei leerem Tisch und den gemeldeten Kapitelabschluss.
+
+### Kapitel 3 — Hochzeit an der Spree (`chapters/hochzeit/`)
+Das Finale. Ein einziger Schauplatz, gebaut wie ein Bühnenbild: die Kamera
+schaut immer über das Wasser auf die **Oberbaumbrücke**, alles andere
+rahmt dieses Bild ein. Vorlage ist ein Foto vom Südufer, das Oliver
+geschickt hat.
+
+**Die Brücke** (`kulisse_hochzeit.gd`): sechs Flusspfeiler mit
+angeschrägtem Vorkopf, fünf Flussöffnungen, der Bogengang der Bahntrasse
+mit Zinnenkranz, zwei achteckige Türme mit Galerie, Spitzhelm und
+Wetterfahne, der Uhrengiebel daneben. Die **Flussbögen sind echte
+Öffnungen**: jede ist ein CSG-Körper, aus dem ein liegender Zylinder und
+ein Kasten herausgeschnitten werden (segmentbogenförmig, Stich 3,2 m auf
+20 m Spannweite). Der erste Versuch legte Zylinder *vor* das Mauerwerk und
+füllte die Zwickel mit Kästen — heraus kam eine Backsteinwand mit Beulen.
+Ein Bogen ist eine Öffnung, und Öffnungen muss man schneiden.
+
+**Das Wasser** (`wasser.gdshader`): kein Spiegel, kein Bildschirmraum-
+Trick — eine ruhige Flussoberfläche ist vor allem *bewegte Normale*. Vier
+Rauschoktaven, jede gegen die vorige **gedreht** (ohne Drehung liegen alle
+auf denselben Achsen und das Ergebnis liest sich als Zebrastreifen; genau
+so sah die erste Fassung aus), darüber eine Fresnel-Mischung zwischen
+Tiefenfarbe und Himmelsfarbe. Läuft auch im Kompatibilitätsrenderer des
+Web-Exports.
+
+**Die Trauerweide** (`tools/make_hochzeit_props.py`) brauchte drei
+Versuche und ist die Lehre des Kapitels: Versuch eins drehte jedes
+Zweigsegment mit Euler-Winkeln — ein Kaktus. Versuch zwei hängte 84 dicke
+Zweige unter eine kugelige Krone — ein Lolli mit Spaghetti. Was eine Weide
+ausmacht, ist **Dichte**: 320 dünne, ungleich lange Strähnen aus einer
+flachen, breiten Krone, gebaut als Ketten *senkrechter* Segmente ohne
+jede Drehung.
+
+**Der Hochzeitsaufbau:** Traubogen mit Blüten und Tuch, zwei Reihen weiße
+Klappstühle mit Mittelgang, roter Teppich, Stehtische mit Gerippten,
+Lichterketten an Holzmasten — und **zwölf Gäste** (`Passant` aus
+Kapitel 2, in festlichen, gedeckten Farben und verschiedenen Größen).
+
+**Das Minispiel** (`strauss_spiel.gd`): zehn Brautsträuße fliegen von drei
+Werfern in Bögen heran und drehen sich dabei, **fünf muss man fangen**.
+Gefangen wird in Ich-Perspektive — ein Ring in der Fangebene folgt der
+Maus (gedämpft, damit die Hände Gewicht haben), ein Klick schließt die
+Hände für 0,45 s. Verfolgen **und** Timing: dieselbe Doppelanforderung wie
+beim Werfen in den Kapiteln davor, nur umgekehrt. Wer alle zehn verpasst,
+bekommt eine freundliche Zeile und eine neue Runde. Die Flugbahn wird
+über den Fortschritt ausgewertet, nicht aufsummiert — derselbe Grund wie
+beim Dart-Minispiel in Kapitel 1.
+
+**Das Finale:** nach dem Sieg das Schlussbild am Wasser, dann der
+**Geschenkbildschirm**. Er löst ein, was die Widmung am Anfang verspricht
+(„Um dein Geschenk zu bekommen, musst du zuerst das Spiel unseres Lebens
+gewinnen"), wartet auf einen Tastendruck statt weiterzulaufen, und sein
+Text steht als **markierter Platzhalter** in
+`dialogue_lines_hochzeit.gd`. Das ist die wichtigste offene Stelle im
+ganzen Projekt.
+
+Prüflauf: `tools/headless_hochzeit_check.gd` — Auftakt, Gästezahl, der
+Traubogen-Trigger, ein bewusst verpasster und ein gefangener Strauß, der
+Sieg, Geschenkbildschirm und Abspann.
 
 ### Ton (`audio/`, `systems/audio/`)
 **Die Stadt-Ambience ist echt:** `audio/stadt_ambiente.mp3` (ruhige
@@ -1067,6 +1129,13 @@ und blondes Haar, Oliver dunkelblauer Pullover, helles Haar, weißer Kragen.
 statt synthetischer Klänge, Kameraübergänge, Pacing, Dialogtiming. Dazu die
 gesammelten Punkte: eine Reaktion zwischen den Würfen, ein echter Weg statt des
 Gleitens auf die Abschlussmarken.
+
+**Kapitel 3 (Hochzeit) ist gebaut** — offen dort: der **Geschenktext**
+(nur Oliver kann ihn schreiben), die echten Dialogtexte, und die Avatare
+der Gäste. Für sie gilt dasselbe wie für die Passanten in Kapitel 2: es
+sind umgefärbte Kopien der beiden Modelle. Wer echte Gäste will, legt je
+eine `.glb` unter `actors/models/` ab und tauscht den Pfad in
+`_gaeste_setzen`.
 
 **Kapitel 2 (Frankfurt) ist gebaut** — offen dort: das echte Umzugsjahr
 für die Kapitelkarte (aktuell Platzhalter „2021"), echte Dialogtexte,

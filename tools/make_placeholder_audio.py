@@ -402,6 +402,76 @@ def klirren():
     schreibe("klirren.wav", spur, 0.55)
 
 
+
+def jubel():
+    """Applaus und Zurufe: viele kurze Klatscher plus ein Rufen darunter.
+
+    Applaus ist gefiltertes Rauschen in Häppchen — ein einzelnes Klatschen
+    klingt synthetisch, zweihundert übereinander nicht mehr."""
+    random.seed(31)
+    dauer = 2.4
+    spur = [0.0] * int(dauer * RATE)
+    for _ in range(220):
+        versatz = random.uniform(0.0, dauer - 0.15)
+        klatsch = huellkurve(hochpass(rauschen(0.06), 900), 0.001, 0.045)
+        start = int(versatz * RATE)
+        # Die ersten Klatscher lauter, danach dünnt es aus.
+        laut = 0.16 * (1.0 - versatz / dauer * 0.55)
+        for j, s in enumerate(klatsch):
+            if start + j < len(spur):
+                spur[start + j] += s * laut
+    # Rufen: zwei gleitende Vokaltöne.
+    for versatz, hoehe in ((0.25, 430.0), (0.9, 520.0)):
+        ruf = huellkurve(sinus(hoehe, 0.55), 0.05, 0.4)
+        start = int(versatz * RATE)
+        for j, s in enumerate(ruf):
+            if start + j < len(spur):
+                gleiten = 1.0 + 0.12 * math.sin(j / RATE * 6.0)
+                spur[start + j] += s * 0.06 * gleiten
+    schreibe("jubel.wav", spur, 0.8)
+
+
+def menge():
+    """Hochzeitsgesellschaft im Freien: Stimmengewirr, vereinzelt Lachen,
+    dazu ein Hauch Wind. Läuft als Schleife unter dem ganzen Kapitel."""
+    random.seed(32)
+    dauer = 10.0
+    stimmen = tiefpass(rauschen(dauer), 620)
+    wind = tiefpass(rauschen(dauer), 260)
+    spur = []
+    for i in range(len(stimmen)):
+        t = i / RATE
+        # Zwei langsame Schwebungen: die Gruppe wird mal lauter, mal leiser.
+        atem = 0.62 + 0.38 * math.sin(t * 0.55) * math.sin(t * 1.31)
+        spur.append(stimmen[i] * atem + wind[i] * 0.35)
+    for versatz in (1.8, 4.2, 5.9, 8.4):
+        lachen = huellkurve(sinus(random.uniform(300.0, 460.0), 0.5), 0.03, 0.35)
+        start = int(versatz * RATE)
+        for j, s in enumerate(lachen):
+            if start + j < len(spur):
+                # Silben: das Lachen pulst.
+                puls = 0.5 + 0.5 * math.sin(j / RATE * 46.0)
+                spur[start + j] += s * 0.07 * puls
+    schreibe("menge.wav", schleife_schliessen(spur, 1.2), 0.4)
+
+
+def volltreffer():
+    """Ein gefangener Strauß: kurzes Rascheln plus ein weicher Glockenton."""
+    random.seed(33)
+    dauer = 0.7
+    spur = [0.0] * int(dauer * RATE)
+    rascheln = huellkurve(hochpass(rauschen(0.22), 1400), 0.004, 0.16)
+    for j, s in enumerate(rascheln):
+        spur[j] += s * 0.34
+    for hoehe, laut, start_s in ((784.0, 0.20, 0.02), (1176.0, 0.13, 0.05),
+                                 (1568.0, 0.08, 0.08)):
+        ton = huellkurve(sinus(hoehe, 0.55), 0.006, 0.42)
+        start = int(start_s * RATE)
+        for j, s in enumerate(ton):
+            if start + j < len(spur):
+                spur[start + j] += s * laut
+    schreibe("volltreffer.wav", spur, 0.6)
+
 if __name__ == "__main__":
     os.makedirs(AUS, exist_ok=True)
     schritte()
@@ -416,4 +486,10 @@ if __name__ == "__main__":
     wisch()
     handy_tipp()
     match_klang()
+    motor()
+    kneipe()
+    klirren()
+    jubel()
+    menge()
+    volltreffer()
     print("fertig — %s" % AUS)

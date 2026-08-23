@@ -370,6 +370,50 @@ des Importeurs sind *0 = aus WAV lesen, 1 = aus, 2 = vorwärts*.
 
 ---
 
+## Kapitel 3 — Hochzeit
+
+### Die Gäste-Avatare
+| | |
+| --- | --- |
+| **Zweck** | Zwölf Menschen auf der Hochzeit |
+| **Szene** | `chapters/hochzeit/kulisse_hochzeit.gd` → `_gaeste_setzen` |
+| **Typ** | Geriggte Personenmodelle, festlich gekleidet |
+| **Stil** | Wie Anne und Oliver: realistisch, nach Fotos |
+| **Animation** | Mocap-Ruhehaltung (steht, verlagert Gewicht, schaut um) |
+| **Platzhalter** | Umgefärbte Kopien von `anne.glb` / `oliver.glb` in verschiedenen Größen |
+| **Priorität** | IMPORTANT — hier stehen die echten Menschen von damals |
+
+**So werden echte Gäste eingesetzt:** je Person eine `.glb` nach
+`actors/models/` legen (dieselben Werkzeuge wie für Anne und Oliver,
+siehe oben) und in `_gaeste_setzen` den `modell_pfad` des jeweiligen
+Platzes auf die neue Datei zeigen lassen. Größe, Kleidungs- und Haarfarbe
+stehen daneben und können dann entfallen — ein eigenes Modell braucht
+kein Umfärben.
+
+### Brautstrauß, Weide, Traubogen, Stuhl, Stehtisch, Lichterkette
+| | |
+| --- | --- |
+| **Zweck** | Das Inventar der Hochzeit |
+| **Szene** | `chapters/hochzeit/` |
+| **Typ** | Blender-Requisiten |
+| **Stil** | Sommerlich, creme und blassrosa, nichts Knalliges |
+| **Animation** | Der Strauß dreht sich im Flug |
+| **Platzhalter** | `tools/make_hochzeit_props.py` |
+| **Priorität** | POLISH — trägt |
+
+### Der Geschenktext
+| | |
+| --- | --- |
+| **Zweck** | Das Ende des Versprechens aus der Widmung |
+| **Szene** | `chapters/hochzeit/dialogue_lines_hochzeit.gd` |
+| **Typ** | Zwei Zeilen Text |
+| **Stil** | Deine Worte, nicht meine |
+| **Animation** | — |
+| **Platzhalter** | „[Hier steht dein Geschenk — der Text ist noch ein Platzhalter.]" |
+| **Priorität** | **CRITICAL** — ohne ihn endet das Spiel mit einer leeren Zusage |
+
+---
+
 ## Nicht in dieser Liste
 
 Die Testfläche `scenes/test_playground.tscn` ist ein Entwicklungswerkzeug zum
