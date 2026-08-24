@@ -112,14 +112,14 @@ const INTRO_PROFILE: Array[Dictionary] = [
 	},
 ]
 
-## Olivers Profil — kommt als vierte Karte. Drei Fotos, auf jedem sieht er
-## anders aus; genau darüber denkt Anne dann laut nach.
+## Olivers Profil — kommt als vierte Karte. Echte Fotos: einmal Selfie mit
+## Sonnenbrille, einmal von hinten im Gegenlicht am Strand — auf jedem sieht
+## er anders aus, und genau darüber denkt Anne dann laut nach.
 const INTRO_OLIVER: Dictionary = {
 	"name": "Oliver", "alter": 28,
 	"bilder": [
 		"res://assets/intro/oliver_foto_1.png",
 		"res://assets/intro/oliver_foto_2.png",
-		"res://assets/intro/oliver_foto_3.png",
 	],
 	"bio": "Sucht jemanden für Spaziergänge, solange alles andere zu hat.",
 	"abwink": "Hm. Vielleicht doch noch mal gucken.",

@@ -82,13 +82,17 @@ func _los() -> void:
 		szene.gedanke_weiter()
 	_pruefe(szene.zustand() == szene.Zustand.WISCHEN, "nach den Gedanken wird gewischt")
 
-	# Durch die Fotos blättern: drei Stück, dann wieder das erste.
+	# Durch die Fotos blättern: so viele, wie das Profil hat, dann wieder
+	# das erste. Die Anzahl kommt aus den Daten — echte Fotos können dazu-
+	# kommen oder wegfallen, ohne dass der Prüflauf bricht.
+	var anzahl: int = (BerlinDialogue.INTRO_OLIVER["bilder"] as Array).size()
+	_pruefe(anzahl >= 2, "Oliver hat mindestens zwei Fotos")
 	_pruefe(szene.foto_index() == 0, "Foto 1 liegt zuerst")
 	szene.tippe_auf_schirm(Vector2(270, 400))  # Tipp mitten aufs Foto
-	szene.naechstes_foto()
-	_pruefe(szene.foto_index() == 2, "zweimal Tippen zeigt Foto 3")
-	szene.naechstes_foto()
-	_pruefe(szene.foto_index() == 0, "danach wieder Foto 1")
+	_pruefe(szene.foto_index() == 1, "ein Tipp blättert weiter")
+	for i in anzahl - 1:
+		szene.naechstes_foto()
+	_pruefe(szene.foto_index() == 0, "nach allen Fotos wieder Foto 1")
 
 	# Links auf Oliver federt zurück — er fliegt nicht weg.
 	szene.wische(false)
