@@ -38,17 +38,6 @@ const WASSER_Y := -0.6
 ## Die Gäste — vom Kapitel für Blickrichtung und Jubel gebraucht.
 var gaeste: Array[Node3D] = []
 
-## Festliche Kleidung. Bewusst gedeckt und sommerlich: ein Dutzend
-## Knallfarben nebeneinander sieht aus wie ein Faschingszug.
-const KLEIDER: Array[Color] = [
-	Color(0.28, 0.32, 0.44), Color(0.62, 0.58, 0.52), Color(0.34, 0.40, 0.36),
-	Color(0.72, 0.68, 0.60), Color(0.42, 0.30, 0.34), Color(0.24, 0.28, 0.34),
-	Color(0.58, 0.50, 0.42), Color(0.36, 0.44, 0.50),
-]
-const HAARE: Array[Color] = [
-	Color(0.16, 0.12, 0.09), Color(0.34, 0.24, 0.14), Color(0.58, 0.48, 0.30),
-	Color(0.22, 0.17, 0.13), Color(0.44, 0.34, 0.22), Color(0.70, 0.66, 0.60),
-]
 
 
 func _ready() -> void:
@@ -613,13 +602,9 @@ func _fest_bauen() -> void:
 
 func _gaeste_setzen() -> void:
 	## Zwölf Gäste: acht auf den Stühlen (bzw. davor stehend), vier an den
-	## Stehtischen. Wie in Kapitel 2 sind es umgefärbte Kopien der beiden
-	## Modelle in verschiedenen Größen — siehe `chapters/frankfurt/passant.gd`
-	## für das Verfahren und seine Grenzen.
-	##
-	## **Hier ist der Platz für die echten Avatare.** Wer eine `.glb` für
-	## einen bestimmten Gast hat, legt sie unter `actors/models/` ab und
-	## tauscht unten den Pfad in der Liste — sonst ändert sich nichts.
+	## Stehtischen. Acht eigene Mixamo-Charaktere (`gast_1`–`gast_8`,
+	## aufbereitet über tools/mixamo_gast.py); an den Stehtischen wiederholen
+	## sich vier davon in anderer Größe — aus der Distanz fällt das nicht auf.
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 815
 	var plaetze: Array = [
@@ -633,12 +618,15 @@ func _gaeste_setzen() -> void:
 	]
 	for i in plaetze.size():
 		var ort: Vector3 = plaetze[i]
-		var gast := Passant.new()
-		gast.modell_pfad = "res://actors/models/%s.glb" % (
-			"anne" if i % 2 == 0 else "oliver")
+		var gast := Figur.new()
+		gast.modell_pfad = "res://actors/models/gast_%d.glb" % ((i % 8) + 1)
 		gast.zielhoehe = rng.randf_range(1.62, 1.88)
-		gast.kleidung = KLEIDER[i % KLEIDER.size()]
-		gast.haar = HAARE[i % HAARE.size()]
+		# Mocap und Gangwerk sind auf das RPM-Rig geeicht; auf dem Mixamo-
+		# Skelett verbiegen sie Kopf und Rumpf. Die Gäste stehen still —
+		# Armsenkung und Höhenskalierung funktionieren rein über Knochennamen
+		# und bleiben an.
+		gast.mocap_aktiv = false
+		gast.gangwerk_aktiv = false
 		add_child(gast)
 		gast.position = ort
 		# Zum Traubogen schauen — die vier am Empfang etwas beiläufiger.

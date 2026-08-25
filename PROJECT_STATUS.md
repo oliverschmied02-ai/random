@@ -410,8 +410,13 @@ jede Drehung.
 
 **Der Hochzeitsaufbau:** Traubogen mit Blüten und Tuch, zwei Reihen weiße
 Klappstühle mit Mittelgang, roter Teppich, Stehtische mit Gerippten,
-Lichterketten an Holzmasten — und **zwölf Gäste** (`Passant` aus
-Kapitel 2, in festlichen, gedeckten Farben und verschiedenen Größen).
+Lichterketten an Holzmasten — und **zwölf Gäste**: acht eigene
+Mixamo-Charaktere (`gast_1`–`gast_8.glb`, von Oliver als FBX geliefert,
+Pipeline siehe ASSET_REQUIREMENTS), an den Stehtischen wiederholen sich
+vier in anderer Größe. Mocap/Gangwerk sind für sie abgeschaltet — beide
+sind auf das RPM-Rig geeicht und verbiegen das Mixamo-Skelett; die
+Armsenkung aus der T-Pose arbeitet dagegen rein über Knochennamen und
+greift nach dem Umbenennen (`mixamorig:` weg) unverändert.
 
 **Das Minispiel** (`strauss_spiel.gd`): zehn Brautsträuße fliegen von drei
 Werfern in Bögen heran und drehen sich dabei, **fünf muss man fangen**.
@@ -1131,11 +1136,10 @@ gesammelten Punkte: eine Reaktion zwischen den Würfen, ein echter Weg statt des
 Gleitens auf die Abschlussmarken.
 
 **Kapitel 3 (Hochzeit) ist gebaut** — offen dort: der **Geschenktext**
-(nur Oliver kann ihn schreiben), die echten Dialogtexte, und die Avatare
-der Gäste. Für sie gilt dasselbe wie für die Passanten in Kapitel 2: es
-sind umgefärbte Kopien der beiden Modelle. Wer echte Gäste will, legt je
-eine `.glb` unter `actors/models/` ab und tauscht den Pfad in
-`_gaeste_setzen`.
+(nur Oliver kann ihn schreiben) und die echten Dialogtexte. Die Gäste
+sind seit dem GitHub-Release „Avatare" echte Mixamo-Charaktere; sie
+stehen still (Retargeting der Bewegung aufs Mixamo-Rig wäre der nächste
+Schritt, wenn mehr Leben gewünscht ist).
 
 **Kapitel 2 (Frankfurt) ist gebaut** — offen dort: das echte Umzugsjahr
 für die Kapitelkarte (aktuell Platzhalter „2021"), echte Dialogtexte,

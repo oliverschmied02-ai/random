@@ -372,23 +372,19 @@ des Importeurs sind *0 = aus WAV lesen, 1 = aus, 2 = vorwärts*.
 
 ## Kapitel 3 — Hochzeit
 
-### Die Gäste-Avatare
+### Die Gäste-Avatare — GELIEFERT
 | | |
 | --- | --- |
 | **Zweck** | Zwölf Menschen auf der Hochzeit |
 | **Szene** | `chapters/hochzeit/kulisse_hochzeit.gd` → `_gaeste_setzen` |
-| **Typ** | Geriggte Personenmodelle, festlich gekleidet |
-| **Stil** | Wie Anne und Oliver: realistisch, nach Fotos |
-| **Animation** | Mocap-Ruhehaltung (steht, verlagert Gewicht, schaut um) |
-| **Platzhalter** | Umgefärbte Kopien von `anne.glb` / `oliver.glb` in verschiedenen Größen |
-| **Priorität** | IMPORTANT — hier stehen die echten Menschen von damals |
+| **Stand** | Acht Mixamo-Charaktere (`actors/models/gast_1`–`gast_8.glb`), von Oliver als FBX über das GitHub-Release „Avatare" geliefert |
+| **Pipeline** | FBX 6100 → FBX2glTF → `tools/mixamo_gast.py` (Knochen umbenennen, Transparenz reparieren) → `tools/gast_verschlanken.py` (Decimate 0.35, Diffuse 256, Normal/Glanz raus) — aus 440 MB FBX wurden 8,7 MB GLB |
+| **Grenze** | Mocap/Gangwerk sind auf das RPM-Rig geeicht und für die Gäste abgeschaltet — sie stehen still. Bewegung bräuchte ein Retargeting auf das Mixamo-Skelett. |
+| **Priorität** | erledigt; NICE wäre Leben (Klatschen, Kopfdrehen) via Retargeting |
 
-**So werden echte Gäste eingesetzt:** je Person eine `.glb` nach
-`actors/models/` legen (dieselben Werkzeuge wie für Anne und Oliver,
-siehe oben) und in `_gaeste_setzen` den `modell_pfad` des jeweiligen
-Platzes auf die neue Datei zeigen lassen. Größe, Kleidungs- und Haarfarbe
-stehen daneben und können dann entfallen — ein eigenes Modell braucht
-kein Umfärben.
+**Weitere Gäste einsetzen:** FBX in ein GitHub-Release hängen, dann die
+Pipeline oben durchlaufen lassen und in `_gaeste_setzen` den
+`modell_pfad` des Platzes tauschen. Größe regelt `zielhoehe`.
 
 ### Brautstrauß, Weide, Traubogen, Stuhl, Stehtisch, Lichterkette
 | | |
