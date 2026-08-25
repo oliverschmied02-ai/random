@@ -1,15 +1,24 @@
 #!/usr/bin/env python3
-"""Baut die FFP2-Maske für das Minispiel — nach Foto-Vorlage.
+"""Baut die FFP2-Maske für das Minispiel — als Faltmaske in Fischform.
 
     python3 tools/make_maske.py
 
-Vorbild ist das hochgeladene Produktfoto einer Körbchen-FFP2 (Moldex-Typ):
-weißes **Rautennetz-Vlies**, rundes **Ausatemventil** mit blauem
-Rundaufdruck („CE 0121 · EN149:2001 · FFP2 NR D", mittig „FFP2"),
-zwei graue **Kopfbänder**. Der Markenname bleibt weg — der Rest der
-Anmutung wird nachgebaut: Ellipsoid-Körbchen mit frontprojizierter
-PIL-Textur (Netzstruktur, Schattierung, Ventilaufdruck), Ventilkuppel
-aus Geometrie, Bänder als Ringe.
+Die erste Fassung war ein Körbchen nach Produktfoto (Ellipsoid mit
+frontprojizierter Textur) — aus der Distanz las sich das als Ei. Die in
+Deutschland allgegenwärtige FFP2 ist aber die **gefaltete Fischform**:
+zwei weiße Vlies-Paneele, die an einer horizontalen Mittelnaht mit
+Knick aufeinandertreffen, zu den Seiten hin flach zusammenlaufen, oben
+ein Nasenbügel, seitlich zwei Ohrschlaufen, auf dem Oberpaneel der
+Aufdruck „FFP2 NR · CE 2163". Genau diese Silhouette macht die Maske
+auf einen Blick erkennbar — also wird sie hier parametrisch aufgebaut:
+
+* Oberes und unteres Paneel als getrennte Gitter (getrennte Ecken an
+  der Naht, damit der Faltknick hart bleibt statt weichgeschattet),
+* Tiefe und Höhe laufen zu den Seiten mit `s(u)` aus — der Fisch-Umriss,
+* Solidify gibt dem Vlies sichtbare Materialstärke an den Rändern,
+* Nasenbügel als geneigter Steg, Ohrschlaufen als flache Tori,
+* Textur: Vliesfasern, geprägte Schweißpunkt-Reihen an Naht und
+  Rändern, blauer Aufdruck auf dem Oberpaneel.
 
 Achsen wie bei allen Requisiten: Z hoch, -Y ist vorn.
 """
@@ -24,10 +33,12 @@ from PIL import Image, ImageDraw, ImageFilter
 ZIEL = Path(__file__).resolve().parent.parent / "assets" / "props"
 TEXTUR = ZIEL / "atemmaske_vlies.png"
 
-BREITE = 0.132   # Körbchen: Breite, Höhe, Tiefe in Metern
-HOEHE = 0.116
-TIEFE = 0.092
-BLAU = (78, 88, 152)
+BREITE = 0.160   # aufgefaltete Maske: Spannweite
+HOEHE = 0.110    # Höhe an der Mitte (beide Paneele zusammen)
+TIEFE = 0.048    # wie weit die Naht nach vorn steht
+BLAU = (64, 78, 148)
+
+SEITE = 768      # Texturkantenlänge
 
 
 def _linear(kanal: float) -> float:
@@ -47,71 +58,69 @@ def _material(name, farbe, rauheit=0.9, metall=0.0):
     return mat
 
 
-def _ringtext(zeichner, mitte, radius, text, farbe, basis_bild):
-    """Setzt `text` Zeichen für Zeichen auf einen Kreisbogen — wie der
-    gestempelte Rundaufdruck auf dem Ventil des Fotos."""
-    schritt = 2.0 * math.asin(5.5 / radius)  # Bogenmaß je Zeichen
-    start = -math.pi / 2 - schritt * (len(text) - 1) / 2
-    for lauf, zeichen in enumerate(text):
-        if zeichen == " ":
-            continue
-        winkel = start + lauf * schritt
-        kachel = Image.new("RGBA", (24, 24), (0, 0, 0, 0))
-        ImageDraw.Draw(kachel).text((7, 6), zeichen, fill=farbe + (255,))
-        kachel = kachel.rotate(-math.degrees(winkel) - 0.0, resample=Image.BICUBIC)
-        x = int(mitte[0] + radius * math.sin(winkel)) - 12
-        y = int(mitte[1] - radius * math.cos(winkel)) - 12
-        basis_bild.paste(kachel, (x, y), kachel)
+# --- Die Form ------------------------------------------------------------
+# u läuft von -1 (links) bis 1 (rechts), v von 0 (Naht) bis 1 (Randkante).
 
 
-def vlies_textur():
-    """Rautennetz-Vlies mit Körbchen-Schattierung und Ventilaufdruck."""
-    seite = 768
-    rng = np.random.default_rng(2021)
-    feld = np.full((seite, seite), 234.0)
-    feld += rng.normal(0.0, 3.0, (seite, seite))
+def _seit(u: float) -> float:
+    """Seitliches Auslaufen: 1 in der Mitte, 0 am Ohrende — der Umriss."""
+    return math.cos(u * math.pi / 2.0) ** 0.5
 
-    # Rautennetz: zwei Familien diagonaler Linien mit heller Gegenkante —
-    # so entsteht der geprägte Netz-Eindruck des Fotos.
-    yy, xx = np.mgrid[0:seite, 0:seite].astype(np.float32)
-    for richtung in (1.0, -1.0):
-        laeufer = (xx + richtung * yy * 0.62) % 17.0
-        feld -= np.clip(2.0 - np.abs(laeufer - 8.5), 0.0, 2.0) * 12.0
-        feld += np.clip(1.2 - np.abs(laeufer - 6.5), 0.0, 1.2) * 9.0
 
-    # Körbchen-Schattierung: zum Rand hin dunkler (frontprojiziert liegt
-    # der Rand der Textur auf der Rundung).
-    rand = np.sqrt((xx / seite - 0.5) ** 2 + (yy / seite - 0.5) ** 2)
-    feld *= np.clip(1.06 - rand * 0.55, 0.62, 1.0)
+def _punkt(u: float, v: float, oben: bool):
+    """Ein Punkt auf dem Ober- (oben=True) oder Unterpaneel."""
+    s = _seit(u)
+    hoehe = (HOEHE / 2.0) * (0.32 + 0.68 * s)
+    # Zu den Ohren hin läuft die Faltung fast flach zusammen — genau
+    # dieses Zusammenkneifen macht die Fischform kenntlich.
+    tiefe = TIEFE * (0.04 + 0.96 * s ** 1.4)
+    x = u * BREITE / 2.0
+    z = (v if oben else -v) * hoehe
+    # Gerade Paneele: der lineare Verlauf lässt sie an der Naht in
+    # einem sichtbaren Winkel aufeinandertreffen — DER Faltknick der
+    # Fischform. (Ein Exponent über 1 hätte hier die Steigung an der Naht
+    # auf null gezogen und den Knick weggebügelt.)
+    y = -tiefe * (1.0 - v)
+    # Die Randkante kippt leicht zurück Richtung Gesicht.
+    y += 0.010 * (v ** 3) * s
+    return (x, y, z)
 
-    bild = Image.fromarray(np.clip(feld, 0, 255).astype(np.uint8), "L").convert("RGB")
 
-    # Ventil: heller Kunststoffteller mit Rundaufdruck, mittig „FFP2".
-    mitte = (seite // 2, seite // 2)
-    teller = ImageDraw.Draw(bild)
-    teller.ellipse([mitte[0] - 118, mitte[1] - 118, mitte[0] + 118, mitte[1] + 118],
-                   fill=(224, 225, 228))
-    teller.ellipse([mitte[0] - 118, mitte[1] - 118, mitte[0] + 118, mitte[1] + 118],
-                   outline=(190, 192, 198), width=3)
-    teller.ellipse([mitte[0] - 62, mitte[1] - 62, mitte[0] + 62, mitte[1] + 62],
-                   outline=(200, 202, 208), width=2)
-    _ringtext(teller, mitte, 92, "· CE 0121 · EN149:2001 · FFP2 NR D ·",
-              BLAU, bild)
-    # Mittiges „FFP2": klein rendern, hochskalieren — wirkt wie gedruckt.
-    stempel = Image.new("RGBA", (46, 16), (0, 0, 0, 0))
-    ImageDraw.Draw(stempel).text((2, 2), "FFP2", fill=BLAU + (255,))
-    stempel = stempel.resize((115, 40), Image.LANCZOS)
-    bild.paste(stempel, (mitte[0] - 52, mitte[1] - 18), stempel)
-
-    bild = bild.filter(ImageFilter.GaussianBlur(0.4))
-    ZIEL.mkdir(parents=True, exist_ok=True)
-    bild.save(TEXTUR)
-    print("  props/atemmaske_vlies.png")
+def _paneel(name: str, oben: bool, mat) -> bpy.types.Object:
+    nu, nv = 48, 14
+    ecken, flaechen = [], []
+    for j in range(nv + 1):
+        for i in range(nu + 1):
+            ecken.append(_punkt(-1.0 + 2.0 * i / nu, j / nv, oben))
+    for j in range(nv):
+        for i in range(nu):
+            a = j * (nu + 1) + i
+            b = a + 1
+            c = a + nu + 2
+            d = a + nu + 1
+            flaechen.append((a, b, c, d) if oben else (a, d, c, b))
+    netz = bpy.data.meshes.new(name)
+    netz.from_pydata(ecken, [], flaechen)
+    netz.update()
+    obj = bpy.data.objects.new(name, netz)
+    bpy.context.collection.objects.link(obj)
+    bpy.context.view_layer.objects.active = obj
+    obj.select_set(True)
+    bpy.ops.object.shade_smooth()
+    _front_uvs(obj)
+    obj.data.materials.append(mat)
+    # Materialstärke: macht die Vlieskante an Rändern und Naht sichtbar.
+    stark = obj.modifiers.new("stark", "SOLIDIFY")
+    stark.thickness = 0.0016
+    stark.offset = 0.0
+    bpy.ops.object.modifier_apply(modifier="stark")
+    obj.select_set(False)
+    return obj
 
 
 def _front_uvs(obj):
-    """Frontprojektion: X/Z der Ecken direkt als UV — das Foto liegt damit
-    wie aufprojiziert auf der Wölbung."""
+    """Frontprojektion: X/Z der Ecken direkt als UV — die Textur liegt wie
+    aufprojiziert auf der Faltung."""
     netz = obj.data
     ebene = netz.uv_layers.new(name="UVMap") if not netz.uv_layers else netz.uv_layers[0]
     for poly in netz.polygons:
@@ -120,11 +129,88 @@ def _front_uvs(obj):
             ebene.data[schleife].uv = (co.x / BREITE + 0.5, co.z / HOEHE + 0.5)
 
 
+# --- Die Textur ----------------------------------------------------------
+
+
+def _pix(x: float, z: float):
+    """Weltkoordinate (x, z) → Texturpixel der Frontprojektion."""
+    return ((x / BREITE + 0.5) * SEITE, (0.5 - z / HOEHE) * SEITE)
+
+
+def _punktreihe(zeichner, hoehe_von_u, versatz: float, ton, schritt=15):
+    """Eine Reihe geprägter Schweißpunkte, die dem Umriss folgt.
+    `hoehe_von_u` liefert die Z-Höhe der Linie für ein u in [-1, 1]."""
+    for xs in range(20, SEITE - 20, schritt):
+        u = (xs / SEITE - 0.5) * 2.0
+        z = hoehe_von_u(u) + versatz
+        _, ys = _pix(0.0, z)
+        # Delle mit heller Oberkante — so liest sich der Punkt als Prägung.
+        zeichner.ellipse([xs - 5, ys - 5, xs + 5, ys + 5], fill=ton)
+        zeichner.ellipse([xs - 4, ys - 6, xs + 4, ys - 2],
+                         fill=(249, 249, 251))
+
+
+def vlies_textur():
+    rng = np.random.default_rng(2021)
+    feld = np.full((SEITE, SEITE), 233.0)
+    feld += rng.normal(0.0, 2.2, (SEITE, SEITE))
+
+    # Vliesfasern: kurze helle und dunkle Schlieren in Zufallsrichtung.
+    yy, xx = np.mgrid[0:SEITE, 0:SEITE].astype(np.float32)
+    for winkel, staerke in ((0.3, 3.6), (1.25, 2.8), (2.1, 2.2)):
+        laeufer = xx * math.cos(winkel) + yy * math.sin(winkel)
+        feld += np.sin(laeufer * 0.9 + rng.uniform(0, 6)) * staerke
+
+    # Paneel-Schattierung: zur Naht hin einen Hauch heller (steht vor),
+    # zu den Seiten hin dunkler (läuft flach aus).
+    mitte_z = np.abs(yy / SEITE - 0.5)
+    feld -= mitte_z * 26.0
+    seite_x = np.abs(xx / SEITE - 0.5) * 2.0
+    feld -= np.clip(seite_x - 0.72, 0.0, 1.0) * 55.0
+
+    bild = Image.fromarray(np.clip(feld, 0, 255).astype(np.uint8), "L").convert("RGB")
+    zeichner = ImageDraw.Draw(bild)
+
+    def rand_oben(u):
+        return (HOEHE / 2.0) * (0.24 + 0.76 * _seit(u))
+
+    grau = (186, 187, 194)
+    # Naht: Doppelreihe Schweißpunkte knapp über und unter der Mitte,
+    # dazwischen eine deutliche Schattenlinie — der Faltknick.
+    zeichner.line([0, SEITE // 2, SEITE, SEITE // 2], fill=(188, 189, 196), width=5)
+    zeichner.line([0, SEITE // 2 - 3, SEITE, SEITE // 2 - 3],
+                  fill=(246, 246, 249), width=2)
+    _punktreihe(zeichner, lambda u: 0.0, 0.0050, grau)
+    _punktreihe(zeichner, lambda u: 0.0, -0.0050, grau)
+    # Randkanten oben und unten: je eine Punktreihe, dem Umriss folgend.
+    _punktreihe(zeichner, rand_oben, -0.0062, grau)
+    _punktreihe(zeichner, lambda u: -rand_oben(u), 0.0062, grau)
+
+    # Aufdruck auf dem Oberpaneel, links der Mitte — klein rendern und
+    # hochskalieren, das wirkt wie gestempelt. Groß genug, dass „FFP2"
+    # auch aus Spieldistanz lesbar bleibt.
+    stempel = Image.new("RGBA", (66, 30), (0, 0, 0, 0))
+    tinte = ImageDraw.Draw(stempel)
+    tinte.text((2, 1), "FFP2 NR", fill=BLAU + (255,))
+    tinte.text((2, 13), "CE 2163", fill=BLAU + (230,))
+    stempel = stempel.resize((290, 132), Image.LANCZOS)
+    xs, ys = _pix(-0.026, 0.027)
+    bild.paste(stempel, (int(xs) - 145, int(ys) - 66), stempel)
+
+    bild = bild.filter(ImageFilter.GaussianBlur(0.4))
+    ZIEL.mkdir(parents=True, exist_ok=True)
+    bild.save(TEXTUR)
+    print("  props/atemmaske_vlies.png")
+
+
+# --- Der Aufbau ----------------------------------------------------------
+
+
 def bauen():
     bpy.ops.wm.read_factory_settings(use_empty=True)
     vlies_textur()
 
-    vlies = _material("vlies", (1.0, 1.0, 1.0), rauheit=0.9)
+    vlies = _material("vlies", (1.0, 1.0, 1.0), rauheit=0.92)
     knoten = vlies.node_tree.nodes
     bild_knoten = knoten.new("ShaderNodeTexImage")
     bild_knoten.image = bpy.data.images.load(str(TEXTUR))
@@ -132,51 +218,46 @@ def bauen():
         bild_knoten.outputs["Color"],
         knoten["Principled BSDF"].inputs["Base Color"])
 
-    # --- Körbchen -----------------------------------------------------------
-    bpy.ops.mesh.primitive_uv_sphere_add(radius=1.0, segments=40, ring_count=22)
-    korb = bpy.context.active_object
-    korb.name = "korb"
-    korb.scale = (BREITE / 2, TIEFE / 2, HOEHE / 2)
-    bpy.ops.object.transform_apply(scale=True)
-    bpy.ops.object.shade_smooth()
-    _front_uvs(korb)
-    korb.data.materials.append(vlies)
+    teile = [
+        _paneel("paneel_oben", True, vlies),
+        _paneel("paneel_unten", False, vlies),
+    ]
 
-    # --- Ventilkuppel ---------------------------------------------------------
-    # Sitzt vorn mittig auf der Wölbung; dieselbe Frontprojektion, damit der
-    # Rundaufdruck der Textur genau über die Kuppel läuft.
-    bpy.ops.mesh.primitive_uv_sphere_add(radius=0.0205, segments=28, ring_count=14,
-                                         location=(0.0, -TIEFE / 2 + 0.004, 0.0))
-    ventil = bpy.context.active_object
-    ventil.name = "ventil"
-    ventil.scale = (1.0, 0.55, 1.0)
-    bpy.ops.object.transform_apply(scale=True, location=False)
+    # --- Nasenbügel: mattes Metallband, dem Oberrand folgend ---------------
+    buegel_mat = _material("buegel", (0.62, 0.63, 0.66), rauheit=0.5, metall=0.6)
+    ort = _punkt(0.0, 0.86, True)
+    bpy.ops.mesh.primitive_cube_add(size=1.0,
+                                    location=(0.0, ort[1] - 0.0015, ort[2]))
+    buegel = bpy.context.active_object
+    buegel.name = "nasenbuegel"
+    buegel.scale = (0.021, 0.0018, 0.0042)
+    # Das Oberpaneel lehnt nach hinten — der Bügel lehnt mit.
+    buegel.rotation_euler = (math.radians(-38.0), 0.0, 0.0)
+    bpy.ops.object.transform_apply(scale=True, rotation=True, location=False)
     bpy.ops.object.shade_smooth()
-    _front_uvs_versetzt(ventil)
-    ventil.data.materials.append(vlies)
+    buegel.data.materials.append(buegel_mat)
+    teile.append(buegel)
 
-    # --- Kopfbänder -----------------------------------------------------------
-    band = _material("band", (0.44, 0.45, 0.48), rauheit=0.85)
-    baender = []
-    for neigung, hoehe in ((-38.0, 0.022), (28.0, -0.020)):
+    # --- Ohrschlaufen: flache weiße Gummiringe an den Enden ----------------
+    schlaufe_mat = _material("schlaufe", (0.92, 0.92, 0.93), rauheit=0.75)
+    for seite in (-1.0, 1.0):
         bpy.ops.mesh.primitive_torus_add(
-            major_radius=0.072, minor_radius=0.0026,
-            location=(0.0, 0.030, hoehe),
-            rotation=(math.radians(90 + neigung), 0.0, 0.0),
-            major_segments=40, minor_segments=8)
-        teil = bpy.context.active_object
-        teil.name = "band"
-        # Flachgedrückt zur Bandform.
-        teil.scale = (1.0, 1.0, 0.45)
+            major_radius=0.030, minor_radius=0.0021,
+            location=(seite * (BREITE / 2.0 - 0.004), 0.026, 0.0),
+            rotation=(0.0, math.radians(90.0), 0.0),
+            major_segments=36, minor_segments=8)
+        ring = bpy.context.active_object
+        ring.name = "schlaufe"
+        ring.scale = (1.0, 1.15, 0.72)
         bpy.ops.object.transform_apply(scale=True, location=False)
         bpy.ops.object.shade_smooth()
-        teil.data.materials.append(band)
-        baender.append(teil)
+        ring.data.materials.append(schlaufe_mat)
+        teile.append(ring)
 
     bpy.ops.object.select_all(action="DESELECT")
-    for teil in [korb, ventil] + baender:
+    for teil in teile:
         teil.select_set(True)
-    bpy.context.view_layer.objects.active = korb
+    bpy.context.view_layer.objects.active = teile[0]
     bpy.ops.object.join()
     maske = bpy.context.active_object
     maske.name = "atemmaske"
@@ -184,18 +265,7 @@ def bauen():
     bpy.ops.export_scene.gltf(filepath=str(ZIEL / "atemmaske.glb"),
                               export_apply=True, export_yup=True,
                               use_selection=True)
-    print("  props/atemmaske.glb (FFP2 nach Foto)")
-
-
-def _front_uvs_versetzt(obj):
-    """Frontprojektion für Anbauteile: die Weltlage der Ecken zählt, damit
-    die Aufdruck-Stelle der Textur an der richtigen Stelle liegt."""
-    netz = obj.data
-    ebene = netz.uv_layers.new(name="UVMap") if not netz.uv_layers else netz.uv_layers[0]
-    for poly in netz.polygons:
-        for schleife in poly.loop_indices:
-            co = obj.matrix_world @ netz.vertices[netz.loops[schleife].vertex_index].co
-            ebene.data[schleife].uv = (co.x / BREITE + 0.5, co.z / HOEHE + 0.5)
+    print("  props/atemmaske.glb (FFP2, Fischform)")
 
 
 if __name__ == "__main__":

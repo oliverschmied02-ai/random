@@ -203,10 +203,19 @@ func _masken_pflegen(delta: float) -> void:
 		ort.y -= eintrag["tempo"] * eintrag["zeit"]
 		ort.x += 0.22 * sin(eintrag["zeit"] * 1.7 + eintrag["phase"])
 		teil.global_position = ort
-		teil.rotation = Vector3(
-			0.35 * sin(eintrag["zeit"] * 2.3 + eintrag["phase"]),
-			eintrag["zeit"] * 0.8,
-			0.3 * sin(eintrag["zeit"] * 1.9))
+		# Die Maske zeigt immer zum Spieler und taumelt nur leicht — dreht
+		# sie frei, ist die halbe Fallzeit nur die Rückseite zu sehen und
+		# das Ziel liest sich als weißes Ei statt als FFP2.
+		var kamera := get_viewport().get_camera_3d()
+		if kamera != null:
+			teil.look_at(kamera.global_position, Vector3.UP)
+			teil.rotate_object_local(Vector3.UP, PI)  # Vorderseite ist +Z
+		teil.rotate_object_local(Vector3.UP,
+			0.5 * sin(eintrag["zeit"] * 1.1 + eintrag["phase"]))
+		teil.rotate_object_local(Vector3.RIGHT,
+			0.30 * sin(eintrag["zeit"] * 2.3 + eintrag["phase"]))
+		teil.rotate_object_local(Vector3.BACK,
+			0.22 * sin(eintrag["zeit"] * 1.9))
 		if ort.y < 0.3:
 			_maske_entfernen(eintrag)
 			_maske_erledigt()
