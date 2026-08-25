@@ -410,10 +410,15 @@ jede Drehung.
 
 **Der Hochzeitsaufbau:** Traubogen mit Blüten und Tuch, zwei Reihen weiße
 Klappstühle mit Mittelgang, roter Teppich, Stehtische mit Gerippten,
-Lichterketten an Holzmasten — und **zwölf Gäste**: acht eigene
+Lichterketten an Holzmasten — und **fünfzig Gäste**: acht eigene
 Mixamo-Charaktere (`gast_1`–`gast_8.glb`, von Oliver als FBX geliefert,
-Pipeline siehe ASSET_REQUIREMENTS), an den Stehtischen wiederholen sich
-vier in anderer Größe. Mocap/Gangwerk sind für sie abgeschaltet — beide
+Pipeline siehe ASSET_REQUIREMENTS), vervielfältigt über
+`Hochzeitsgast` (chapters/hochzeit/hochzeitsgast.gd): Oberteil, Hose
+und Haar werden je Exemplar über der Stofftextur getönt (Anzüge
+einfarbig, Hemden darunter bleiben hell, Haut nie), dazu Größen von
+1,58 bis 1,92 m und gestreute Blickrichtungen. Zwölf Plätze sind
+gesetzt, 38 verteilen sich mit festem Seed über die Terrasse — die
+Gasse hinter der Braut bleibt frei. Mocap/Gangwerk sind für sie abgeschaltet — beide
 sind auf das RPM-Rig geeicht und verbiegen das Mixamo-Skelett; die
 Armsenkung aus der T-Pose arbeitet dagegen rein über Knochennamen und
 greift nach dem Umbenennen (`mixamorig:` weg) unverändert.

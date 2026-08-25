@@ -64,8 +64,8 @@ func _los() -> void:
 
 	# Zwölf Gäste müssen stehen — sie sind der halbe Schauplatz.
 	var gaeste: Array = szene.get_node("Kulisse").gaeste
-	_pruefe(gaeste.size() >= 10,
-		"die Hochzeitsgesellschaft ist da (%d Gäste)" % gaeste.size())
+	_pruefe(gaeste.size() == szene.get_node("Kulisse").GAESTE_GESAMT,
+		"die Hochzeitsgesellschaft ist vollzählig (%d Gäste)" % gaeste.size())
 
 	# Zum Traubogen — der Prüflauf teleportiert, der Trigger muss greifen.
 	spieler.global_position = Vector3(0.0, 0.5, 6.5)

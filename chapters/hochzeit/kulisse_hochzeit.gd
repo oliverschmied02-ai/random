@@ -600,14 +600,37 @@ func _fest_bauen() -> void:
 # --- Die Gäste ----------------------------------------------------------------
 
 
+## Wie viele Menschen auf der Hochzeit stehen.
+const GAESTE_GESAMT := 50
+
+## Tönungen für Oberteile — gedeckt und sommerlich, als Multiplikator über
+## der Stofftextur. Reines Weiß heißt: Original lassen.
+const _OBEN_TOENE: Array[Color] = [
+	Color(0.55, 0.62, 0.78), Color(0.60, 0.70, 0.60), Color(0.95, 0.90, 0.80),
+	Color(0.75, 0.45, 0.50), Color(0.70, 0.70, 0.72), Color(0.42, 0.47, 0.62),
+	Color(0.85, 0.62, 0.52), Color(1.0, 1.0, 1.0),
+]
+const _HOSEN_TOENE: Array[Color] = [
+	Color(0.45, 0.45, 0.48), Color(0.80, 0.74, 0.62), Color(0.40, 0.44, 0.55),
+	Color(0.52, 0.44, 0.38), Color(1.0, 1.0, 1.0),
+]
+## Haartönungen — Werte über 1 hellen auf (grau, blond).
+const _HAAR_TOENE: Array[Color] = [
+	Color(1.0, 1.0, 1.0), Color(0.55, 0.50, 0.45), Color(1.10, 0.88, 0.62),
+	Color(0.35, 0.33, 0.30), Color(1.25, 1.20, 1.15), Color(0.85, 0.60, 0.42),
+]
+
+
 func _gaeste_setzen() -> void:
-	## Zwölf Gäste: acht auf den Stühlen (bzw. davor stehend), vier an den
-	## Stehtischen. Acht eigene Mixamo-Charaktere (`gast_1`–`gast_8`,
-	## aufbereitet über tools/mixamo_gast.py); an den Stehtischen wiederholen
-	## sich vier davon in anderer Größe — aus der Distanz fällt das nicht auf.
+	## Fünfzig Gäste aus acht Mixamo-Modellen (`gast_1`–`gast_8`, Pipeline
+	## siehe ASSET_REQUIREMENTS). Die ersten zwölf Plätze sind gesetzt:
+	## acht an den Stuhlreihen, vier an den Stehtischen — dort stehen die
+	## Modelle im Original. Der Rest verteilt sich per Zufall (fester Seed)
+	## über die Terrasse und wird über Tönung, Größe und Drehung variiert,
+	## damit die Wiederholung nicht auffällt.
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 815
-	var plaetze: Array = [
+	var plaetze: Array[Vector3] = [
 		# Ort, Blickrichtung (schauen zum Bogen bei z = 2,6)
 		Vector3(-6.4, 0.0, 6.4), Vector3(-4.0, 0.0, 6.5),
 		Vector3(3.6, 0.0, 6.4), Vector3(6.0, 0.0, 6.6),
@@ -616,21 +639,46 @@ func _gaeste_setzen() -> void:
 		Vector3(-12.4, 0.0, 12.6), Vector3(-9.0, 0.0, 15.0),
 		Vector3(12.0, 0.0, 12.9), Vector3(15.4, 0.0, 14.6),
 	]
+	# 38 weitere Plätze hinter den Stuhlreihen und über die Terrasse
+	# verstreut. Die Gasse hinter der Braut (x um 0, bis z 14) bleibt frei —
+	# dort läuft man selbst, und beim Spiel steht die Kamera davor.
+	while plaetze.size() < GAESTE_GESAMT:
+		var ort := Vector3(rng.randf_range(-16.5, 16.5), 0.0,
+			rng.randf_range(10.5, 19.5))
+		if absf(ort.x) < 2.6 and ort.z < 14.0:
+			continue
+		var eng := false
+		for p in plaetze:
+			if p.distance_to(ort) < 1.15:
+				eng = true
+				break
+		if not eng:
+			plaetze.append(ort)
+
 	for i in plaetze.size():
 		var ort: Vector3 = plaetze[i]
-		var gast := Figur.new()
-		gast.modell_pfad = "res://actors/models/gast_%d.glb" % ((i % 8) + 1)
-		gast.zielhoehe = rng.randf_range(1.62, 1.88)
+		var gast := Hochzeitsgast.new()
+		var modell_nr := (i % 8) + 1
+		gast.modell_pfad = "res://actors/models/gast_%d.glb" % modell_nr
+		gast.zielhoehe = rng.randf_range(1.58, 1.92)
 		# Mocap und Gangwerk sind auf das RPM-Rig geeicht; auf dem Mixamo-
 		# Skelett verbiegen sie Kopf und Rumpf. Die Gäste stehen still —
 		# Armsenkung und Höhenskalierung funktionieren rein über Knochennamen
 		# und bleiben an.
 		gast.mocap_aktiv = false
 		gast.gangwerk_aktiv = false
+		if i >= 8:
+			# Ab der zweiten Runde durch die Modelle wird getönt; die ersten
+			# acht zeigen die Originale.
+			gast.oberteil = _OBEN_TOENE[rng.randi() % _OBEN_TOENE.size()]
+			gast.hose = _HOSEN_TOENE[rng.randi() % _HOSEN_TOENE.size()]
+			if modell_nr >= 7:
+				gast.hose = gast.oberteil  # Anzug: Jackett und Hose gleich
+			gast.haar_ton = _HAAR_TOENE[rng.randi() % _HAAR_TOENE.size()]
 		add_child(gast)
 		gast.position = ort
-		# Zum Traubogen schauen — die vier am Empfang etwas beiläufiger.
+		# Zum Traubogen schauen — vorn andächtig, hinten beiläufiger.
 		var zum_bogen := Vector3(0.0, 0.0, 2.6) - ort
 		gast.rotation.y = atan2(zum_bogen.x, zum_bogen.z) + PI \
-			+ (rng.randf_range(-0.9, 0.9) if i >= 8 else rng.randf_range(-0.15, 0.15))
+			+ (rng.randf_range(-0.7, 0.7) if i >= 8 else rng.randf_range(-0.15, 0.15))
 		gaeste.append(gast)
