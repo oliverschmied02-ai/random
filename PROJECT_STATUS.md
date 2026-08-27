@@ -1146,6 +1146,23 @@ sind seit dem GitHub-Release „Avatare" echte Mixamo-Charaktere; sie
 stehen still (Retargeting der Bewegung aufs Mixamo-Rig wäre der nächste
 Schritt, wenn mehr Leben gewünscht ist).
 
+**Die Autobahnfahrt ist jetzt spielbar** (`chapters/frankfurt/lkw_spiel.gd`):
+nach dem Telefonat übernimmt man das Steuer — A/D wechseln die Spur,
+Schleicher wollen überholt werden, drüben kommt Gegenverkehr. Rempler
+kosten Tempo und hupen, kein Scheitern. Die Welt ist nur 620 m lang:
+am Ende springt die ganze Fahrt (LKW plus Verkehr) um 500 m zurück —
+auf einer geraden A5 mit Leitplanken im 4-m-Takt sieht niemand den
+Schnitt. Angekommen ist man nach 900 m und fünf Überholern.
+Die Kabinenkamera sitzt knapp unter der Scheibenoberkante (die Öffnung
+geht von y 1,54 bis 2,31 — eine Kamera darüber schaut nur steil auf
+den Asphalt).
+
+**Das Krugspiel hat jetzt ein Ballbudget:** acht Bälle für zwölf Krüge,
+sind sie leer, stehen die Türme wieder auf (freundlicher Neustart wie
+beim Brautstrauß). Die Kettenreaktion ist enger gefasst (Reichweite
+0,58 → 0,48, Stoß 0,16 → 0,12) — ein Turm verlangt wieder einen
+sauberen Treffer.
+
 **Kapitel 2 (Frankfurt) ist gebaut** — offen dort: das echte Umzugsjahr
 für die Kapitelkarte (aktuell Platzhalter „2021"), echte Dialogtexte,
 Probespielen der Sequenz-Zeiten (Fahrtdauer, Blendenlängen) und des

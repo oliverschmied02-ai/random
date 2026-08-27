@@ -38,6 +38,12 @@ const GEFALLEN_WEG := 0.35
 ## Achtzehn Krüge waren zu viele — ein guter Wurf räumt drei ab, und der
 ## Tisch wurde nicht leer, sondern zäh.
 const TUERME := 2
+## Wie viele Bälle eine Runde hat. Ohne Budget war das Spiel nicht zu
+## verlieren — man warf einfach, bis der Tisch leer war. Acht Bälle für
+## zwölf Krüge heißt: gute Würfe müssen mehrere fällen, schlampige Runden
+## bauen die Türme neu auf (freundlich, wie beim Brautstrauß — kein
+## Scheitern, nur nochmal).
+const WURF_VORRAT := 8
 ## Maßstab der Krüge. Ein echter Bembel ist gut 30 cm hoch; in der ersten
 ## Fassung standen Miniaturen auf dem Tisch.
 const KRUG_GROESSE := 1.25
@@ -69,6 +75,8 @@ var _stoss: float = 0.0
 var _kamera_ruhe: Vector3 = Vector3.ZERO
 ## Wie viele Krüge beim letzten Zählen lagen — für die Zurufe.
 var _gefallen_zuletzt: int = 0
+## Wächter gegen doppelten Rundenneustart, solange die Banner-Pause läuft.
+var _neustart_laeuft := false
 var _zuruf: Label
 var _zuruf_tween: Tween
 
@@ -139,7 +147,7 @@ func _tuerme_bauen() -> void:
 					mitte_x + versatz, TISCH.y + etage * etagenhoehe, TISCH.z)
 				krug.rotation.y = rng.randf() * 0.3
 				_kruege.append({"node": krug, "start": krug.global_position,
-					"gefallen": false})
+					"drehung": krug.rotation.y, "gefallen": false})
 	_ziel = zielvorschlag()
 
 	# Der Wurftisch selbst: sichtbar und fest.
@@ -291,7 +299,7 @@ func starten() -> void:
 	_stand_anzeigen()
 	if intro_dauer > 0.0:
 		_banner_zeigen("KRÜGE UMWERFEN",
-			"Wirf alle Bembel vom Tisch! Taste halten, im grünen Bereich loslassen.")
+			"Alle Bembel vom Tisch — du hast %d Bälle! Taste halten, im grünen Bereich loslassen." % WURF_VORRAT)
 		await get_tree().create_timer(intro_dauer).timeout
 		_banner.visible = false
 	zustand = Zustand.ZIELEN
@@ -331,8 +339,8 @@ func gefallen_zaehler() -> int:
 
 
 func _stand_anzeigen() -> void:
-	_stand_label.text = "KRÜGE %d / %d   ·   WÜRFE %d" % [
-		gefallen_zaehler(), _kruege.size(), wuerfe]
+	_stand_label.text = "KRÜGE %d / %d   ·   BÄLLE %d" % [
+		gefallen_zaehler(), _kruege.size(), WURF_VORRAT - wuerfe]
 
 
 func _process(delta: float) -> void:
@@ -342,7 +350,8 @@ func _process(delta: float) -> void:
 	match zustand:
 		Zustand.ZIELEN:
 			_zielen(delta)
-			if Input.is_action_pressed(&"wurf") and _pause <= 0.0:
+			if Input.is_action_pressed(&"wurf") and _pause <= 0.0 \
+					and wuerfe < WURF_VORRAT:
 				zustand = Zustand.LADEN
 				_kraft = 0.0
 				_kraft_steigt = true
@@ -357,6 +366,12 @@ func _process(delta: float) -> void:
 	if zustand in [Zustand.ZIELEN, Zustand.LADEN] \
 			and gefallen_zaehler() >= _kruege.size():
 		_sieg()
+	# Bälle aufgebraucht und noch nicht alles unten: kurz warten, bis die
+	# Physik ausgerollt ist (Nachzügler kippen noch), dann freundlich neu.
+	elif zustand == Zustand.ZIELEN and wuerfe >= WURF_VORRAT \
+			and _pause <= 0.0 and not _neustart_laeuft:
+		_neustart_laeuft = true
+		_neue_runde()
 
 
 ## Der Kamerastoß beim Einschlag. Er klingt exponentiell aus und rührt
@@ -490,6 +505,10 @@ func _werfen() -> void:
 	_pause = wurf_pause
 	_balken.visible = false
 	wuerfe += 1
+	if wuerfe >= WURF_VORRAT:
+		# Der letzte Ball: länger warten, bis Flug und Kettenreaktion
+		# ausgerollt sind, bevor der Neustart entscheidet.
+		_pause = wurf_pause + 2.4
 	_wischklang.play()
 
 	var ball := RigidBody3D.new()
@@ -561,7 +580,11 @@ func _auf_ball_treffer(koerper: Node, ball: RigidBody3D) -> void:
 ## davon ist sichtbar; sichtbar ist nur, dass ein guter Treffer einen Turm
 ## räumt, wie er das auf dem Jahrmarkt auch tut.
 func _kettenreaktion(ort: Vector3, wucht: float) -> void:
-	const REICHWEITE := 0.58
+	# Mit 0.58/0.16 räumte ein mittiger Treffer fast immer den ganzen Turm —
+	# zusammen mit unbegrenzten Bällen war das Spiel nicht zu verlieren.
+	# Seit dem Ballbudget ist die Hilfe enger gefasst: nahe Nachbarn kippen
+	# noch mit, aber ein Turm verlangt wieder einen sauberen Treffer.
+	const REICHWEITE := 0.48
 	for eintrag in _kruege:
 		if eintrag["gefallen"]:
 			continue
@@ -573,7 +596,7 @@ func _kettenreaktion(ort: Vector3, wucht: float) -> void:
 		var anteil := 1.0 - abstand / REICHWEITE
 		# Waagerecht weg vom Einschlag, mit einem Hauch nach oben.
 		var stoss := (richtung.normalized() * 0.9 + Vector3.UP * 0.25) \
-			* wucht * anteil * 0.16
+			* wucht * anteil * 0.12
 		krug.sleeping = false
 		krug.apply_impulse(stoss, Vector3(0.0, 0.20 * KRUG_GROESSE, 0.0))
 
@@ -628,6 +651,35 @@ func _wurfgeschwindigkeit(ziel: Vector3, kraft: float) -> Vector3:
 	var geschwindigkeit := strecke / flugzeit
 	geschwindigkeit.y += 0.5 * schwerkraft * flugzeit
 	return geschwindigkeit * (1.0 + (kraft - 0.5) * 2.0 * kraft_einfluss)
+
+
+## Alle Bälle geworfen, aber es stehen noch Krüge: Türme zurückstellen,
+## neue Bälle. Freundlich wie beim Brautstrauß — kein Scheitern, nur
+## nochmal. Läuft nebenläufig; gewinnt der letzte Ball währenddessen
+## doch noch, bricht der Zustandswechsel auf SIEG den Neustart ab.
+func _neue_runde() -> void:
+	_banner_zeigen("ALLE BÄLLE GEWORFEN",
+		"Macht nichts — die Türme stehen wieder auf. Neue Runde, %d Bälle!"
+		% WURF_VORRAT)
+	await get_tree().create_timer(2.2).timeout
+	if zustand != Zustand.ZIELEN:
+		_neustart_laeuft = false
+		return
+	for eintrag in _kruege:
+		var krug: RigidBody3D = eintrag["node"]
+		krug.freeze = true
+		krug.linear_velocity = Vector3.ZERO
+		krug.angular_velocity = Vector3.ZERO
+		krug.global_position = eintrag["start"]
+		krug.rotation = Vector3(0.0, eintrag["drehung"], 0.0)
+		eintrag["gefallen"] = false
+	await get_tree().physics_frame
+	for eintrag in _kruege:
+		(eintrag["node"] as RigidBody3D).freeze = false
+	wuerfe = 0
+	_gefallen_zuletzt = 0
+	_banner.visible = false
+	_neustart_laeuft = false
 
 
 func _sieg() -> void:

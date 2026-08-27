@@ -118,12 +118,18 @@ func _los() -> void:
 	# Ein echter Wurf auf einen Turm muss Krüge fällen. Das Ziel rechnet das
 	# Spiel selbst aus (`zielvorschlag`) — eine festgeschriebene Marke zeigte
 	# nach jeder Änderung am Aufbau daneben.
-	krug._ziel = krug.zielvorschlag()
-	krug._kraft = 0.5
-	krug._werfen()
-	var uhr := create_timer(2.0)
-	while uhr.time_left > 0.0:
-		await physics_frame
+	# Seit dem Ballbudget ist die Kettenreaktion enger gefasst — ein
+	# einzelner Wurf fällt fast immer, aber nicht restlos sicher etwas.
+	# Wie eine Spielerin auch: bis zu drei Bälle, bis etwas liegt.
+	for versuch in 3:
+		krug._ziel = krug.zielvorschlag()
+		krug._kraft = 0.5
+		krug._werfen()
+		var uhr := create_timer(2.0)
+		while uhr.time_left > 0.0:
+			await physics_frame
+		if krug.gefallen_zaehler() > 0:
+			break
 	_pruefe(krug.gefallen_zaehler() > 0,
 		"ein Treffer fällt Krüge (gefallen: %d)" % krug.gefallen_zaehler())
 

@@ -203,7 +203,27 @@ func _autobahn_sequenz() -> void:
 	await _dialogue.play(FrankfurtDialogue.ANRUF)
 	_mitfahrt = false
 
+	# Dann übernimmt man selbst das Steuer: Spurwechsel, Schleicher
+	# überholen, Gegenverkehr drüben. Das Spiel bewegt den LKW ab hier
+	# selbst — die Sequenzfahrt muss dafür loslassen.
+	_fahrt_laeuft = false
+	var fahrspiel := LkwSpiel.new()
+	add_child(fahrspiel)
+	if test_schnell:
+		fahrspiel.ziel_strecke = 4.0
+		fahrspiel.ziel_ueberholer = 0
+	fahrspiel.starten(lkw, _filmkamera, _kulisse, _motor)
+	await fahrspiel.fertig
+	await get_tree().create_timer(_wartezeit(1.6)).timeout
+	fahrspiel.abschluss_uebernehmen()
+	_fahrt_laeuft = true
+
 	# Einstellung 3: fest an der Brücke, der LKW zieht darunter durch.
+	# Nach dem Weltumbruch des Spiels steht der LKW irgendwo — für die
+	# Brückeneinstellung wird er kurz davor zurückgesetzt.
+	lkw.position.x = 40.0
+	lkw.position.z = 300.0
+	lkw.rotation.y = PI / 2.0
 	_film(Vector3(96.0, 2.2, 308.0), Vector3(70.0, 3.4, 300.0))
 	uhr = 0.0
 	dauer = _wartezeit(4.5)
