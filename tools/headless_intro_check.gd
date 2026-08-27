@@ -43,18 +43,18 @@ func _los() -> void:
 	# Rechts wischen auf einem Scherz-Profil: Karte bleibt, Anne winkt ab.
 	szene.wische(true)
 	await _ruhe()
-	_pruefe(szene.karten_index() == 0, "rechts auf Kevin federt zurück")
+	_pruefe(szene.karten_index() == 0, "rechts auf dem ersten Scherz-Profil federt zurück")
 	_pruefe(not szene.match_erreicht, "kein Match durch Zurückfedern")
 
-	# Der Herz-Knopf tut dasselbe wie der Rechtswisch: Kevin federt zurück.
+	# Der Herz-Knopf tut dasselbe wie der Rechtswisch: die Karte federt zurück.
 	szene.tippe_auf_schirm(Vector2(400, 1035))
 	await _ruhe()
-	_pruefe(szene.karten_index() == 0, "Herz-Knopf auf Kevin federt zurück")
+	_pruefe(szene.karten_index() == 0, "Herz-Knopf federt zurück")
 
-	# Der ✕-Knopf wischt nach links: Kevin fliegt, Marcel liegt.
+	# Der ✕-Knopf wischt nach links: die erste Karte fliegt, die zweite liegt.
 	szene.tippe_auf_schirm(Vector2(140, 1035))
 	await _ruhe()
-	_pruefe(szene.karten_index() == 1, "✕-Knopf wischt Kevin weg")
+	_pruefe(szene.karten_index() == 1, "✕-Knopf wischt die erste Karte weg")
 
 	# Klick-Geometrie: ein Fensterpunkt über dem Herz-Knopf muss auf dessen
 	# Viewport-Koordinate zurückgerechnet werden (Strahl → Ebene → Pixel).
@@ -67,13 +67,17 @@ func _los() -> void:
 		"Fensterklick trifft den Herz-Knopf (Abweichung %.1f px)"
 		% punkt.distance_to(Vector2(400, 1035)))
 
-	# Zurück auf Anfang für den Rest der Prüfung: Marcel liegt schon —
-	# der Stapel läuft einfach weiter, es fehlen noch zwei Linkswische.
-	szene.wische(false)
-	await _ruhe()
-	szene.wische(false)
-	await _ruhe()
-	_pruefe(szene.karten_index() == 3, "nach den Knöpfen und zwei Wischen liegt Oliver")
+	# Der Stapel läuft einfach weiter: alle übrigen Scherz-Profile nach
+	# links, bis Oliver liegt. Die Anzahl kommt aus den Daten — Profile
+	# können dazukommen oder wegfallen, ohne dass der Prüflauf bricht.
+	var scherze: int = BerlinDialogue.INTRO_PROFILE.size()
+	for versuch in scherze * 3:
+		if szene.karten_index() >= scherze:
+			break
+		szene.wische(false)
+		await _ruhe()
+	_pruefe(szene.karten_index() == scherze,
+		"nach allen Abwinken liegt Oliver (Karte %d)" % szene.karten_index())
 
 	# Olivers Karte startet die Gedanken; Wischen ist derweil gesperrt.
 	_pruefe(szene.zustand() == szene.Zustand.GEDANKEN, "Gedanken beginnen von selbst")
@@ -97,7 +101,7 @@ func _los() -> void:
 	# Links auf Oliver federt zurück — er fliegt nicht weg.
 	szene.wische(false)
 	await _ruhe()
-	_pruefe(szene.karten_index() == 3, "links auf Oliver federt zurück")
+	_pruefe(szene.karten_index() == scherze, "links auf Oliver federt zurück")
 	_pruefe(not szene.match_erreicht, "noch kein Match")
 
 	# Herz-Knopf auf Oliver: Match.

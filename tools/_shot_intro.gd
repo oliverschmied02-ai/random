@@ -26,7 +26,7 @@ func _los() -> void:
 	_merke("aufgeblendet")
 	_schuss("intro_kevin")
 
-	for i in 3:
+	for i in BerlinDialogue.INTRO_PROFILE.size():
 		szene.wische(false)
 		await create_timer(0.9).timeout
 	_merke("oliver liegt")

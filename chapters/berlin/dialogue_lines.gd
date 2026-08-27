@@ -91,24 +91,32 @@ const ERINNERUNG_BANK: Array[Dictionary] = [
 # wenn man versehentlich doch nach rechts wischt — die Karte federt zurück.
 # Namen, Alter und Sprüche sind Platzhalter mit der richtigen Tonlage.
 
+## Vier echte Fotos, vier Sprüche von Oliver — die Reihenfolge ist sein
+## Drehbuch. Die Namen sind erfunden; die Sprüche tragen den Witz.
 const INTRO_PROFILE: Array[Dictionary] = [
 	{
-		"name": "Kevin", "alter": 29,
-		"bild": "res://assets/intro/profil_kevin.png",
-		"bio": "Der Fisch ist nicht immer dabei. Meistens schon.",
-		"abwink": "Nee. Nicht schon wieder ein Fisch.",
+		"name": "Dennis", "alter": 34,
+		"bild": "res://assets/intro/profil_checker.png",
+		"bio": "Ey, hier ist der Checker vom Neckar, alles klar bei dir?",
+		"abwink": "Bei mir ja. Beim Checker checke ich aus.",
 	},
 	{
-		"name": "Marcel", "alter": 31,
-		"bild": "res://assets/intro/profil_marcel.png",
-		"bio": "Frag mich nach meinem Auto.",
-		"abwink": "Ich will nichts über sein Auto wissen.",
+		"name": "Patrick", "alter": 32,
+		"bild": "res://assets/intro/profil_gym.png",
+		"bio": "Erst das Gym, dann das Business, dann die Frau",
+		"abwink": "Ich bin also Punkt drei auf der Liste. Nein.",
 	},
 	{
-		"name": "Justin", "alter": 26,
-		"bild": "res://assets/intro/profil_justin.png",
-		"bio": "Erst das Gym. Dann das Gym.",
-		"abwink": "Ich habe nicht mal sein Gesicht gesehen.",
+		"name": "Maurice", "alter": 30,
+		"bild": "res://assets/intro/profil_maurice.png",
+		"bio": "Der Löwe gefällt jeder Schwiegermama",
+		"abwink": "Meine Mama hätte da Fragen.",
+	},
+	{
+		"name": "Calvin", "alter": 27,
+		"bild": "res://assets/intro/profil_kappe.png",
+		"bio": "Hey du, ich bin zwar kein Zahnarzt, aber ich kann dir trotzdem eine Füllung verpassen.",
+		"abwink": "Autsch. Einfach: autsch.",
 	},
 ]
 
@@ -121,7 +129,7 @@ const INTRO_OLIVER: Dictionary = {
 		"res://assets/intro/oliver_foto_1.png",
 		"res://assets/intro/oliver_foto_2.png",
 	],
-	"bio": "Sucht jemanden für Spaziergänge, solange alles andere zu hat.",
+	"bio": "Suche jemanden für lange Spaziergänge mit ausreichend Abstand",
 	"abwink": "Hm. Vielleicht doch noch mal gucken.",
 }
 

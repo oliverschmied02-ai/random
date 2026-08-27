@@ -123,7 +123,8 @@ func _auf_sprechzeile(sprecher: String) -> void:
 ## lange — wer schon läuft, während der Titel noch steht, hat den Anfang verpasst.
 func _auftakt() -> void:
 	_player.input_enabled = false
-	await _karte.auftakt("KAPITEL 1", "BERLIN — 2020")
+	await _karte.auftakt("KAPITEL 1",
+		"DAS ERSTE TREFFEN AM ALEXANDERPLATZ — 2020")
 	_player.input_enabled = true
 	_objective.show_objective("Oliver von der Arbeit abholen")
 
@@ -318,7 +319,8 @@ func _abschluss_szene() -> void:
 
 	_figur_anne.schaue_an(_oliver)
 	await _dialogue.play(BerlinDialogue.ABSCHLUSS)
-	await _karte.abspann("KAPITEL 1", "BERLIN — 2020")
+	await _karte.abspann("KAPITEL 1",
+		"DAS ERSTE TREFFEN AM ALEXANDERPLATZ — 2020")
 
 
 ## Wohin die Abschlusskamera schaut: auf die Mitte zwischen beiden, auf
