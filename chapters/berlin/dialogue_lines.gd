@@ -13,26 +13,32 @@ extends RefCounted
 ##
 ## `speaker` steht in der Kopfzeile der Dialogbox.
 ##
-## **Alle Texte sind Platzhalter.** Sie treffen die gewünschte Tonlage, damit
-## sich Länge und Tempo beurteilen lassen, aber die echten Erinnerungen und
-## Insider gehören später genau hierher.
+## **Treffen, True Crime, Dönerbude und die Tinder-Sprüche sind Olivers
+## echte Texte.** Der Rest (UNTERWEGS_PLATZ, ABSCHLUSS, Erinnerungen) ist
+## noch Platzhalter in der richtigen Tonlage.
 
-## Vor Olivers Bürotür: das Abholen nach Feierabend.
+## Das erste Treffen am Alexanderplatz — Olivers echter Text.
 const ABHOLEN: Array[Dictionary] = [
-	{"speaker": "ANNE", "text": "Hey. Feierabend?"},
-	{"speaker": "OLIVER", "text": "Hey. Endlich."},
-	{"speaker": "OLIVER", "text": "Ich sitze seit heute früh da drin und habe mit genau null Menschen geredet."},
-	{"speaker": "ANNE", "text": "Willkommen in 2020."},
-	{"speaker": "OLIVER", "text": "Wollen wir ein Stück laufen?"},
-	{"speaker": "ANNE", "text": "Klar. Ich hab sowieso nichts vor. Keiner hat was vor."},
+	{"speaker": "ANNE", "text": "Oh, du siehst ja in echt viel besser aus als auf den Fotos."},
+	{"speaker": "OLIVER", "text": "Na, das ist ja mal ein Kompliment."},
+	{"speaker": "ANNE", "text": "Ja, du sahst auf jedem Foto auf Zünder anders aus."},
+	{"speaker": "OLIVER", "text": "Ich bin einfach ein sehr variabler Typ... Wirst du schon noch sehen."},
+	{"speaker": "ANNE", "text": "Na, da bin ich mal gespannt."},
+	{"speaker": "OLIVER", "text": "Wollen wir spazieren gehen?"},
+	{"speaker": "ANNE", "text": "Ja, ich habe aber nicht viel Zeit. Ich muss später noch nach Leipzig fahren und brauche auch noch ein Ladegerät für mein Handy. Deshalb müssen wir noch zu Tedi."},
+	{"speaker": "OLIVER", "text": "Das klingt doch nach einem super Date. Dann gehen wir mal los, oder?"},
+	{"speaker": "ANNE", "text": "Ja."},
 ]
 
-## Unterwegs, am geschlossenen Café.
+## Unterwegs, erster Halt — True Crime, Olivers echter Text.
 const UNTERWEGS_CAFE: Array[Dictionary] = [
-	{"speaker": "ANNE", "text": "Da wollten wir doch eigentlich hin."},
-	{"speaker": "OLIVER", "text": "Da wollten wir seit drei Wochen hin."},
-	{"speaker": "ANNE", "text": "Zu. Wie alles."},
-	{"speaker": "OLIVER", "text": "Dafür kennen wir inzwischen jede Parkbank in Mitte mit Vornamen."},
+	{"speaker": "ANNE", "text": "Ich bin ein großer True-Crime-Podcast-Fan."},
+	{"speaker": "OLIVER", "text": "Und was waren die krassesten Kriminalfälle, die du in letzter Zeit gehört hast?"},
+	{"speaker": "ANNE", "text": "Es gab diesen einen Fall nach einem Tinder-Date, bei dem jemand in eine Wohnung gekommen ist, in der alles mit Plastik ausgelegt war. Dann ist die Frau schnell wieder verschwunden, weil sie Angst hatte, dass sie umgebracht wird."},
+	{"speaker": "OLIVER", "text": "Aha. Willst du mir damit irgendetwas sagen?"},
+	{"speaker": "ANNE", "text": "Nein, ich habe keine Angst. Ich habe immer ein Messer neben meinem Bett im Schlafzimmer."},
+	{"speaker": "OLIVER", "text": "Das lässt mich in der ersten Nacht neben dir sicher beruhigt schlafen."},
+	{"speaker": "ANNE", "text": "Schauen wir mal, ob du es so weit schaffst."},
 ]
 
 ## Unterwegs, am Desinfektionsspender auf dem Platz.
@@ -44,14 +50,17 @@ const UNTERWEGS_PLATZ: Array[Dictionary] = [
 	{"speaker": "OLIVER", "text": "Ich weiß."},
 ]
 
-## Ankunft an der Dönerbude — vorläufiger Abschluss von Kapitel 1.
+## Ankunft an der Dönerbude — Olivers echter Text. Die letzte Zeile
+## kündigt das Minispiel an, das direkt danach startet.
 const ANKUNFT_DOENER: Array[Dictionary] = [
-	{"speaker": "OLIVER", "text": "Da vorne. Siehst du das?"},
-	{"speaker": "ANNE", "text": "Die Dönerbude?"},
-	{"speaker": "OLIVER", "text": "Die Dönerbude."},
-	{"speaker": "ANNE", "text": "Es ist halb elf."},
-	{"speaker": "OLIVER", "text": "Perfekte Uhrzeit. Und die haben hinten eine Dartscheibe."},
-	{"speaker": "ANNE", "text": "Das wird ja immer besser."},
+	{"speaker": "OLIVER", "text": "Was hältst du denn von Döner?"},
+	{"speaker": "ANNE", "text": "Etwas Hunger hätte ich schon."},
+	{"speaker": "OLIVER", "text": "Na dann lass uns doch zur Dönerbude gehen. Ist eh das Einzige, was auf hat."},
+	{"speaker": "ANNE", "text": "Ein super Dinner für ein erstes Date."},
+	{"speaker": "OLIVER", "text": "Ich nehme einmal Döner mit allem und extra Zwiebeln und Knoblauch."},
+	{"speaker": "ANNE", "text": "Den ersten Kuss gibt's damit aber nicht."},
+	{"speaker": "OLIVER", "text": "Das war auch die Absicht der Bestellung."},
+	{"speaker": "ANNE", "text": "Haha, als ob... Dann lass uns doch danach Spritzenwerfen auf FFP2-Masken spielen. Das Spiel ist direkt hinter der Dönerbude."},
 ]
 
 ## Abschluss nach dem gewonnenen Minispiel. Hier stehen später die echten Sätze.
@@ -95,13 +104,13 @@ const ERINNERUNG_BANK: Array[Dictionary] = [
 ## Drehbuch. Die Namen sind erfunden; die Sprüche tragen den Witz.
 const INTRO_PROFILE: Array[Dictionary] = [
 	{
-		"name": "Dennis", "alter": 34,
+		"name": "Cosimo", "alter": 34,
 		"bild": "res://assets/intro/profil_checker.png",
 		"bio": "Ey, hier ist der Checker vom Neckar, alles klar bei dir?",
 		"abwink": "Bei mir ja. Beim Checker checke ich aus.",
 	},
 	{
-		"name": "Patrick", "alter": 32,
+		"name": "Karl", "alter": 32,
 		"bild": "res://assets/intro/profil_gym.png",
 		"bio": "Erst das Gym, dann das Business, dann die Frau",
 		"abwink": "Ich bin also Punkt drei auf der Liste. Nein.",

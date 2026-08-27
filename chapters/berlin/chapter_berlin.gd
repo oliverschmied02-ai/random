@@ -108,7 +108,30 @@ func _ready() -> void:
 	# Wer spricht, nickt dazu — die Dialogbox meldet jede neue Zeile.
 	_dialogue.zeile_begonnen.connect(_auf_sprechzeile)
 
+	_jacke_anziehen()
 	_auftakt()
+
+
+## Zieht Oliver für dieses Kapitel die Wachsjacke an: dieselbe outfit-
+## Fläche, aber die umgemalte Textur (tools/make_barbour.py — Sakko-Pixel
+## per Körperhöhen-Maske in Wachs-Oliv, Cordkragen). Nur ein Material-
+## Override auf dieser Instanz; die anderen Kapitel behalten das Sakko.
+func _jacke_anziehen() -> void:
+	var jacke := load("res://assets/kleidung/oliver_barbour.png") as Texture2D
+	if jacke == null or _figur_oliver.modell == null:
+		return
+	for kind in _figur_oliver.modell.find_children("*", "MeshInstance3D", true, false):
+		var teil := kind as MeshInstance3D
+		if teil == null or teil.mesh == null:
+			continue
+		for s in teil.mesh.get_surface_count():
+			var material := teil.get_active_material(s) as BaseMaterial3D
+			if material == null or material.resource_name != "outfit":
+				continue
+			var kopie := material.duplicate() as BaseMaterial3D
+			kopie.albedo_texture = jacke
+			kopie.roughness = 0.72  # Wachs glänzt stumpf, nicht wie Wolle
+			teil.set_surface_override_material(s, kopie)
 
 
 func _auf_sprechzeile(sprecher: String) -> void:
@@ -126,7 +149,7 @@ func _auftakt() -> void:
 	await _karte.auftakt("KAPITEL 1",
 		"DAS ERSTE TREFFEN AM ALEXANDERPLATZ — 2020")
 	_player.input_enabled = true
-	_objective.show_objective("Oliver von der Arbeit abholen")
+	_objective.show_objective("Triff Oliver am Alexanderplatz")
 
 
 ## Erste Station: das Abholen vor der Bürotür.
