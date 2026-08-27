@@ -30,11 +30,13 @@ enum State {
 @export var target_path: NodePath = ^"../Player"
 
 @export_group("Following")
-## How far behind the player the companion aims for.
-@export_range(0.5, 6.0, 0.1) var follow_distance: float = 2.2
+## How far behind the player the companion aims for. Small on purpose:
+## on a date you walk next to each other, not in single file — the side
+## offset does the separating, this only keeps him out of the turn circle.
+@export_range(0.2, 6.0, 0.1) var follow_distance: float = 0.5
 ## Sideways offset, so the companion walks beside rather than in the player's
 ## footsteps. Negative puts them on the other side.
-@export_range(-3.0, 3.0, 0.1) var side_offset: float = 0.9
+@export_range(-3.0, 3.0, 0.1) var side_offset: float = 1.15
 ## Spacing of the recorded footsteps. Finer means corners are cut less, at the
 ## cost of a few more stored points.
 @export_range(0.2, 3.0, 0.1) var trail_spacing: float = 0.7

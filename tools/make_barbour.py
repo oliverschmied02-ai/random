@@ -125,6 +125,20 @@ def bauen() -> None:
     for k in range(3):
         bild[..., k] = np.where(ziel_k, CORD[k] * faktor * rippen, bild[..., k])
 
+    # Keine Krawatte unter der Wachsjacke: ihre UV-Insel liegt isoliert
+    # oben links im Atlas (geometrisch ist sie nicht vom Brustkorb zu
+    # trennen — sie liegt hautnah auf der Jacke). Die Krawattengeometrie
+    # bleibt, aber hemdweiß gestrichen verschwindet sie im Hemd.
+    neu = bild.mean(axis=2)  # nach dem Ummalen: Krawatte ist jetzt oliv
+    krawatte = np.zeros_like(hell, dtype=bool)
+    box = (slice(int(175 / 1024 * seite), int(418 / 1024 * seite)),
+           slice(0, int(72 / 1024 * seite)))
+    r, g, b = bild[..., 0], bild[..., 1], bild[..., 2]
+    krawatte[box] = ((r - b > 10.0) | (r > g + 6.0))[box] & (neu[box] < 180.0)
+    weiss = 233.0 + rng.normal(0.0, 2.0, hell.shape)
+    for k in range(3):
+        bild[..., k] = np.where(krawatte, weiss - (2 - k), bild[..., k])
+
     ZIEL.mkdir(parents=True, exist_ok=True)
     aus = ZIEL / "oliver_barbour.png"
     Image.fromarray(np.clip(bild, 0, 255).astype(np.uint8)).save(aus)

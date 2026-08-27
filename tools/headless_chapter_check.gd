@@ -161,9 +161,10 @@ func _count_dialogues() -> void:
 func _finish() -> void:
 	Input.action_release(&"move_forward")
 
-	_expect(_dialogues_seen == 4,
-		"all four conversations played (pickup + 2 en route + arrival): saw %d"
-			% _dialogues_seen)
+	var erwartet: int = 1 + _root._STATIONEN.size()  # Abholen + Stationen
+	_expect(_dialogues_seen == erwartet,
+		"all conversations played (pickup + stations): saw %d of %d"
+			% [_dialogues_seen, erwartet])
 	_expect(_oliver.state != Companion.State.IDLE, "Oliver joined the walk")
 	_expect(_darts != null and _darts.zustand != DartsGame.Zustand.INAKTIV,
 		"arriving at the kebab shop hands over to the dart mini-game")

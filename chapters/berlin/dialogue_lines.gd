@@ -13,9 +13,9 @@ extends RefCounted
 ##
 ## `speaker` steht in der Kopfzeile der Dialogbox.
 ##
-## **Treffen, True Crime, Dönerbude und die Tinder-Sprüche sind Olivers
-## echte Texte.** Der Rest (UNTERWEGS_PLATZ, ABSCHLUSS, Erinnerungen) ist
-## noch Platzhalter in der richtigen Tonlage.
+## **Treffen, True Crime, Dönerbude, Abschluss und die Tinder-Sprüche sind
+## Olivers echte Texte.** Nur die drei Erinnerungs-Fundstücke sind noch
+## Platzhalter in der richtigen Tonlage.
 
 ## Das erste Treffen am Alexanderplatz — Olivers echter Text.
 const ABHOLEN: Array[Dictionary] = [
@@ -41,15 +41,6 @@ const UNTERWEGS_CAFE: Array[Dictionary] = [
 	{"speaker": "ANNE", "text": "Schauen wir mal, ob du es so weit schaffst."},
 ]
 
-## Unterwegs, am Desinfektionsspender auf dem Platz.
-const UNTERWEGS_PLATZ: Array[Dictionary] = [
-	{"speaker": "OLIVER", "text": "Guck mal. Die Dinger standen wirklich an jeder Ecke."},
-	{"speaker": "ANNE", "text": "Ich hatte den ganzen Frühling Hände wie Schmirgelpapier."},
-	{"speaker": "OLIVER", "text": "Zwei Meter Abstand, hieß es."},
-	{"speaker": "ANNE", "text": "Du läufst gerade seit zwanzig Minuten neben mir."},
-	{"speaker": "OLIVER", "text": "Ich weiß."},
-]
-
 ## Ankunft an der Dönerbude — Olivers echter Text. Die letzte Zeile
 ## kündigt das Minispiel an, das direkt danach startet.
 const ANKUNFT_DOENER: Array[Dictionary] = [
@@ -63,14 +54,13 @@ const ANKUNFT_DOENER: Array[Dictionary] = [
 	{"speaker": "ANNE", "text": "Haha, als ob... Dann lass uns doch danach Spritzenwerfen auf FFP2-Masken spielen. Das Spiel ist direkt hinter der Dönerbude."},
 ]
 
-## Abschluss nach dem gewonnenen Minispiel. Hier stehen später die echten Sätze.
+## Abschluss nach dem gewonnenen Minispiel — Olivers echtes Ende.
 const ABSCHLUSS: Array[Dictionary] = [
 	{"speaker": "OLIVER", "text": "Fünf von fünf. Das war Anfängerglück."},
 	{"speaker": "ANNE", "text": "Das war Können."},
 	{"speaker": "OLIVER", "text": "Das war Anfängerglück, das aussah wie Können."},
-	{"speaker": "ANNE", "text": "Es ist kurz vor Mitternacht und wir stehen an einer Dönerbude."},
-	{"speaker": "OLIVER", "text": "Ich weiß."},
-	{"speaker": "ANNE", "text": "Ich auch."},
+	{"speaker": "OLIVER", "text": "Sehen wir uns wieder?"},
+	{"speaker": "ANNE", "text": "Ja, das Date war sehr schön."},
 ]
 
 

@@ -7,12 +7,10 @@ extends Node3D
 ## visuelles Skriptsystem wäre für so wenige Schritte mehr Gerüst als Inhalt.
 ##
 ## Der Ablauf:
-##   1. Oliver vor seiner Bürotür abholen (Ansprechen mit E)
-##   2. am geschlossenen Café — löst beim Vorbeigehen aus
-##   3. auf dem Platz am Desinfektionsspender — ebenso
-##   4. Ankunft an der Dönerbude, danach das Dart-Minispiel
-##
-##   5. das Minispiel gewonnen → Abschlussszene und Abspann
+##   1. Oliver am Alexanderplatz treffen (Ansprechen mit E)
+##   2. unterwegs das True-Crime-Gespräch — löst beim Vorbeigehen aus
+##   3. Ankunft an der Dönerbude, danach das Spritzen-Minispiel
+##   4. das Minispiel gewonnen → Abschlussszene und Abspann
 ##
 ## Die drei Stationen unterwegs sind Area3D-Knoten unter `Triggers`. Eine
 ## Station hinzuzufügen heißt: Area3D in die Szene, Zeile in `_STATIONEN`.
@@ -28,11 +26,6 @@ const _STATIONEN := [
 	{
 		"node": "TriggerCafe",
 		"lines": BerlinDialogue.UNTERWEGS_CAFE,
-		"ziel": "Weiter durch die Stadt",
-	},
-	{
-		"node": "TriggerPlatz",
-		"lines": BerlinDialogue.UNTERWEGS_PLATZ,
 		"ziel": "Weiter durch die Stadt",
 	},
 	{
@@ -342,8 +335,10 @@ func _abschluss_szene() -> void:
 
 	_figur_anne.schaue_an(_oliver)
 	await _dialogue.play(BerlinDialogue.ABSCHLUSS)
-	await _karte.abspann("KAPITEL 1",
-		"DAS ERSTE TREFFEN AM ALEXANDERPLATZ — 2020")
+	# Die Schlusskarte kündigt das nächste Kapitel an — dieselbe Karte
+	# noch einmal mit "KAPITEL 1" las sich wie ein Neustart des Kapitels.
+	await _karte.abspann("KAPITEL 2",
+		"DER UMZUG NACH FRANKFURT")
 
 
 ## Wohin die Abschlusskamera schaut: auf die Mitte zwischen beiden, auf
