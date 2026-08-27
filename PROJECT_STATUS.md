@@ -1146,6 +1146,18 @@ sind seit dem GitHub-Release „Avatare" echte Mixamo-Charaktere; sie
 stehen still (Retargeting der Bewegung aufs Mixamo-Rig wäre der nächste
 Schritt, wenn mehr Leben gewünscht ist).
 
+**Die Autobahn sieht jetzt nach A5 aus:** echte Karosserien aus
+Querschnitts-Lofts (tools/make_fahrzeuge.py — Limousine, Kombi, weißer
+Kastenwagen, eingefärbt über das Material `autolack` in Flottenfarben),
+der LKW hat Grill, Chromleiste, Sonnenblende, Transporterspiegel,
+Schmutzfänger, Tank und den Schriftzug "SCHMIED UMZÜGE · Berlin -
+Frankfurt" auf dem Koffer. Am Rand: Felder in Ackertönen (eins Raps),
+vier drehende Windräder, eine Strommastenreihe mit Leitungen, ein Dorf
+mit Kirchturm am Horizont, Lärmschutzwand und Gebüsch. Die Skyline hat
+jetzt die drei Silhouetten, an denen man Frankfurt erkennt: Commerzbank
+(dreiseitiges Prisma + gelber Mast), Messeturm (Granit + Pyramide) und
+Main Tower (Glaszylinder + Antenne).
+
 **Die Autobahnfahrt ist jetzt spielbar** (`chapters/frankfurt/lkw_spiel.gd`):
 nach dem Telefonat übernimmt man das Steuer — A/D wechseln die Spur,
 Schleicher wollen überholt werden, drüben kommt Gegenverkehr. Rempler

@@ -115,22 +115,29 @@ func _verkehr_bauen() -> void:
 	rng.seed = 2306
 	# Eigene Richtung: sechs Schleicher, verteilt nach vorn.
 	for i in 6:
-		var auto := _auto_setzen(
+		var auto := _auto_setzen(rng,
 			_lkw.global_position.x + 45.0 + i * 55.0 + rng.randf_range(-12.0, 12.0),
 			SPUREN[rng.randi() % 2], PI / 2.0)
 		_verkehr.append({"node": auto, "tempo": rng.randf_range(13.0, 17.5),
 			"gegen": false, "gezaehlt": false})
 	# Gegenverkehr: reine Kulisse, macht die Autobahn erst zur Autobahn.
 	for i in 4:
-		var auto := _auto_setzen(
+		var auto := _auto_setzen(rng,
 			_lkw.global_position.x + 80.0 + i * 110.0,
 			GEGEN_SPUREN[rng.randi() % 2], -PI / 2.0)
 		_verkehr.append({"node": auto, "tempo": rng.randf_range(20.0, 26.0),
 			"gegen": true, "gezaehlt": true})
 
 
-func _auto_setzen(x: float, z: float, gier: float) -> Node3D:
-	var auto := _AUTO.instantiate() as Node3D
+func _auto_setzen(rng: RandomNumberGenerator, x: float, z: float,
+		gier: float) -> Node3D:
+	# Die richtigen Karosserien mit Flottenfarben kommen aus der Kulisse;
+	# ohne Kulisse (nackte Prüfstände) fällt es auf das alte Modell zurück.
+	var auto: Node3D
+	if _kulisse != null and _kulisse.has_method("auto_bauen"):
+		auto = _kulisse.auto_bauen(rng)
+	else:
+		auto = _AUTO.instantiate() as Node3D
 	add_child(auto)
 	auto.global_position = Vector3(x, 0.0, z)
 	auto.rotation.y = gier

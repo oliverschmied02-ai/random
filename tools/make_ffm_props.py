@@ -86,6 +86,26 @@ def _export(objekte, name):
 # --- Der Umzugs-LKW -----------------------------------------------------------
 
 
+def _schriftzug_material():
+    """Firmenschriftzug für den Koffer — klein gerendert, hochskaliert,
+    dadurch wirkt er gedruckt statt pixelig."""
+    seite_b, seite_h = 720, 200
+    bild = Image.new("RGB", (180, 50), (225, 225, 222))
+    tinte = ImageDraw.Draw(bild)
+    tinte.text((6, 8), "SCHMIED UMZÜGE", fill=(28, 48, 110))
+    tinte.text((6, 28), "Berlin - Frankfurt", fill=(120, 40, 30))
+    bild = bild.resize((seite_b, seite_h), Image.LANCZOS)
+    pfad = PROPS / "lkw_schriftzug.png"
+    bild.save(pfad)
+    mat = _material("schriftzug", (1.0, 1.0, 1.0), rauheit=0.6)
+    knoten = mat.node_tree.nodes
+    tex = knoten.new("ShaderNodeTexImage")
+    tex.image = bpy.data.images.load(str(pfad))
+    mat.node_tree.links.new(tex.outputs["Color"],
+                            knoten["Principled BSDF"].inputs["Base Color"])
+    return mat
+
+
 def lkw():
     bpy.ops.wm.read_factory_settings(use_empty=True)
     weiss = _material("koffer", (0.88, 0.88, 0.86), rauheit=0.6)
@@ -157,6 +177,68 @@ def lkw():
     stoss = _kasten((2.3, 0.25, 0.35), (0, -4.35, 0.55), fase=0.04, name="stoss")
     stoss.data.materials.append(dunkel)
     teile.append(stoss)
+
+    # --- Anbauteile, die einen LKW erst zum LKW machen ------------------------
+    # Wichtig: die Fensteröffnung des Frontrahmens bleibt unangetastet —
+    # auf ihr ist die Kamera des Fahrspiels kalibriert (y 1,54 bis 2,31).
+    chrom = _material("chrom", (0.65, 0.66, 0.68), rauheit=0.25, metall=0.8)
+    # Sonnenblende über der Scheibe.
+    blende = _kasten((2.44, 0.30, 0.14), (0, -4.36, 2.56), fase=0.03, name="blende")
+    blende.data.materials.append(kabine_lack)
+    teile.append(blende)
+    # Kühlergrill-Lamellen und Chromleiste.
+    for z in (0.92, 1.06, 1.20):
+        lamelle = _kasten((1.6, 0.04, 0.08), (0, -4.40, z), name="lamelle")
+        lamelle.data.materials.append(dunkel)
+        teile.append(lamelle)
+    leiste = _kasten((1.7, 0.03, 0.05), (0, -4.41, 1.32), name="leiste")
+    leiste.data.materials.append(chrom)
+    teile.append(leiste)
+    # Große Transporterspiegel an den A-Säulen, beidseitig.
+    for seite in (-1, 1):
+        arm = _kasten((0.30, 0.05, 0.05), (seite * 1.28, -4.20, 2.30), name="arm")
+        arm.data.materials.append(dunkel)
+        teile.append(arm)
+        spiegel = _kasten((0.06, 0.24, 0.42), (seite * 1.42, -4.16, 2.10),
+                          fase=0.015, name="spiegel")
+        spiegel.data.materials.append(dunkel)
+        teile.append(spiegel)
+    # Schmutzfänger hinter den Rädern, Seitenschürze zwischen den Achsen.
+    for seite in (-1, 1):
+        for y in (-2.82, 2.98):
+            lappen = _kasten((0.36, 0.04, 0.42), (seite * 1.05, y, 0.30),
+                             name="lappen")
+            lappen.data.materials.append(gummi)
+            teile.append(lappen)
+        schuerze = _kasten((0.08, 3.2, 0.35), (seite * 1.10, -0.9, 0.42),
+                           name="schuerze")
+        schuerze.data.materials.append(dunkel)
+        teile.append(schuerze)
+    # Tank und Staukasten unterm Rahmen.
+    tank = _kasten((0.34, 1.1, 0.5), (-0.95, -1.6, 0.62), fase=0.06, name="tank")
+    tank.data.materials.append(chrom)
+    teile.append(tank)
+    stau = _kasten((0.30, 0.9, 0.45), (0.95, -1.6, 0.60), fase=0.03, name="stau")
+    stau.data.materials.append(dunkel)
+    teile.append(stau)
+    # Warnmarkierung hinten: rot-weiß schraffierte Ecken.
+    for seite in (-1, 1):
+        warn = _kasten((0.4, 0.02, 0.12), (seite * 0.9, 3.02, 0.95), name="warn")
+        warn.data.materials.append(streifen)
+        teile.append(warn)
+
+    # Schriftzug auf dem Koffer: eigene dünne Tafel je Seite, Textur aus PIL.
+    schrift_mat = _schriftzug_material()
+    for seite in (-1, 1):
+        tafel = bpy.ops.mesh.primitive_plane_add(
+            size=1.0, location=(seite * 1.215, 0.3, 2.35),
+            rotation=(math.radians(90), 0, math.radians(90 * seite)))
+        tafel = bpy.context.active_object
+        tafel.name = "schriftzug"
+        tafel.scale = (3.6, 1.0, 1.0)
+        bpy.ops.object.transform_apply(scale=True, rotation=True)
+        tafel.data.materials.append(schrift_mat)
+        teile.append(tafel)
 
     # --- Fahrerhaus von innen ------------------------------------------------
     # Für die Einstellung aus der Kabine (Kapitel 2, Autobahnsequenz) muss

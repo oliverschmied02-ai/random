@@ -23,6 +23,20 @@ const _TUER := preload("res://assets/props/tuer_modul.glb")
 const _BAUM := preload("res://assets/props/baum_tag.glb")
 const _AUTO := preload("res://assets/props/auto.glb")
 const _LKW := preload("res://assets/props/lkw.glb")
+## Die richtigen Karosserien für die Autobahn (tools/make_fahrzeuge.py).
+## Der Kastenwagen bleibt weiß — Handwerker fahren weiß —, Limousine und
+## Kombi werden pro Exemplar über das Material `autolack` eingefärbt.
+const _AUTOS: Array = [
+	preload("res://assets/props/auto_limo.glb"),
+	preload("res://assets/props/auto_kombi.glb"),
+	preload("res://assets/props/auto_van.glb"),
+]
+## Deutsche Flottenfarben: viel Silber, Schwarz und Weiß, wenig Buntes.
+const AUTO_FARBEN: Array[Color] = [
+	Color(0.72, 0.73, 0.75), Color(0.10, 0.10, 0.11), Color(0.90, 0.90, 0.88),
+	Color(0.35, 0.36, 0.38), Color(0.42, 0.10, 0.10), Color(0.13, 0.20, 0.38),
+	Color(0.72, 0.73, 0.75), Color(0.10, 0.10, 0.11),
+]
 const _BEMBEL := preload("res://assets/props/bembel.glb")
 const _LATERNE := preload("res://assets/props/laterne.glb")
 const _BANK := preload("res://assets/props/bank.glb")
@@ -40,6 +54,8 @@ const _PENDELLAMPE := preload("res://assets/props/pendellampe.glb")
 var lkw_fahrt: Node3D
 ## Gegenverkehr auf der Autobahn, fährt von selbst.
 var _gegenverkehr: Array = []
+## Die Rotoren der Windräder — gedreht in `_process`.
+var _windraeder: Array = []
 ## Die sechs Räder des fahrenden LKW, für die Drehung.
 var _lkw_raeder: Array[Node3D] = []
 ## Karosserie des fahrenden LKW, für das Wippen der Federung.
@@ -66,7 +82,33 @@ func _process(delta: float) -> void:
 		auto.position.x -= 22.0 * delta
 		if auto.position.x < -290.0:
 			auto.position.x = 290.0
+	# Windräder: langsam und majestätisch — echte Anlagen drehen mit
+	# gut 10 Umdrehungen pro Minute.
+	for rotor in _windraeder:
+		(rotor as Node3D).rotation.z += delta * 1.1
 	_lkw_beleben(delta)
+
+
+## Baut ein zufälliges Straßenfahrzeug — auch das Fahrspiel bedient sich
+## hier. Der Rückgabeknoten ist noch nicht eingehängt.
+func auto_bauen(rng: RandomNumberGenerator) -> Node3D:
+	var wahl := rng.randi() % _AUTOS.size()
+	var auto := (_AUTOS[wahl] as PackedScene).instantiate() as Node3D
+	if wahl == 2:
+		return auto  # der Kastenwagen bleibt weiß
+	var ton: Color = AUTO_FARBEN[rng.randi() % AUTO_FARBEN.size()]
+	for kind in auto.find_children("*", "MeshInstance3D", true, false):
+		var teil := kind as MeshInstance3D
+		if teil == null or teil.mesh == null:
+			continue
+		for s in teil.mesh.get_surface_count():
+			var material := teil.get_active_material(s) as BaseMaterial3D
+			if material == null or material.resource_name != "autolack":
+				continue
+			var kopie := material.duplicate() as BaseMaterial3D
+			kopie.albedo_color = ton
+			teil.set_surface_override_material(s, kopie)
+	return auto
 
 
 ## Was einen fahrenden LKW von einem geschobenen Klotz unterscheidet:
@@ -304,6 +346,7 @@ func _autobahn_bauen() -> void:
 	add_child(fugentraeger)
 
 	_autobahnbruecke(78.0)
+	_autobahn_umgebung()
 
 	# Fahrbahnmarkierung: gestrichelt, als MultiMesh.
 	var striche := MultiMesh.new()
@@ -363,9 +406,160 @@ func _autobahn_bauen() -> void:
 		kabinenlicht.shadow_enabled = false
 		lkw_fahrt.add_child(kabinenlicht)
 		kabinenlicht.position = Vector3(0.0, 2.25, 3.2)
+	var rng_autos := RandomNumberGenerator.new()
+	rng_autos.seed = 501
 	for i in 3:
-		var auto := _prop(_AUTO, Vector3(-120.0 + i * 170.0, 0, 291.0), -PI / 2.0)
+		var auto := auto_bauen(rng_autos)
+		add_child(auto)
+		auto.position = Vector3(-120.0 + i * 170.0, 0, 291.0)
+		auto.rotation.y = -PI / 2.0
 		_gegenverkehr.append(auto)
+
+
+## Die Landschaft, die eine A5 zur A5 macht: Felder in Streifen (eines
+## davon Raps), Windräder, eine Strommastenreihe, ein Dorf mit Kirchturm
+## am Horizont, ein Stück Lärmschutzwand und Gebüsch am Rand. Alles
+## billige Kästen — aber es sind *diese* Dinge, an denen das Auge
+## „deutsche Autobahn" liest, nicht die Fahrbahn selbst.
+func _autobahn_umgebung() -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 2107
+
+	# Felder: breite Streifen hinter beiden Seiten, in Ackertönen.
+	var toene: Array[Color] = [
+		Color(0.42, 0.50, 0.24), Color(0.55, 0.47, 0.30), Color(0.86, 0.78, 0.22),
+		Color(0.38, 0.46, 0.26), Color(0.48, 0.40, 0.28), Color(0.50, 0.56, 0.30),
+	]
+	var lauf := -300.0
+	var reihe := 0
+	while lauf < 300.0:
+		var breite := rng.randf_range(60.0, 110.0)
+		_kasten(Vector3(lauf + breite / 2.0, 0.008, 372.0),
+			Vector3(breite, 0.02, 96.0), _mat(toene[reihe % toene.size()], 1.0))
+		_kasten(Vector3(lauf + breite / 2.0, 0.008, 222.0),
+			Vector3(breite, 0.02, 60.0), _mat(toene[(reihe + 3) % toene.size()], 1.0))
+		lauf += breite
+		reihe += 1
+
+	# Windräder weit hinter der Gegenfahrbahn.
+	for x in [-190.0, -60.0, 90.0, 230.0]:
+		_windrad(Vector3(x + rng.randf_range(-15.0, 15.0), 0.0,
+			rng.randf_range(180.0, 205.0)))
+
+	# Strommasten mit Leitungen auf der eigenen Seite.
+	var stahl := _mat(Color(0.55, 0.56, 0.58), 0.5)
+	var mast_x: Array[float] = []
+	var mx := -280.0
+	while mx < 300.0:
+		mast_x.append(mx)
+		var fuss := Vector3(mx, 0.0, 352.0)
+		_kasten(fuss + Vector3(0, 11.0, 0), Vector3(1.4, 22.0, 1.4), stahl)
+		_kasten(fuss + Vector3(0, 21.0, 0), Vector3(9.0, 0.5, 0.5), stahl)
+		_kasten(fuss + Vector3(0, 17.5, 0), Vector3(6.5, 0.5, 0.5), stahl)
+		mx += 105.0
+	for i in mast_x.size() - 1:
+		for arm: Vector3 in [Vector3(-3.6, 20.7, 0), Vector3(3.6, 20.7, 0),
+				Vector3(-2.4, 17.2, 0), Vector3(2.4, 17.2, 0)]:
+			var a: Vector3 = Vector3(mast_x[i], 0, 352.0) + arm
+			var b: Vector3 = Vector3(mast_x[i + 1], 0, 352.0) + arm
+			_kasten((a + b) / 2.0 - Vector3(0, 0.8, 0),
+				Vector3(a.distance_to(b), 0.06, 0.06),
+				_mat(Color(0.25, 0.25, 0.27), 0.6))
+
+	# Ein Stück Lärmschutzwand an der eigenen Seite.
+	var wand := _foto_mat("beton_rau", Color(0.55, 0.58, 0.52), 0.3, 0.8)
+	_kasten(Vector3(-160.0, 2.1, 307.5), Vector3(90.0, 4.2, 0.5), wand)
+	for px in range(-200, -115, 12):
+		_kasten(Vector3(px, 2.3, 307.5), Vector3(0.4, 4.6, 0.7),
+			_mat(Color(0.4, 0.42, 0.44), 0.6))
+
+	# Gebüsch am Fahrbahnrand: flache dunkelgrüne Kugeln als MultiMesh.
+	var busch := MultiMesh.new()
+	busch.transform_format = MultiMesh.TRANSFORM_3D
+	var kugel := SphereMesh.new()
+	kugel.radius = 1.0
+	kugel.height = 1.4
+	kugel.radial_segments = 10
+	kugel.rings = 5
+	kugel.material = _mat(Color(0.20, 0.30, 0.16), 1.0)
+	busch.mesh = kugel
+	var busch_orte: Array[Transform3D] = []
+	for i in 44:
+		var bx := rng.randf_range(-290.0, 290.0)
+		var bz := 309.0 + rng.randf_range(0.0, 5.0) if i % 2 == 0 \
+			else 281.5 - rng.randf_range(0.0, 5.0)
+		var gr := rng.randf_range(0.7, 1.6)
+		busch_orte.append(Transform3D(
+			Basis.IDENTITY.scaled(Vector3(gr, gr * 0.8, gr)),
+			Vector3(bx, 0.5 * gr, bz)))
+	busch.instance_count = busch_orte.size()
+	for i in busch_orte.size():
+		busch.set_instance_transform(i, busch_orte[i])
+	var buschtraeger := MultiMeshInstance3D.new()
+	buschtraeger.multimesh = busch
+	add_child(buschtraeger)
+
+	# Ein Dorf am Horizont: Häuschen mit Satteldächern um einen Kirchturm.
+	var putz := _mat(Color(0.82, 0.79, 0.72), 0.9)
+	var dachrot := _mat(Color(0.52, 0.28, 0.20), 0.9)
+	for i in 9:
+		var hx := -40.0 + rng.randf_range(-45.0, 45.0)
+		var hz := 415.0 + rng.randf_range(-12.0, 12.0)
+		var hb := rng.randf_range(6.0, 10.0)
+		var hh := rng.randf_range(4.0, 6.0)
+		_kasten(Vector3(hx, hh / 2.0, hz), Vector3(hb, hh, hb * 0.8), putz)
+		var dach := MeshInstance3D.new()
+		var prisma := PrismMesh.new()
+		prisma.size = Vector3(hb + 0.6, hh * 0.5, hb * 0.8 + 0.6)
+		prisma.material = dachrot
+		dach.mesh = prisma
+		add_child(dach)
+		dach.position = Vector3(hx, hh + hh * 0.25, hz)
+	# Kirchturm mit Spitzhelm.
+	_kasten(Vector3(-38.0, 9.0, 418.0), Vector3(5.0, 18.0, 5.0), putz)
+	var helm := MeshInstance3D.new()
+	var kegel := CylinderMesh.new()
+	kegel.top_radius = 0.0
+	kegel.bottom_radius = 3.4
+	kegel.height = 7.0
+	kegel.radial_segments = 8
+	kegel.material = _mat(Color(0.28, 0.32, 0.36), 0.7)
+	helm.mesh = kegel
+	add_child(helm)
+	helm.position = Vector3(-38.0, 21.5, 418.0)
+
+
+## Ein Windrad: Rohrmast, Gondel, drei Blätter an einem Rotorknoten, der
+## sich in `_process` dreht. Nichts sagt schneller „deutsche Autobahn".
+func _windrad(fuss: Vector3) -> void:
+	var weiss := _mat(Color(0.88, 0.89, 0.90), 0.6)
+	var mast := MeshInstance3D.new()
+	var rohr := CylinderMesh.new()
+	rohr.top_radius = 0.7
+	rohr.bottom_radius = 1.3
+	rohr.height = 42.0
+	rohr.radial_segments = 12
+	rohr.material = weiss
+	mast.mesh = rohr
+	add_child(mast)
+	mast.position = fuss + Vector3(0, 21.0, 0)
+	_kasten(fuss + Vector3(0, 42.5, 0.6), Vector3(2.2, 2.4, 5.0), weiss)
+	var rotor := Node3D.new()
+	add_child(rotor)
+	# Die Gondel schaut zur Autobahn (-Z): der Rotor sitzt davor.
+	rotor.position = fuss + Vector3(0, 42.5, -2.2)
+	for i in 3:
+		var blatt := MeshInstance3D.new()
+		var form := BoxMesh.new()
+		form.size = Vector3(1.1, 16.0, 0.35)
+		form.material = weiss
+		blatt.mesh = form
+		rotor.add_child(blatt)
+		blatt.position = Vector3(0, 0, 0)
+		blatt.rotation.z = TAU * i / 3.0
+		# Blattwurzel an der Nabe: das Blatt hängt an seinem unteren Ende.
+		blatt.position = blatt.transform.basis.y * 8.0
+	_windraeder.append(rotor)
 
 
 ## Eine Brücke über die Autobahn. Sie kostet fünf Kästen und ist der
@@ -678,23 +872,70 @@ func _kneipenfront_bauen() -> void:
 
 
 func _skyline_bauen() -> void:
-	# Die Bankentürme hinter Sachsenhausen — weit weg, im Tageslicht-Dunst.
-	# Kühler und dunkler als die Gasse: so liest das Auge „weit weg".
+	# Die Skyline hinter Sachsenhausen — und zwar *die* Skyline. Frankfurt
+	# erkennt man an drei Silhouetten, nicht an grauen Klötzen:
+	# der Commerzbank-Turm (dreieckiger Grundriss, gelber Mast), der
+	# Messeturm (roter Granit, Pyramidenspitze) und der Main Tower
+	# (runder Glaszylinder mit Antenne). Dahinter generische Füllung.
 	var glas := _tex_mat("res://assets/texturen/ffm/skyline.png", 0.06,
 		Color(0.58, 0.66, 0.80))
-	var rng := RandomNumberGenerator.new()
-	rng.seed = 69
+	var granit := _mat(Color(0.66, 0.52, 0.46), 0.7)
+	var metall := _mat(Color(0.55, 0.57, 0.60), 0.5)
+
+	# Commerzbank Tower: dreiseitiges Prisma (CylinderMesh mit 3 Segmenten),
+	# obendrauf der gelbe Mast.
+	var commerz := MeshInstance3D.new()
+	var drei := CylinderMesh.new()
+	drei.top_radius = 20.0
+	drei.bottom_radius = 20.0
+	drei.height = 185.0
+	drei.radial_segments = 3
+	drei.material = glas
+	commerz.mesh = drei
+	add_child(commerz)
+	commerz.position = Vector3(520.0, 92.5, -20.0)
+	commerz.rotation.y = 0.4
+	_kasten(Vector3(520.0, 200.0, -20.0), Vector3(1.6, 36.0, 1.6),
+		_mat(Color(0.85, 0.75, 0.30), 0.5, Color(0.9, 0.8, 0.3), 0.3))
+
+	# Messeturm: quadratischer Schaft, Rücksprung, Pyramidenspitze.
+	_kasten(Vector3(560.0, 75.0, 45.0), Vector3(26.0, 150.0, 26.0), granit)
+	_kasten(Vector3(560.0, 158.0, 45.0), Vector3(17.0, 18.0, 17.0), granit)
+	var pyramide := MeshInstance3D.new()
+	var spitz := CylinderMesh.new()
+	spitz.top_radius = 0.0
+	spitz.bottom_radius = 12.0
+	spitz.height = 22.0
+	spitz.radial_segments = 4
+	spitz.material = _mat(Color(0.60, 0.42, 0.38), 0.6)
+	pyramide.mesh = spitz
+	add_child(pyramide)
+	pyramide.position = Vector3(560.0, 178.0, 45.0)
+	pyramide.rotation.y = PI / 4.0
+
+	# Main Tower: runder Glaszylinder mit Antennenspitze.
+	var main := MeshInstance3D.new()
+	var rund := CylinderMesh.new()
+	rund.top_radius = 13.0
+	rund.bottom_radius = 13.0
+	rund.height = 145.0
+	rund.radial_segments = 20
+	rund.material = glas
+	main.mesh = rund
+	add_child(main)
+	main.position = Vector3(470.0, 72.5, 15.0)
+	_kasten(Vector3(470.0, 165.0, 15.0), Vector3(1.2, 40.0, 1.2), metall)
+
+	# Füllung dahinter: die generischen Kästen bleiben, etwas versetzt.
 	var tuerme: Array = [
-		[420.0, -60.0, 120.0, 24.0], [455.0, -20.0, 155.0, 28.0],
-		[440.0, 30.0, 95.0, 20.0], [495.0, -80.0, 170.0, 30.0],
-		[520.0, 10.0, 130.0, 26.0], [560.0, -40.0, 200.0, 34.0],
-		[480.0, 70.0, 85.0, 22.0],
+		[420.0, -60.0, 110.0, 24.0], [452.0, -95.0, 150.0, 28.0],
+		[440.0, 75.0, 95.0, 20.0], [505.0, -70.0, 128.0, 26.0],
+		[545.0, -45.0, 165.0, 30.0], [595.0, 0.0, 140.0, 32.0],
+		[480.0, 100.0, 85.0, 22.0], [610.0, 60.0, 120.0, 28.0],
 	]
 	for turm: Array in tuerme:
 		_kasten(Vector3(turm[0], turm[2] / 2.0, turm[1]),
 			Vector3(turm[3], turm[2], turm[3] * 0.8), glas)
-	# Eine Antennenspitze auf dem höchsten.
-	_kasten(Vector3(560, 212, -40), Vector3(1.2, 24, 1.2), _mat(Color(0.4, 0.42, 0.45), 0.5))
 
 
 # --- Kneipenstube (400, -100) ----------------------------------------------------
