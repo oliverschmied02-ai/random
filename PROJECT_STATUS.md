@@ -1153,6 +1153,16 @@ Kapitel direkt an; gesperrte zeigen nur „Kapitel n — ✻ ✻ ✻", damit die
 Hochzeit keine Überraschung verrät. F9 auf dem Titel schaltet alles frei
 (der Werkstattschlüssel fürs Testen).
 
+**Vom Kenney- zum Quaternius-Fahrzeugpark:** Oliver fand die
+Kenney-Wagen zu comichaft — zu Recht, das Kit ist bewusst knuffig
+(gestauchte Proportionen, dicke Räder). Ersetzt durch die Quaternius-
+NPC-Wagen (CC0, quaternius.com, Spiegel purham01/ISS-simulacija-auta):
+echte Proportionen (4,2 m lang), Front nach +Z wie die Projekt-
+Konvention, keine Skalierung, kein Halterknoten. Der Lack heißt je
+Modell anders (Blue, White, …), getönt wird deshalb alles außer
+Fenstern, Anbauteilen und Leuchten (KulisseFfm.auto_einfaerben, auch
+von Berlin genutzt). Gleiche Metallic-Patch-Behandlung wie zuvor.
+
 **Auch Berlin und Sachsenhausen fahren Kenney:** die geparkten Reihen
 in Kapitel 1 (inklusive eines beigen Taxis — eine Berliner Straße ohne
 Taxi gibt es nicht), die fahrenden Nachtautos mit Scheinwerfern und die
