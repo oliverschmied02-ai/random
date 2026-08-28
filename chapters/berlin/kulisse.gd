@@ -633,6 +633,41 @@ func _prop(name: String, ort: Vector3, gier: float = 0.0) -> Node3D:
 	return teil
 
 
+## Ein Auto aus dem Kenney Car Kit (siehe assets/props/kenney/HERKUNFT.txt).
+## Kenney-Fronten zeigen nach -Z; der Halterknoten dreht das in die
+## Projekt-Konvention (+Z vorn), damit Scheinwerfer-Kinder und Drehungen
+## der Aufrufer unverändert funktionieren. TRANSPARENT lässt die
+## Kit-Farbe stehen (das Taxi bleibt Taxi).
+func _kenney_auto(art: String, ort: Vector3, gier: float,
+		ton: Color = Color.TRANSPARENT) -> Node3D:
+	var szene := load("res://assets/props/kenney/%s.glb" % art) as PackedScene
+	if szene == null:
+		return null
+	var halter := Node3D.new()
+	var wagen := szene.instantiate() as Node3D
+	halter.add_child(wagen)
+	wagen.rotation.y = PI
+	wagen.scale = Vector3.ONE * 1.75
+	add_child(halter)
+	halter.position = ort
+	halter.rotation.y = gier
+	if ton == Color.TRANSPARENT:
+		return halter
+	for kind in wagen.find_children("*", "MeshInstance3D", true, false):
+		var teil := kind as MeshInstance3D
+		if teil == null or teil.mesh == null:
+			continue
+		for s in teil.mesh.get_surface_count():
+			var material := teil.get_active_material(s) as BaseMaterial3D
+			if material == null \
+					or not material.resource_name.begins_with("paint"):
+				continue
+			var kopie := material.duplicate() as BaseMaterial3D
+			kopie.albedo_color = ton
+			teil.set_surface_override_material(s, kopie)
+	return halter
+
+
 ## Findet in einem Requisit das Material mit dem gegebenen Namen und ersetzt
 ## es durch eine eigene Kopie — die importierten Materialien teilen sich
 ## sonst alle Exemplare.
@@ -738,21 +773,22 @@ func _lichtkegel(quelle: Vector3, farbe: Color) -> void:
 ## Geparkte Autos: die Blender-Karosserie mit gerundeten Kanten. Jeder
 ## dritte Wagen in hellerem Lack — eine eigene Materialkopie je Exemplar.
 func _autos_parken() -> void:
+	# Kenney-Modelle im Wechsel, in gedeckten Abendfarben — und ein
+	# beiges Taxi darunter, denn eine Berliner Straße ohne Taxi gibt
+	# es nicht. Das Taxi behält seine Kit-Farbe.
+	var arten: Array[String] = ["sedan", "suv", "hatchbackSports",
+		"taxi", "van", "sedan"]
+	var toene: Array = [
+		Color(0.30, 0.31, 0.34), Color(0.14, 0.16, 0.22),
+		Color(0.55, 0.56, 0.58), Color.TRANSPARENT,
+		Color(0.85, 0.85, 0.83), Color(0.32, 0.12, 0.12),
+	]
 	var nummer := 0
 	for eintrag in AUTOS:
 		var fuss := Vector3(eintrag[0], 0.0, eintrag[1])
 		var drehung: float = eintrag[2]
-		var wagen := _prop("auto", fuss, drehung)
-		if wagen == null:
-			continue
-		if nummer % 3 == 2:
-			var lack := _prop_material(wagen, "autolack")
-			if lack != null:
-				lack.albedo_color = Color(0.3, 0.31, 0.34)
-		elif nummer % 3 == 1:
-			var lack := _prop_material(wagen, "autolack")
-			if lack != null:
-				lack.albedo_color = Color(0.14, 0.16, 0.22)
+		_kenney_auto(arten[nummer % arten.size()], fuss, drehung,
+			toene[nummer % toene.size()])
 		nummer += 1
 
 
@@ -796,8 +832,15 @@ func _baeume_pflanzen() -> void:
 ## halten an, wenn die Spielerin vor ihnen die Straße quert. Rein visuell,
 ## keine Physik: die Straßen gehören weiter den Fußgängern.
 func _verkehr_starten() -> void:
+	var arten: Array[String] = ["sedan", "suv", "taxi", "sedanSports"]
+	var toene: Array = [Color(0.20, 0.22, 0.28), Color(0.12, 0.12, 0.13),
+		Color.TRANSPARENT, Color(0.35, 0.36, 0.38)]
+	var nummer := 0
 	for eintrag in FAHRTEN:
-		var wagen := _prop("auto", Vector3(eintrag[0], 0.0, eintrag[1]))
+		var wagen := _kenney_auto(arten[nummer % arten.size()],
+			Vector3(eintrag[0], 0.0, eintrag[1]), 0.0,
+			toene[nummer % toene.size()])
+		nummer += 1
 		if wagen == null:
 			continue
 		var von := Vector3(eintrag[0], 0.0, eintrag[1])

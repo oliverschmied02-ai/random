@@ -1153,6 +1153,13 @@ Kapitel direkt an; gesperrte zeigen nur „Kapitel n — ✻ ✻ ✻", damit die
 Hochzeit keine Überraschung verrät. F9 auf dem Titel schaltet alles frei
 (der Werkstattschlüssel fürs Testen).
 
+**Auch Berlin und Sachsenhausen fahren Kenney:** die geparkten Reihen
+in Kapitel 1 (inklusive eines beigen Taxis — eine Berliner Straße ohne
+Taxi gibt es nicht), die fahrenden Nachtautos mit Scheinwerfern und die
+zwei Geparkten in der Sachsenhausen-Gasse nutzen dieselben Modelle.
+Der Halterknoten kapselt die Kenney-Drehung, deshalb blieben
+Scheinwerfer-Kinder und alle Aufrufer unverändert.
+
 **Der Verkehr fährt jetzt Kenney:** acht zivile Typen aus dem Kenney Car
 Kit (CC0, kenney.nl, bezogen über den GitHub-Spiegel kidscancode/
 3d_car_sphere — assets/props/kenney/). Die GLBs kamen mit metallicFactor 1

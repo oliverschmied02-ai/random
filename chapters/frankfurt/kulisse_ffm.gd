@@ -677,8 +677,15 @@ func _sachsenhausen_bauen() -> void:
 	_prop(_LATERNE, Vector3(228.0, 0, -5.4), 0.0)
 	_prop(_LATERNE, Vector3(262.0, 0, 5.4), PI)
 	_prop(_BANK, Vector3(240.0, 0, 5.8), PI)
-	_prop(_AUTO, Vector3(217.0, 0, 3.4), PI / 2.0)
-	_prop(_AUTO, Vector3(268.0, 0, -3.4), -PI / 2.0)
+	# Zwei Geparkte aus dem Kenney-Fahrzeugpark, in gedeckten Farben.
+	var rng_gasse := RandomNumberGenerator.new()
+	rng_gasse.seed = 217
+	for daten: Array in [[Vector3(217.0, 0, 3.4), PI / 2.0],
+			[Vector3(268.0, 0, -3.4), -PI / 2.0]]:
+		var wagen := auto_bauen(rng_gasse)
+		add_child(wagen)
+		wagen.position = daten[0]
+		wagen.rotation.y = daten[1]
 	# Abgestellte Räder — in Sachsenhausen lehnt an jeder zweiten Wand eins.
 	for daten in [[232.0, 7.4, PI / 2.0], [251.0, -7.2, -PI / 2.0],
 			[288.0, 7.3, PI / 2.0]]:
