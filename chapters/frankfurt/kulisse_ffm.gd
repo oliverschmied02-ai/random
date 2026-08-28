@@ -23,14 +23,24 @@ const _TUER := preload("res://assets/props/tuer_modul.glb")
 const _BAUM := preload("res://assets/props/baum_tag.glb")
 const _AUTO := preload("res://assets/props/auto.glb")
 const _LKW := preload("res://assets/props/lkw.glb")
-## Die richtigen Karosserien für die Autobahn (tools/make_fahrzeuge.py).
-## Der Kastenwagen bleibt weiß — Handwerker fahren weiß —, Limousine und
-## Kombi werden pro Exemplar über das Material `autolack` eingefärbt.
+## Der Fahrzeugpark der Autobahn: das Kenney Car Kit (CC0, kenney.nl),
+## acht zivile Typen. Die Modelle kommen mit metallicFactor 1 und wurden
+## dafür einmalig gepatcht (siehe assets/props/kenney/HERKUNFT.txt);
+## das Material `paint*` wird pro Exemplar in Flottenfarben umgefärbt.
+## Kenney-Fronten zeigen nach -Z — `auto_bauen` dreht sie in die
+## Projekt-Konvention (+Z vorn), damit alle Aufrufer gleich bleiben.
 const _AUTOS: Array = [
-	preload("res://assets/props/auto_limo.glb"),
-	preload("res://assets/props/auto_kombi.glb"),
-	preload("res://assets/props/auto_van.glb"),
+	preload("res://assets/props/kenney/sedan.glb"),
+	preload("res://assets/props/kenney/sedanSports.glb"),
+	preload("res://assets/props/kenney/suv.glb"),
+	preload("res://assets/props/kenney/suvLuxury.glb"),
+	preload("res://assets/props/kenney/hatchbackSports.glb"),
+	preload("res://assets/props/kenney/van.glb"),
+	preload("res://assets/props/kenney/delivery.glb"),
+	preload("res://assets/props/kenney/truck.glb"),
 ]
+## Kenney-Einheiten sind kompakt — auf Straßenmaß gebracht.
+const _AUTO_MASSSTAB := 1.75
 ## Deutsche Flottenfarben: viel Silber, Schwarz und Weiß, wenig Buntes.
 const AUTO_FARBEN: Array[Color] = [
 	Color(0.72, 0.73, 0.75), Color(0.10, 0.10, 0.11), Color(0.90, 0.90, 0.88),
@@ -93,22 +103,27 @@ func _process(delta: float) -> void:
 ## hier. Der Rückgabeknoten ist noch nicht eingehängt.
 func auto_bauen(rng: RandomNumberGenerator) -> Node3D:
 	var wahl := rng.randi() % _AUTOS.size()
+	var halter := Node3D.new()
 	var auto := (_AUTOS[wahl] as PackedScene).instantiate() as Node3D
-	if wahl == 2:
-		return auto  # der Kastenwagen bleibt weiß
-	var ton: Color = AUTO_FARBEN[rng.randi() % AUTO_FARBEN.size()]
+	halter.add_child(auto)
+	auto.rotation.y = PI  # Kenney-Front -Z → Projekt-Konvention +Z
+	auto.scale = Vector3.ONE * _AUTO_MASSSTAB
+	# Kastenwagen und Lieferwagen bleiben weiß — Handwerker fahren weiß.
+	var ton: Color = Color.WHITE if wahl in [5, 6] \
+		else AUTO_FARBEN[rng.randi() % AUTO_FARBEN.size()]
 	for kind in auto.find_children("*", "MeshInstance3D", true, false):
 		var teil := kind as MeshInstance3D
 		if teil == null or teil.mesh == null:
 			continue
 		for s in teil.mesh.get_surface_count():
 			var material := teil.get_active_material(s) as BaseMaterial3D
-			if material == null or material.resource_name != "autolack":
+			if material == null \
+					or not material.resource_name.begins_with("paint"):
 				continue
 			var kopie := material.duplicate() as BaseMaterial3D
 			kopie.albedo_color = ton
 			teil.set_surface_override_material(s, kopie)
-	return auto
+	return halter
 
 
 ## Was einen fahrenden LKW von einem geschobenen Klotz unterscheidet:

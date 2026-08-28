@@ -100,6 +100,7 @@ func _ablauf() -> void:
 
 
 func _auf_runde_geschafft() -> void:
+	Spielstand.freischalten(3)
 	_jubel.play()
 	await get_tree().create_timer(_wartezeit(2.6)).timeout
 	_strauss.abschluss_uebernehmen()

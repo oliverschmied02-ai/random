@@ -1146,6 +1146,23 @@ sind seit dem GitHub-Release „Avatare" echte Mixamo-Charaktere; sie
 stehen still (Retargeting der Bewegung aufs Mixamo-Rig wäre der nächste
 Schritt, wenn mehr Leben gewünscht ist).
 
+**Kapitelauswahl und Spielstand:** Das Spiel merkt sich nach jedem
+gewonnenen Minispiel die höchste erreichte Stufe (`user://spielstand.cfg`,
+Autoload `Spielstand`). Der Titelbildschirm bietet die freigeschalteten
+Kapitel direkt an; gesperrte zeigen nur „Kapitel n — ✻ ✻ ✻", damit die
+Hochzeit keine Überraschung verrät. F9 auf dem Titel schaltet alles frei
+(der Werkstattschlüssel fürs Testen).
+
+**Der Verkehr fährt jetzt Kenney:** acht zivile Typen aus dem Kenney Car
+Kit (CC0, kenney.nl, bezogen über den GitHub-Spiegel kidscancode/
+3d_car_sphere — assets/props/kenney/). Die GLBs kamen mit metallicFactor 1
+und rendern damit schwarz; ein Binärpatch setzt Metall/Rauheit auf
+Spielwerte. Das Material `paint*` wird pro Exemplar in Flottenfarben
+getönt, Kastenwagen und Lieferwagen bleiben weiß. Kenney-Fronten zeigen
+nach -Z, `auto_bauen` kapselt die Drehung in einen Halterknoten.
+Die selbstgebauten Loft-Karosserien sind raus (das Werkzeug
+tools/make_fahrzeuge.py bleibt als Referenz).
+
 **Die Autobahn sieht jetzt nach A5 aus:** echte Karosserien aus
 Querschnitts-Lofts (tools/make_fahrzeuge.py — Limousine, Kombi, weißer
 Kastenwagen, eingefärbt über das Material `autolack` in Flottenfarben),

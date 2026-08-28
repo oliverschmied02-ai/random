@@ -232,6 +232,7 @@ func _gehe_zu(tween: Tween, figur: Node3D, ziel: Vector3) -> void:
 
 
 func _auf_runde_geschafft(_punkte: int) -> void:
+	Spielstand.freischalten(1)
 	await _level_uebergang()
 	await _abschluss_szene()
 	kapitel_abgeschlossen.emit()

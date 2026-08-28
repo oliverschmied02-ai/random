@@ -133,6 +133,7 @@ func _ablauf() -> void:
 	_krug.starten()
 	await _aufblenden(0.9)
 	await _krug.runde_geschafft
+	Spielstand.freischalten(2)
 	await get_tree().create_timer(_wartezeit(2.4)).timeout
 	_krug.abschluss_uebernehmen()
 

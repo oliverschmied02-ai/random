@@ -15,6 +15,10 @@ config/description="A personal stylized 3D story game. Chapter 1 — Berlin."
 run/main_scene="res://ui/widmung.tscn"
 config/features=PackedStringArray("4.5", "Forward Plus")
 
+[autoload]
+
+Spielstand="*res://systems/spielstand.gd"
+
 [audio]
 
 buses/default_bus_layout="res://audio/bus_layout.tres"

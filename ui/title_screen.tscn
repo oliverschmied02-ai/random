@@ -78,7 +78,7 @@ horizontal_alignment = 1
 layout_mode = 2
 theme_override_colors/font_color = Color(0.937255, 0.858824, 0.752941, 1)
 theme_override_font_sizes/font_size = 24
-text = "Kapitel 1 — Berlin, 2020"
+text = "Berlin — Frankfurt — Berlin · 2020 bis 2023"
 horizontal_alignment = 1
 
 [node name="Abstand" type="Control" parent="Mitte/VBox"]
