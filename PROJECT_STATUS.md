@@ -110,6 +110,18 @@ mit ihrer 8-cm-Bordsteinkante, für die das Stufen-Steigen gebaut wurde.
   sie **halten an, wenn die Spielerin vor ihnen die Straße quert** (Prüfung
   entlang der Fahrtrichtung in `_verkehr_pflegen`). Rein visuell, keine
   Physik.
+* **Passanten** (`chapters/berlin/passant.gd`, gesetzt in
+  `_passanten_beleben`): sechs Menschen gehen ihre Abendwege auf den
+  Gehwegen — hin und zurück, gewendet statt teleportiert, eine Route je
+  Etappe der Spielstrecke. Basis sind die beiden RPM-Modelle (nur auf
+  deren Rig läuft das Gangwerk sauber), unkenntlich gemacht mit den
+  Gäste-Regeln — Outfit- und Haartönung multiplikativ über die Textur,
+  gestreute Größen — plus dem Kapitel-Kniff: **alle tragen FFP2**
+  (Minispiel-Maske, per `BoneAttachment3D` am Kopfknochen — sie nickt
+  und schaut mit). Maskensitz ist gemessen, nicht geraten: das Gesicht
+  liegt im Kopfknochen-Frame bei +Z, die Gesichtsfläche bei z ≈ +0,13
+  (AABB des Kopf-Meshes). Das Gehen kostet keine eigene Zeile — das
+  Gangwerk liest die zurückgelegte Strecke und schreitet von selbst aus.
 * **Mimik über die Blendshapes der Modelle** (ARKit-Namen): alle Figuren
   **blinzeln** (alle 2,6–5,8 s, Lidschlag 0,16 s — schnell zu, langsamer
   auf), und beim Sprechen bewegt sich der **Kiefer** für die Dauer der Zeile
@@ -170,23 +182,27 @@ in Berlin, mit gefangener Maus. Jetzt gibt es einen Anfang.
 **Wie alles anfing** — die spielbare Vorgeschichte, *Anfangen* startet sie vor
 Kapitel 1 (sie wechselt danach selbst nach Berlin, Esc überspringt):
 
-* **Nahaufnahme:** Annes rechte Hand mit dem Handy — jetzt ein **echtes,
-  anatomisches Handmodell**: das generische WebXR-Handnetz (npm
-  `@webxr-input-profiles/assets`, MIT — Quelle und Lizenz liegen unter
-  `assets/intro/quelle/`), das `tools/make_hand_echt.py` über sein
-  25-Gelenke-Rig in die **Griffpose** biegt. Die Ausrichtung wird nicht
-  geraten, sondern aus den Knochen gemessen (Fingerrichtung ×
-  Handflächen-Normale → exakte Rotationsmatrix); die Beugung läuft um
-  **Welt-Achsen**, analytisch in die Kanal-Quaternionen zurückgerechnet
-  (die lokalen Achsen dieses Rigs sind unzuverlässig, und Pose-Matrizen
-  zu setzen oder zurückzulesen greift headless nicht — steht als
-  Kommentar im Werkzeug). Danach Pose einfrieren, Subdivision, offene
-  Kanten zunähen, **Selbst-AO in Cycles backen**. Der Daumen bleibt am
-  Netz (jede Abtrennung riss sichtbare Nähte) — beim Wischen **schnipst
-  die ganze Hand** kurz in Wischrichtung. Die alte Skin-Modifier-Hand
-  bleibt als Rückfallebene in `make_intro_props.py`. Hinter der Hand
-  warme Bokeh-Lichter (weiche Kreistextur, additiv), ein kühler
-  Fensterschimmer, das Bildschirmlicht flackert schwach auf den Fingern.
+* **Nahaufnahme:** Annes rechte Hand mit dem Handy — und zwar wörtlich:
+  `tools/make_hand_anne.py` schneidet die **rechte Hand aus `anne.glb`**
+  (Auswahl über die Knochengewichte am RPM-Rig, Schnitt am Handgelenk,
+  ein Ärmel deckt die Kante), mit **echter Hauttextur samt Fingernägeln**
+  statt der getönten WebXR-Gummihand. Architektur wie beim Vorgänger
+  `make_hand_echt.py`: Grifflage aus den Knochen gemessen (Fingerrichtung
+  × Handflächen-Normale → exakte Rotationsmatrix), Beugung um
+  **Welt-Achsen** analytisch in die Kanal-Quaternionen zurückgerechnet —
+  nur die Knochennamen und Winkel sind auf das RPM-Rig gemappt (Annes
+  längere Finger brauchen kräftigere Beugen, `BEUGEN_ANNE`). ARKit-Shape-
+  Keys werden vorher entfernt (sie blockieren das Pose-Backen), dann
+  Pose einfrieren, Subdivision, offene Kanten zunähen. Kein AO-Bake —
+  die Hauttextur bringt ihre Schattierung mit. Stolperfallen stehen als
+  Kommentar im Werkzeug: `matrix_world` enthält die Skalierung bereits
+  (Versatz sonst doppelt skaliert), und `_kasten` bakt die Ablage ins
+  Netz — der Ärmel wird deshalb am Ursprung gebaut und als
+  Objekt-Transform platziert. Beim Wischen **schnipst die ganze Hand**
+  kurz in Wischrichtung; die WebXR-Hand bleibt als Rückfallebene in
+  `make_hand_echt.py`. Hinter der Hand warme Bokeh-Lichter (weiche
+  Kreistextur, additiv), ein kühler Fensterschimmer, das Bildschirmlicht
+  flackert schwach auf den Fingern.
 * **Die App:** eine SubViewport-Textur (540 × 1170) auf der Bildfläche des
   Modells, mit **abgerundeten Display-Ecken** (Spatial-Shader) — Statuszeile,
   „zünder"-Kopfzeile, Karten mit Foto, Name, Bio, NEE-/GEFÄLLT-MIR-Stempeln
@@ -195,22 +211,24 @@ Kapitel 1 (sie wechselt danach selbst nach Berlin, Esc überspringt):
   als Strahl auf die Bildschirmebene zurückgerechnet (`_schirm_punkt` —
   Ebenenschnitt, lokale Quad-Koordinaten, Viewport-Pixel), der getroffene
   Knopf pulst und wischt die Karte; ein Tipp aufs Foto blättert die Bilder.
-* **Ablauf:** drei Scherz-Profile (Angler Kevin, Auto-Marcel, Gym-Justin —
-  stilisierte Silhouetten-Porträts aus `tools/make_tinder_fotos.py`) lassen
-  sich **nur nach links** wischen; rechts federt zurück und Anne kommentiert.
-  Dann Olivers Profil: **drei Fotos, auf jedem sieht er anders aus** (aus
-  seinem 3D-Modell in der Kapitelszene gerendert — ordentlich / dunkel und
-  verwackelt / Blitz von schräg unten vor dem BÜRO-Schild; Nachbearbeitung
-  in `make_tinder_fotos.py veredeln`). Annes Gedanken laufen Zeile für Zeile
-  (`INTRO_GEDANKEN` in `dialogue_lines.gd`), ein Tipp aufs Foto blättert,
-  rechts wischen macht das **Match** (Dreiklang, zwei runde Avatare) und
-  blendet nach Berlin über.
+* **Ablauf:** vier Scherz-Profile mit echten Fotos und Olivers Sprüchen
+  (Cosimo, Karl, Maurice, Calvin — `INTRO_PROFILE` in `dialogue_lines.gd`)
+  lassen sich **nur nach links** wischen; rechts federt zurück und Anne
+  kommentiert. Dann Olivers Profil (zwei echte Fotos, Bio „Suche jemanden
+  für lange Spaziergänge mit ausreichend Abstand"): **erst wird in Ruhe
+  geblättert** (Tipp aufs Foto = nächstes Bild, der Hinweistext unten
+  sagt es), links federt zurück — und **erst der Herz-Knopf/Rechtswisch
+  startet Annes Gedanken** (`INTRO_GEDANKEN`, Zeile für Zeile). Nach dem
+  letzten Gedanken kommt das **Match** (Dreiklang, zwei runde Avatare)
+  und blendet nach Berlin über.
 * **Eingabe:** Maus ziehen oder ←/→, Tipp/Leertaste blättert Fotos, Klick
   schaltet Gedanken weiter, Esc überspringt.
 * **Prüflauf** `tools/headless_intro_check.gd`: Zustandsmaschine komplett —
-  falsche Richtungen federn, drei Linkswische legen Oliver hin, Gedanken
-  sperren das Wischen, Fotos rotieren, erst der Rechtswisch auf Oliver
-  setzt das Match. Die Logik schaltet sofort, Tweens sind nur Kosmetik.
+  falsche Richtungen federn, alle Linkswische legen Oliver hin (Anzahl
+  datengetrieben aus `INTRO_PROFILE`), auf Oliver blättert der Foto-Tipp
+  sofort, das Like startet die Gedanken, die Gedanken sperren das Wischen,
+  erst nach dem letzten Gedanken steht das Match. Die Logik schaltet
+  sofort, Tweens sind nur Kosmetik.
 
 ### Level-Übergang nach dem Sieg (`chapter_berlin.gd`)
 Nach dem gewonnenen Minispiel (und kurzem Wirken des GESCHAFFT-Banners)

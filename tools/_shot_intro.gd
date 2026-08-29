@@ -32,13 +32,15 @@ func _los() -> void:
 	_merke("oliver liegt")
 	_schuss("intro_oliver_gedanke")
 
-	for i in BerlinDialogue.INTRO_GEDANKEN.size():
-		szene.gedanke_weiter()
 	szene.naechstes_foto()
 	await create_timer(0.4).timeout
 	_schuss("intro_oliver_foto2")
 
-	szene.wische(true)
+	szene.wische(true)  # startet die Gedanken
+	await create_timer(0.6).timeout
+	_schuss("intro_oliver_gedanke2")
+	for i in BerlinDialogue.INTRO_GEDANKEN.size():
+		szene.gedanke_weiter()
 	await create_timer(1.5).timeout
 	_merke("match")
 	_schuss("intro_match")

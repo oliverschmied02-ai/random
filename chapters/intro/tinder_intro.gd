@@ -620,7 +620,10 @@ func wische(nach_rechts: bool) -> bool:
 		_abfedern(_profil(_index)["abwink"] as String)
 		return false
 	if oliver:
-		_match_starten()
+		# Erst beim Like meldet sich Annes Kopf zu Wort — das Match kommt,
+		# wenn der letzte Gedanke gedacht ist. Vorher darf man in Ruhe
+		# durch die Fotos blättern.
+		_gedanken_starten()
 	else:
 		_wegfliegen(false)
 	return true
@@ -653,8 +656,9 @@ func _wegfliegen(nach_rechts: bool) -> void:
 	auftritt.tween_property(_karte, ^"modulate:a", 1.0, 0.18)
 	await auftritt.finished
 	_karte_gesperrt = false
-	if _index >= BerlinDialogue.INTRO_PROFILE.size() and _gedanke < 0:
-		_gedanken_starten()
+	if _index >= BerlinDialogue.INTRO_PROFILE.size():
+		_hinweis.text = "Tipp aufs Foto: nächstes Bild  ·  Herz-Knopf: gefällt mir"
+		_hinweis.visible = true
 
 
 func _abfedern(spruch: String) -> void:
@@ -701,10 +705,7 @@ func gedanke_weiter() -> void:
 	if _gedanke < BerlinDialogue.INTRO_GEDANKEN.size():
 		_gedanke_zeigen(BerlinDialogue.INTRO_GEDANKEN[_gedanke])
 		return
-	_zustand = Zustand.WISCHEN
-	_gedanke_loeschen()
-	_hinweis.text = "Tipp aufs Foto: nächstes Bild  ·  Herz-Knopf: gefällt mir"
-	_hinweis.visible = true
+	_match_starten()
 
 
 func _match_starten() -> void:

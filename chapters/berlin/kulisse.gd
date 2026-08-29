@@ -132,6 +132,7 @@ func _ready() -> void:
 	_fuelllicht_anbringen()
 	_baeume_pflanzen()
 	_verkehr_starten()
+	_passanten_beleben()
 	_regen_bauen()
 	_tram_bauen()
 	_flugzeug_starten()
@@ -815,6 +816,41 @@ func _baeume_pflanzen() -> void:
 ## Ein paar Autos fahren durch die Nacht — mit Scheinwerferlicht, und sie
 ## halten an, wenn die Spielerin vor ihnen die Straße quert. Rein visuell,
 ## keine Physik: die Straßen gehören weiter den Fußgängern.
+## Passanten auf den Gehwegen: sechs Menschen, die ihre Abendwege gehen —
+## hin und zurück, nah an den Fassaden, mit Abstand zu den Baumreihen.
+## Die Wege decken jede Etappe der Route ab, damit die Stadt nie leer
+## wirkt. Alle tragen FFP2 — Berlin im Herbst 2020, und die Maske nimmt
+## den beiden Basismodellen nebenbei jede Ähnlichkeit mit Anne und Oliver.
+func _passanten_beleben() -> void:
+	var leute: Array = [
+		# [modell, wegpunkte, start, kleid, haar, maske, groesse]
+		["anne", [Vector3(-9.4, 0.08, 16.0), Vector3(-9.4, 0.08, -38.0)],
+			0.15, Color(0.55, 0.20, 0.20), Color(0.34, 0.24, 0.16), true, 1.66],
+		["oliver", [Vector3(9.4, 0.08, -38.0), Vector3(9.4, 0.08, 14.0)],
+			0.45, Color(0.30, 0.36, 0.28), Color(0.16, 0.15, 0.14), true, 1.84],
+		["oliver", [Vector3(14.0, 0.08, -45.8), Vector3(68.0, 0.08, -45.8)],
+			0.30, Color(0.24, 0.28, 0.40), Color(2.2, 2.1, 2.0), true, 1.72],
+		["anne", [Vector3(50.9, 0.08, -72.0), Vector3(50.9, 0.08, -130.0)],
+			0.60, Color(0.72, 0.58, 0.26), Color(0.42, 0.26, 0.14), true, 1.62],
+		["anne", [Vector3(54.0, 0.08, -146.3), Vector3(114.0, 0.08, -146.3)],
+			0.50, Color(0.30, 0.30, 0.33), Color(1.5, 1.35, 1.05), true, 1.75],
+		["oliver", [Vector3(139.2, 0.08, -152.0), Vector3(139.2, 0.08, -238.0)],
+			0.25, Color(0.38, 0.28, 0.20), Color(0.24, 0.20, 0.16), true, 1.78],
+	]
+	for eintrag in leute:
+		var passant := Passant.new()
+		passant.modell_pfad = "res://actors/models/%s.glb" % eintrag[0]
+		passant.weg = PackedVector3Array(eintrag[1])
+		passant.start_anteil = eintrag[2]
+		passant.kleid_ton = eintrag[3]
+		passant.haar_ton = eintrag[4]
+		passant.maske_an = eintrag[5]
+		passant.zielhoehe = eintrag[6]
+		# Kein Mocap: die Passanten sollen schlicht gehen, nicht gestikulieren.
+		passant.mocap_aktiv = false
+		add_child(passant)
+
+
 func _verkehr_starten() -> void:
 	var arten: Array[String] = ["NormalCar1", "SUV", "Taxi", "NormalCar2"]
 	var toene: Array = [Color(0.20, 0.22, 0.28), Color(0.12, 0.12, 0.13),

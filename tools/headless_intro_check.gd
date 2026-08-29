@@ -79,12 +79,10 @@ func _los() -> void:
 	_pruefe(szene.karten_index() == scherze,
 		"nach allen Abwinken liegt Oliver (Karte %d)" % szene.karten_index())
 
-	# Olivers Karte startet die Gedanken; Wischen ist derweil gesperrt.
-	_pruefe(szene.zustand() == szene.Zustand.GEDANKEN, "Gedanken beginnen von selbst")
-	_pruefe(not szene.wische(false), "während der Gedanken wird nicht gewischt")
-	for i in BerlinDialogue.INTRO_GEDANKEN.size():
-		szene.gedanke_weiter()
-	_pruefe(szene.zustand() == szene.Zustand.WISCHEN, "nach den Gedanken wird gewischt")
+	# Olivers Karte startet KEINE Gedanken mehr — erst blättert man in
+	# Ruhe durch die Fotos, die Gedanken kommen mit dem Like.
+	_pruefe(szene.zustand() == szene.Zustand.WISCHEN,
+		"Oliver liegt, geblättert wird sofort")
 
 	# Durch die Fotos blättern: so viele, wie das Profil hat, dann wieder
 	# das erste. Die Anzahl kommt aus den Daten — echte Fotos können dazu-
@@ -104,10 +102,20 @@ func _los() -> void:
 	_pruefe(szene.karten_index() == scherze, "links auf Oliver federt zurück")
 	_pruefe(not szene.match_erreicht, "noch kein Match")
 
-	# Herz-Knopf auf Oliver: Match.
+	# Herz-Knopf auf Oliver: erst Annes Gedanken, dann das Match.
 	szene.tippe_auf_schirm(Vector2(400, 1035))
+	await _ruhe()
+	_pruefe(szene.zustand() == szene.Zustand.GEDANKEN,
+		"das Like startet Annes Gedanken")
+	_pruefe(not szene.match_erreicht, "während der Gedanken noch kein Match")
+	_pruefe(not szene.wische(false), "während der Gedanken wird nicht gewischt")
+	for i in BerlinDialogue.INTRO_GEDANKEN.size() - 1:
+		szene.gedanke_weiter()
+	_pruefe(szene.zustand() == szene.Zustand.GEDANKEN,
+		"der letzte Gedanke steht noch")
+	szene.gedanke_weiter()
 	await _ruhe(1.2)
-	_pruefe(szene.match_erreicht, "Herz-Knopf auf Oliver macht das Match")
+	_pruefe(szene.match_erreicht, "nach dem letzten Gedanken kommt das Match")
 	_pruefe(szene.zustand() == szene.Zustand.MATCH, "Zustand steht auf MATCH")
 
 	if _fehler == 0:
