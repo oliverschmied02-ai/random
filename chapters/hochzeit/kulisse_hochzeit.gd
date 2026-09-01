@@ -37,6 +37,9 @@ const WASSER_Y := -0.6
 
 ## Die Gäste — vom Kapitel für Blickrichtung und Jubel gebraucht.
 var gaeste: Array[Node3D] = []
+## Ort und Drehung jedes Stuhls — gefüllt beim Möblieren, gelesen beim
+## Setzen der Gäste.
+var _stuhlplaetze: Array = []
 
 
 
@@ -179,9 +182,13 @@ func _ufer_bauen() -> void:
 			_mat(Color(0.30, 0.34, 0.42).lerp(
 				Color(0.52, 0.30, 0.36), float(i) / 6.0), 0.95))
 
-	# Poller am Kai.
+	# Poller am Kai. Keiner auf der Mittelachse: dort schaut beim
+	# Fangspiel die Kamera durch — ein dunkler Poller mitten im Fangring
+	# las sich als Teil der Hände.
 	for i in 9:
 		var x := -34.0 + i * 8.5
+		if absf(x) < 2.0:
+			continue
 		var poller := MeshInstance3D.new()
 		var form := CylinderMesh.new()
 		form.top_radius = 0.14
@@ -545,15 +552,18 @@ func _fest_bauen() -> void:
 
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 2023
-	# Zwei Stuhlreihen mit Mittelgang, den Rücken zum Wasser.
+	# Zwei Stuhlreihen mit Mittelgang, den Rücken zum Wasser. Jeder Stuhl
+	# merkt sich Ort und Drehung — die Gäste setzen sich später auf einen
+	# Teil davon (gleiche Streuung, sonst sitzt jemand schräg zum Stuhl).
 	for reihe in 2:
 		for platz in 10:
 			if platz == 4 or platz == 5:
 				continue                       # Mittelgang
 			var x := -7.2 + platz * 1.6
 			var z := 7.4 + reihe * 1.7
-			_prop(_STUHL, Vector3(x, 0.06, z),
-				PI + rng.randf_range(-0.14, 0.14))
+			var gier := PI + rng.randf_range(-0.14, 0.14)
+			_prop(_STUHL, Vector3(x, 0.06, z), gier)
+			_stuhlplaetze.append({"ort": Vector3(x, 0.0, z), "gier": gier})
 	# Roter Teppich vom Gang zum Bogen — hier steht später die Braut.
 	_kasten(Vector3(0.0, 0.055, 5.6), Vector3(1.9, 0.03, 7.6),
 		_mat(Color(0.52, 0.20, 0.22), 0.9))
@@ -623,40 +633,44 @@ const _HAAR_TOENE: Array[Color] = [
 
 func _gaeste_setzen() -> void:
 	## Fünfzig Gäste aus acht Mixamo-Modellen (`gast_1`–`gast_8`, Pipeline
-	## siehe ASSET_REQUIREMENTS). Die ersten zwölf Plätze sind gesetzt:
-	## acht an den Stuhlreihen, vier an den Stehtischen — dort stehen die
-	## Modelle im Original. Der Rest verteilt sich per Zufall (fester Seed)
-	## über die Terrasse und wird über Tönung, Größe und Drehung variiert,
-	## damit die Wiederholung nicht auffällt.
+	## siehe ASSET_REQUIREMENTS). Zehn **sitzen** auf den Stühlen
+	## (Knochenpose in `Hochzeitsgast._hinsetzen`), sechs stehen fest an
+	## Stehtischen und Reihenrändern, der Rest verteilt sich per Zufall
+	## (fester Seed) über die Terrasse — variiert über Tönung, Größe und
+	## Drehung, damit die Wiederholung nicht auffällt.
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 815
-	var plaetze: Array[Vector3] = [
-		# Ort, Blickrichtung (schauen zum Bogen bei z = 2,6)
-		Vector3(-6.4, 0.0, 6.4), Vector3(-4.0, 0.0, 6.5),
-		Vector3(3.6, 0.0, 6.4), Vector3(6.0, 0.0, 6.6),
-		Vector3(-5.2, 0.0, 9.6), Vector3(4.8, 0.0, 9.7),
+
+	# Zehn der sechzehn Stühle sind besetzt — ein paar leere Stühle
+	# erzählen mehr als volle Reihen (jemand holt Getränke, jemand steht
+	# am Wasser). Die Auswahl kommt aus dem gesäten Zufall.
+	var sitze: Array = _stuhlplaetze.duplicate()
+	while sitze.size() > 10:
+		sitze.remove_at(rng.randi() % sitze.size())
+
+	# Feste Stehplätze: die Stehtische und zwei an den Reihenrändern.
+	var staende: Array[Vector3] = [
 		Vector3(-9.6, 0.0, 8.2), Vector3(9.2, 0.0, 8.4),
 		Vector3(-12.4, 0.0, 12.6), Vector3(-9.0, 0.0, 15.0),
 		Vector3(12.0, 0.0, 12.9), Vector3(15.4, 0.0, 14.6),
 	]
-	# 38 weitere Plätze hinter den Stuhlreihen und über die Terrasse
+	# Weitere Plätze hinter den Stuhlreihen und über die Terrasse
 	# verstreut. Die Gasse hinter der Braut (x um 0, bis z 14) bleibt frei —
 	# dort läuft man selbst, und beim Spiel steht die Kamera davor.
-	while plaetze.size() < GAESTE_GESAMT:
+	while sitze.size() + staende.size() < GAESTE_GESAMT:
 		var ort := Vector3(rng.randf_range(-16.5, 16.5), 0.0,
 			rng.randf_range(10.5, 19.5))
 		if absf(ort.x) < 2.6 and ort.z < 14.0:
 			continue
 		var eng := false
-		for p in plaetze:
+		for p in staende:
 			if p.distance_to(ort) < 1.15:
 				eng = true
 				break
 		if not eng:
-			plaetze.append(ort)
+			staende.append(ort)
 
-	for i in plaetze.size():
-		var ort: Vector3 = plaetze[i]
+	for i in GAESTE_GESAMT:
 		var gast := Hochzeitsgast.new()
 		var modell_nr := (i % 8) + 1
 		gast.modell_pfad = "res://actors/models/gast_%d.glb" % modell_nr
@@ -675,10 +689,24 @@ func _gaeste_setzen() -> void:
 			if modell_nr >= 7:
 				gast.hose = gast.oberteil  # Anzug: Jackett und Hose gleich
 			gast.haar_ton = _HAAR_TOENE[rng.randi() % _HAAR_TOENE.size()]
+		# Ort und Drehung **vor** add_child: das Hinsetzen senkt die Figur
+		# in _ready ab — eine danach gesetzte Position überschriebe das.
+		if i < sitze.size():
+			var platz: Dictionary = sitze[i]
+			gast.sitzend = true
+			# Der Stuhl schaut mit Modell-Gier PI nach −Z; die Figur schaut
+			# mit Gier 0 nach −Z — gleiche Streuung, um PI versetzt. Und ein
+			# Stück zur Lehne gerückt, sonst sitzt jeder auf der Vorderkante.
+			var gier_gast := (platz["gier"] as float) - PI
+			gast.rotation.y = gier_gast
+			gast.position = (platz["ort"] as Vector3) \
+				+ Vector3(sin(gier_gast), 0.0, cos(gier_gast)) * 0.12
+		else:
+			var ort: Vector3 = staende[i - sitze.size()]
+			gast.position = ort
+			# Zum Traubogen schauen — vorn andächtig, hinten beiläufiger.
+			var zum_bogen := Vector3(0.0, 0.0, 2.6) - ort
+			gast.rotation.y = atan2(zum_bogen.x, zum_bogen.z) + PI \
+				+ (rng.randf_range(-0.7, 0.7) if i >= 8 else rng.randf_range(-0.15, 0.15))
 		add_child(gast)
-		gast.position = ort
-		# Zum Traubogen schauen — vorn andächtig, hinten beiläufiger.
-		var zum_bogen := Vector3(0.0, 0.0, 2.6) - ort
-		gast.rotation.y = atan2(zum_bogen.x, zum_bogen.z) + PI \
-			+ (rng.randf_range(-0.7, 0.7) if i >= 8 else rng.randf_range(-0.15, 0.15))
 		gaeste.append(gast)

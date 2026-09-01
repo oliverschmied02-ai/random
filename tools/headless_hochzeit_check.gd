@@ -107,7 +107,7 @@ func _los() -> void:
 			var flug: Dictionary = spiel._fliegende[0]
 			var ziel: Vector3 = flug["ziel"]
 			spiel._haende.global_position = ziel
-			if float(flug["uhr"]) / spiel.flugzeit > 0.72:
+			if float(flug["uhr"]) / float(flug["dauer"]) > 0.72:
 				spiel.greifen()
 		await physics_frame
 	_pruefe(spiel.gefangen > vorher_gefangen,
@@ -121,7 +121,7 @@ func _los() -> void:
 		if not spiel._fliegende.is_empty():
 			var flug: Dictionary = spiel._fliegende[0]
 			spiel._haende.global_position = flug["ziel"]
-			if float(flug["uhr"]) / spiel.flugzeit > 0.72:
+			if float(flug["uhr"]) / float(flug["dauer"]) > 0.72:
 				spiel.greifen()
 		await physics_frame
 	_pruefe(spiel.zustand == StraussSpiel.Zustand.SIEG,

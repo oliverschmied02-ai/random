@@ -95,25 +95,25 @@ const ERINNERUNG_BANK: Array[Dictionary] = [
 const INTRO_PROFILE: Array[Dictionary] = [
 	{
 		"name": "Cosimo", "alter": 34,
-		"bild": "res://assets/intro/profil_checker.png",
+		"bild": "res://assets/intro/profil_checker.jpg",
 		"bio": "Ey, hier ist der Checker vom Neckar, alles klar bei dir?",
 		"abwink": "Bei mir ja. Beim Checker checke ich aus.",
 	},
 	{
 		"name": "Karl", "alter": 32,
-		"bild": "res://assets/intro/profil_gym.png",
+		"bild": "res://assets/intro/profil_gym.jpg",
 		"bio": "Erst das Gym, dann das Business, dann die Frau",
 		"abwink": "Ich bin also Punkt drei auf der Liste. Nein.",
 	},
 	{
 		"name": "Maurice", "alter": 30,
-		"bild": "res://assets/intro/profil_maurice.png",
+		"bild": "res://assets/intro/profil_maurice.jpg",
 		"bio": "Der Löwe gefällt jeder Schwiegermama",
 		"abwink": "Meine Mama hätte da Fragen.",
 	},
 	{
 		"name": "Calvin", "alter": 27,
-		"bild": "res://assets/intro/profil_kappe.png",
+		"bild": "res://assets/intro/profil_kappe.jpg",
 		"bio": "Hey du, ich bin zwar kein Zahnarzt, aber ich kann dir trotzdem eine Füllung verpassen.",
 		"abwink": "Autsch. Einfach: autsch.",
 	},
@@ -125,8 +125,8 @@ const INTRO_PROFILE: Array[Dictionary] = [
 const INTRO_OLIVER: Dictionary = {
 	"name": "Oliver", "alter": 28,
 	"bilder": [
-		"res://assets/intro/oliver_foto_1.png",
-		"res://assets/intro/oliver_foto_2.png",
+		"res://assets/intro/oliver_foto_1.jpg",
+		"res://assets/intro/oliver_foto_2.jpg",
 	],
 	"bio": "Suche jemanden für lange Spaziergänge mit ausreichend Abstand",
 	"abwink": "Hm. Vielleicht doch noch mal gucken.",

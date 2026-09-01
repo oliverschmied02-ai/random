@@ -7,14 +7,22 @@ extends Node3D
 ## drei Positionen vor der Braut (Oliver und zwei Gäste), jeder Strauß
 ## kommt in einem Bogen auf die Kamera zu und dreht sich dabei.
 ##
-## Gefangen wird mit den **Händen**: ein Ring in der Fangebene folgt der
-## Maus, ein Klick schließt die Hände für einen Moment. Wer im richtigen
-## Augenblick zugreift und die Hände am richtigen Ort hat, fängt.
+## Gefangen wird mit den **Händen** — Annes echten, aus `anne.glb`
+## geschnitten (`tools/make_fanghaende.py`): ein offenes Paar folgt der
+## Maus in der Fangebene, ein Klick blendet für einen Moment auf das
+## zugreifende Paar um. Wer im richtigen Augenblick zugreift und die
+## Hände am richtigen Ort hat, fängt.
 ##
 ## Warum ein Zeitfenster und kein Auto-Fangen: ohne Klick wäre es ein
 ## Mauszeiger-Spiel, das man nicht verlieren kann. Mit Klick ist es
 ## Verfolgen **und** Timing — dieselbe Doppelanforderung wie beim Werfen
 ## in den beiden Kapiteln davor, nur umgekehrt.
+##
+## Schwer wird es durch den **Flug**, nicht durch die Zone: jeder Strauß
+## hat seine eigene Flugzeit (schnelle flach, langsame in hohem Bogen)
+## und der Uferwind schiebt ihn unterwegs seitlich — die Kurve kehrt zum
+## Zielpunkt zurück, sichtbar windig, aber fair. Ein Fehlgriff kostet:
+## die Hände brauchen einen Moment, bis sie wieder offen sind.
 
 signal runde_geschafft
 
@@ -44,18 +52,21 @@ const WERFER: Array[Vector3] = [
 @export_range(0.5, 3.0, 0.1) var reichweite_breit: float = 1.7
 @export_range(0.4, 2.0, 0.1) var reichweite_hoch: float = 1.15
 ## Wie weit vom Handmittelpunkt ein Strauß noch gefangen wird.
-@export_range(0.2, 1.2, 0.05) var fang_radius: float = 0.58
+@export_range(0.2, 1.2, 0.05) var fang_radius: float = 0.46
 ## Wie lange die Hände nach einem Klick geschlossen bleiben.
-@export_range(0.1, 1.0, 0.05) var greifdauer: float = 0.45
-## Pause zwischen zwei Griffen.
-@export_range(0.0, 1.0, 0.05) var greif_pause: float = 0.22
-## Flugzeit eines Straußes.
+@export_range(0.1, 1.0, 0.05) var greifdauer: float = 0.32
+## Pause zwischen zwei Griffen — der Preis eines Fehlgriffs.
+@export_range(0.0, 1.0, 0.05) var greif_pause: float = 0.40
+## Mittlere Flugzeit eines Straußes; jeder Wurf streut um sie herum.
 @export_range(0.8, 3.0, 0.1) var flugzeit: float = 1.2
+## Wie stark der Uferwind die Sträuße unterwegs seitlich schiebt (Meter).
+@export_range(0.0, 2.0, 0.05) var wind_staerke: float = 1.0
 ## Abstand zwischen zwei Würfen.
 @export_range(0.5, 4.0, 0.1) var wurf_abstand: float = 1.9
 @export_range(0.0, 6.0, 0.1) var intro_dauer: float = 2.8
 
 const _STRAUSS := preload("res://assets/props/strauss.glb")
+const _HAENDE := preload("res://assets/hochzeit/fanghaende.glb")
 
 var zustand: Zustand = Zustand.INAKTIV
 var gefangen: int = 0
@@ -75,10 +86,9 @@ var _runde_laeuft := false
 var _fliegende: Array = []      # je {node, start, ziel, uhr, drehachse}
 
 var _haende: Node3D
-var _hand_links: MeshInstance3D
-var _hand_rechts: MeshInstance3D
+var _offene: Array[Node3D] = []
+var _zugreifende: Array[Node3D] = []
 var _ring: MeshInstance3D
-var _hand_stoff: StandardMaterial3D
 var _ring_stoff: StandardMaterial3D
 
 var _hud: CanvasLayer
@@ -116,32 +126,41 @@ func _kamera_bauen() -> void:
 	kamera.look_at(Vector3(0.0, 1.45, 2.2))
 
 
-## Die Hände: zwei flache Schalen und ein Ring, der die Fangzone zeigt.
+## Die Hände: Annes echte, in zwei Posen (offen und zugreifend, siehe
+## `tools/make_fanghaende.py`), dazu der Ring, der die Fangzone zeigt.
 ##
 ## Der Ring ist keine Zierde — ohne eine sichtbare Fangzone rät man, und
 ## das Spiel fühlt sich unfair an. Er wird beim Zugreifen kleiner und
-## heller: das ist die ganze Rückmeldung, die der Griff braucht.
+## heller; die Hände wechseln im selben Moment von offen auf zu.
 func _haende_bauen() -> void:
 	_haende = Node3D.new()
 	add_child(_haende)
-	_hand_stoff = StandardMaterial3D.new()
-	_hand_stoff.albedo_color = Color(0.86, 0.68, 0.58)
-	_hand_stoff.roughness = 0.75
 
-	for seite in [-1.0, 1.0]:
-		var hand := MeshInstance3D.new()
-		var form := SphereMesh.new()
-		form.radius = 0.115
-		form.height = 0.16
-		form.material = _hand_stoff
-		hand.mesh = form
-		hand.scale = Vector3(1.25, 0.55, 1.0)
-		_haende.add_child(hand)
-		hand.position = Vector3(seite * 0.17, 0.0, 0.0)
-		if seite < 0.0:
-			_hand_links = hand
+	# Die vier Netze aus dem GLB: links/rechts × offen/zu. Handgelenk im
+	# Ursprung, Finger nach oben, Fläche den Sträußen entgegen. Leicht
+	# vergrößert — aus 2,4 m Abstand wirken echte Hände sonst zierlich.
+	var satz := _HAENDE.instantiate() as Node3D
+	for kennung: String in ["links_offen", "rechts_offen", "links_zu", "rechts_zu"]:
+		var teil := satz.find_child(kennung, true, false) as Node3D
+		if teil == null:
+			push_warning("Fanghände: '%s' fehlt im GLB." % kennung)
+			continue
+		teil.get_parent().remove_child(teil)
+		_haende.add_child(teil)
+		var links := kennung.begins_with("links")
+		teil.position = Vector3(-0.15 if links else 0.15, -0.17, 0.0)
+		teil.scale = Vector3.ONE * 1.6
+		if kennung.ends_with("offen"):
+			_offene.append(teil)
 		else:
-			_hand_rechts = hand
+			# Eine Faust von hinten ist ein winziger Fleck — die
+			# zugreifenden Hände kippen deshalb mit den Knöcheln zur
+			# Kamera und rücken in die Ringmitte zusammen.
+			teil.visible = false
+			teil.position = Vector3(-0.11 if links else 0.11, -0.10, 0.05)
+			teil.rotation.x = 0.5
+			_zugreifende.append(teil)
+	satz.queue_free()
 
 	_ring = MeshInstance3D.new()
 	var reifen := TorusMesh.new()
@@ -256,7 +275,8 @@ func starten() -> void:
 	_stand_anzeigen()
 	if intro_dauer > 0.0:
 		_banner_zeigen("BRAUTSTRÄUSSE FANGEN",
-			"%d fliegen, %d musst du fangen. Maus bewegen, klicken zum Zugreifen."
+			("%d fliegen, %d musst du fangen. Maus bewegen, klicken zum " +
+			"Zugreifen — und Vorsicht, der Wind spielt mit.")
 				% [STRAEUSSE_PRO_RUNDE, FANG_ZIEL])
 		await get_tree().create_timer(intro_dauer).timeout
 		_banner.visible = false
@@ -323,11 +343,17 @@ func _haende_fuehren(delta: float) -> void:
 	_haende.global_position = _haende.global_position.lerp(soll,
 		clampf(delta * 14.0, 0.0, 1.0))
 
-	# Zugreifen: Hände zusammen, Ring kleiner und heller.
+	# Zugreifen: die offenen Hände weichen dem zugreifenden Paar, die
+	# Paare rücken zusammen, der Ring wird kleiner und heller.
 	var zu := _greift > 0.0
-	var spanne := 0.055 if zu else 0.17
-	_hand_links.position.x = lerpf(_hand_links.position.x, -spanne, delta * 22.0)
-	_hand_rechts.position.x = lerpf(_hand_rechts.position.x, spanne, delta * 22.0)
+	for hand in _offene:
+		hand.visible = not zu
+	for hand in _zugreifende:
+		hand.visible = zu
+	var spanne := 0.10 if zu else 0.16
+	for hand in _offene + _zugreifende:
+		var ziel_x := -spanne if hand.position.x < 0.0 else spanne
+		hand.position.x = lerpf(hand.position.x, ziel_x, delta * 22.0)
 	var groesse := 0.72 if zu else 1.0
 	_ring.scale = _ring.scale.lerp(Vector3.ONE * groesse, delta * 18.0)
 	if _ring_stoff != null:
@@ -354,17 +380,24 @@ func _werfen() -> void:
 	add_child(strauss)
 	var start: Vector3 = WERFER[(geworfen - 1) % WERFER.size()]
 	strauss.global_position = start
-	# Das Ziel streut um die Ruhelage der Hände — sonst müsste man sich
+	# Das Ziel streut über die volle Reichweite — sonst müsste man sich
 	# nie bewegen.
 	var streuung := Vector2(
-		randf_range(-reichweite_breit, reichweite_breit) * 0.78,
-		randf_range(-reichweite_hoch, reichweite_hoch) * 0.7)
+		randf_range(-reichweite_breit, reichweite_breit),
+		randf_range(-reichweite_hoch, reichweite_hoch) * 0.9)
 	var ziel := Vector3(streuung.x, HAND_HOEHE + streuung.y, FANG_Z)
+	# Jeder Wurf hat seinen eigenen Charakter: schnelle kommen flach,
+	# langsame in hohem Bogen, und der Wind schiebt unterwegs zur Seite
+	# (die Kurve kehrt zum Zielpunkt zurück — sichtbar windig, aber fair).
+	var anteil := randf_range(0.8, 1.3)
 	_fliegende.append({
 		"node": strauss,
 		"start": start,
 		"ziel": ziel,
 		"uhr": 0.0,
+		"dauer": flugzeit * anteil,
+		"bogen": lerpf(0.65, 1.9, (anteil - 0.8) / 0.5),
+		"wind": randf_range(-wind_staerke, wind_staerke),
 		"achse": Vector3(randf_range(-1.0, 1.0), randf_range(-0.4, 0.4),
 			randf_range(-1.0, 1.0)).normalized(),
 		"tempo": randf_range(4.0, 7.5),
@@ -382,7 +415,7 @@ func _fluege_bewegen(delta: float) -> void:
 	var fertig: Array = []
 	for flug in _fliegende:
 		flug["uhr"] += delta
-		var t: float = flug["uhr"] / flugzeit
+		var t: float = flug["uhr"] / float(flug["dauer"])
 		var strauss: Node3D = flug["node"]
 		if not is_instance_valid(strauss):
 			fertig.append(flug)
@@ -390,8 +423,11 @@ func _fluege_bewegen(delta: float) -> void:
 		var start: Vector3 = flug["start"]
 		var ziel: Vector3 = flug["ziel"]
 		var ort := start.lerp(ziel, minf(t, 1.35))
-		# Wurfbogen: 1,3 m Stich in der Mitte.
-		ort.y += sin(clampf(t, 0.0, 1.0) * PI) * 1.3
+		# Wurfbogen (je Wurf anders hoch) und der seitliche Windschub —
+		# beide null an Start und Ziel, am größten in der Flugmitte.
+		var welle := sin(clampf(t, 0.0, 1.0) * PI)
+		ort.y += welle * float(flug["bogen"])
+		ort.x += welle * float(flug["wind"])
 		strauss.global_position = ort
 		strauss.rotate(flug["achse"], flug["tempo"] * delta)
 

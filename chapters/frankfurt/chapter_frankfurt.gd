@@ -159,7 +159,9 @@ func _ablauf() -> void:
 	_film(Vector3(400.4, 1.75, -95.6), Vector3(400.4, 1.25, -98.4))
 	await _dialogue.play(FrankfurtDialogue.GEWONNEN)
 	await _level_uebergang()
-	await _karte.abspann(FrankfurtDialogue.KARTE_TITEL, FrankfurtDialogue.KARTE_ZEILE)
+	# Keine Abspannkarte mehr: „KAPITEL 2" nach dem Kapitelende las sich
+	# wie ein Neustart — Kapitel 3 stellt sich mit seiner Auftaktkarte
+	# selbst vor.
 	kapitel_abgeschlossen.emit()
 	if not test_schnell:
 		get_tree().change_scene_to_file(

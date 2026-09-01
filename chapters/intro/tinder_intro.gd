@@ -431,8 +431,8 @@ func _match_bauen(grund: Control) -> void:
 	_match_schicht.add_child(gruss)
 
 	for daten in [
-		["res://assets/intro/anne_match.png", Vector2(88, 470)],
-		["res://assets/intro/oliver_foto_1.png", Vector2(292, 470)],
+		["res://assets/intro/anne_match.jpg", Vector2(88, 470)],
+		["res://assets/intro/oliver_foto_1.jpg", Vector2(292, 470)],
 	]:
 		var ring := Panel.new()
 		var form := StyleBoxFlat.new()

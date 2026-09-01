@@ -24,6 +24,10 @@ extends Figur
 @export var hose: Color = Color.TRANSPARENT
 ## Tönung für Haar und Bart. Werte über 1 hellen auf (grau, blond).
 @export var haar_ton: Color = Color.TRANSPARENT
+## Auf einen Stuhl setzen: Beine per Knochenpose beugen, Figur auf
+## Sitzhöhe absenken. `sitzhoehe` ist die Sitzflächen-Oberkante in Metern.
+@export var sitzend: bool = false
+@export var sitzhoehe: float = 0.55
 
 const _OBEN: Array[String] = ["tops", "sweater", "hoodie", "suit", "cloth"]
 const _HEMD: Array[String] = ["shirt"]
@@ -36,6 +40,51 @@ func _ready() -> void:
 	if modell == null:
 		return
 	_toenen()
+	if sitzend:
+		_hinsetzen()
+
+
+## Setzt die Figur hin — dieselbe Skelettraum-Technik wie das Armsenken
+## in `Figur`: Oberschenkel um die Skelett-X-Achse nach vorn (das Modell
+## schaut im Skelettraum nach +Z), Unterschenkel wieder senkrecht nach
+## unten, der Fuß folgt von selbst mit Netto-Drehung null und bleibt
+## flach. Danach sinkt der ganze Knoten, bis das Gesäß (die Hüfthöhe)
+## auf der Sitzfläche liegt.
+func _hinsetzen() -> void:
+	var skelett := skelett_finden()
+	if skelett == null:
+		return
+	for seite in ["Left", "Right"]:
+		var schenkel := skelett.find_bone("%sUpLeg" % seite)
+		var schienbein := skelett.find_bone("%sLeg" % seite)
+		if schenkel < 0 or schienbein < 0:
+			return
+		var lage := skelett.get_bone_global_pose(schenkel)
+		skelett.set_bone_global_pose(schenkel, Transform3D(
+			Basis(Vector3.RIGHT, -PI * 0.46) * lage.basis, lage.origin))
+		lage = skelett.get_bone_global_pose(schienbein)
+		skelett.set_bone_global_pose(schienbein, Transform3D(
+			Basis(Vector3.RIGHT, PI * 0.44) * lage.basis, lage.origin))
+	# Sitzende Arme: etwas weniger gesenkt und weiter vorn, sonst stecken
+	# die Hände in den Oberschenkeln. Die Ruhelage steht schon — nur die
+	# Oberarme werden nachgestellt.
+	for paar: Array in [["Left", -1.0], ["Right", 1.0]]:
+		var arm := skelett.find_bone("%sArm" % paar[0])
+		if arm < 0:
+			continue
+		var lage := skelett.get_bone_global_pose(arm)
+		skelett.set_bone_global_pose(arm, Transform3D(
+			Basis(Vector3.RIGHT, -0.22)
+			* Basis(Vector3.BACK, -0.18 * (paar[1] as float)) * lage.basis,
+			lage.origin))
+	# Absenken: Hüfthöhe messen (Weltraum, nach der Skalierung) und die
+	# Differenz zur Sitzfläche vom Knoten abziehen.
+	var huefte := skelett.find_bone("Hips")
+	if huefte < 0:
+		return
+	var hueft_welt := (skelett.global_transform
+		* skelett.get_bone_global_pose(huefte).origin).y - global_position.y
+	position.y -= hueft_welt - sitzhoehe - 0.05
 
 
 func _passt(name_klein: String, woerter: Array[String]) -> bool:

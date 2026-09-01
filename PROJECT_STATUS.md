@@ -288,7 +288,9 @@ Der Umzug, bei Tag, bewusst als **Sequenzkette** erzählt
    Sequenzen davor von selbst. Der Wurfball fliegt mit `continuous_cd`
    und ohne Dämpfung, sonst tunnelt er oder sackt vor dem Tisch ab.
 9. **Sieg-Dialog, Level-Übergang** (*„Glückwunsch. Du hast es ins dritte
-   Level geschafft."*), Abspann, zurück zum Titel.
+   Level geschafft."*) — ohne Abspannkarte: „KAPITEL 2" nach dem
+   Kapitelende las sich wie ein Neustart, Kapitel 3 stellt sich mit
+   seiner Auftaktkarte selbst vor.
 
 Die Kulisse (`kulisse_ffm.gd`) baut alle fünf Schauplätze prozedural:
 Abschiedsstraße, Autobahn, Bahnstrecke mit Bahnsteig, Sachsenhausen,
@@ -450,22 +452,38 @@ Pipeline siehe ASSET_REQUIREMENTS), vervielfältigt über
 `Hochzeitsgast` (chapters/hochzeit/hochzeitsgast.gd): Oberteil, Hose
 und Haar werden je Exemplar über der Stofftextur getönt (Anzüge
 einfarbig, Hemden darunter bleiben hell, Haut nie), dazu Größen von
-1,58 bis 1,92 m und gestreute Blickrichtungen. Zwölf Plätze sind
-gesetzt, 38 verteilen sich mit festem Seed über die Terrasse — die
-Gasse hinter der Braut bleibt frei. Mocap/Gangwerk sind für sie abgeschaltet — beide
+1,58 bis 1,92 m und gestreute Blickrichtungen. **Zehn sitzen auf den
+Stühlen** (`Hochzeitsgast._hinsetzen`: Oberschenkel im Skelettraum nach
+vorn, Unterschenkel zurück — der Fuß folgt mit Netto-Drehung null und
+bleibt flach —, Arme nachgestellt, Knoten auf Sitzhöhe abgesenkt; jeder
+Sitzende übernimmt die gestreute Drehung seines Stuhls und rückt 12 cm
+zur Lehne), sechs Stühle bleiben frei. Sechs stehen fest an Stehtischen
+und Reihenrändern, der Rest verteilt sich mit festem Seed über die
+Terrasse — die Gasse hinter der Braut bleibt frei. Mocap/Gangwerk sind für sie abgeschaltet — beide
 sind auf das RPM-Rig geeicht und verbiegen das Mixamo-Skelett; die
 Armsenkung aus der T-Pose arbeitet dagegen rein über Knochennamen und
 greift nach dem Umbenennen (`mixamorig:` weg) unverändert.
 
 **Das Minispiel** (`strauss_spiel.gd`): zehn Brautsträuße fliegen von drei
-Werfern in Bögen heran und drehen sich dabei, **fünf muss man fangen**.
-Gefangen wird in Ich-Perspektive — ein Ring in der Fangebene folgt der
-Maus (gedämpft, damit die Hände Gewicht haben), ein Klick schließt die
-Hände für 0,45 s. Verfolgen **und** Timing: dieselbe Doppelanforderung wie
-beim Werfen in den Kapiteln davor, nur umgekehrt. Wer alle zehn verpasst,
+Werfern heran und drehen sich dabei, **fünf muss man fangen**. Gefangen
+wird in Ich-Perspektive mit **Annes echten Händen** — aus `anne.glb`
+geschnitten wie die Intro-Hand, in zwei Posen (offen mit gefächerten
+Fingern / zugreifend, `tools/make_fanghaende.py`; links ist die
+gespiegelte rechte, die Achsen-Umschreibung der Beugewinkel steht als
+Kommentar im Werkzeug). Der Ring in der Fangebene folgt der Maus
+(gedämpft), ein Klick blendet für 0,32 s aufs zugreifende Paar um —
+die Fäuste kippen dabei mit den Knöcheln zur Kamera, sonst wären sie
+aus 2,4 m ein Fleck. **Schwer macht es der Flug:** jeder Strauß hat
+seine eigene Flugzeit (schnelle flach, langsame in hohem Bogen), der
+Uferwind schiebt ihn seitlich (die Kurve kehrt zum Zielpunkt zurück —
+sichtbar windig, aber fair, und die Prüfläufe bleiben gültig), die
+Ziele streuen über die volle Reichweite, der Fangradius ist enger
+(0,46 m) und ein Fehlgriff kostet 0,4 s Pause. Wer alle zehn verpasst,
 bekommt eine freundliche Zeile und eine neue Runde. Die Flugbahn wird
 über den Fortschritt ausgewertet, nicht aufsummiert — derselbe Grund wie
-beim Dart-Minispiel in Kapitel 1.
+beim Dart-Minispiel in Kapitel 1. Am Kai steht kein Poller mehr auf der
+Mittelachse — ein dunkler Zylinder mitten im Fangring las sich als Teil
+der Hände.
 
 **Das Finale:** nach dem Sieg das Schlussbild am Wasser, dann der
 **Geschenkbildschirm**. Er löst ein, was die Widmung am Anfang verspricht
