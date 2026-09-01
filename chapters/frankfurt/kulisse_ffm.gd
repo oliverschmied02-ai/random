@@ -24,6 +24,7 @@ const _TUER := preload("res://assets/props/tuer_modul.glb")
 const _BAUM := preload("res://assets/props/baum_tag.glb")
 const _AUTO := preload("res://assets/props/auto.glb")
 const _LKW := preload("res://assets/props/lkw.glb")
+const _ICE := preload("res://assets/props/ice.glb")
 ## Der Fahrzeugpark: Quaternius-NPC-Wagen (CC0, quaternius.com) — echte
 ## Proportionen (4,2 m lang, 1,2 m hoch), Front nach +Z wie die
 ## Projekt-Konvention, keine Skalierung nötig. Die GLBs kamen mit
@@ -62,6 +63,8 @@ const _PENDELLAMPE := preload("res://assets/props/pendellampe.glb")
 
 ## Vom Kapitel animiert: der LKW auf der Autobahn.
 var lkw_fahrt: Node3D
+## Der ICE der Zug-Zwischenszene — das Kapitel schiebt ihn (wie den LKW).
+var zug: Node3D
 ## Gegenverkehr auf der Autobahn, fährt von selbst.
 var _gegenverkehr: Array = []
 ## Die Rotoren der Windräder — gedreht in `_process`.
@@ -83,6 +86,7 @@ const PUTZTOENE: Array[Color] = [
 func _ready() -> void:
 	_abschied_bauen()
 	_autobahn_bauen()
+	_bahn_bauen()
 	_sachsenhausen_bauen()
 	_kneipe_bauen()
 
@@ -615,6 +619,129 @@ func _schild(x: float, textur: String) -> void:
 	_kasten(Vector3(x - 0.05, 1.5, 304.6), Vector3(0.14, 3.2, 0.14), mast)
 
 
+# --- Bahnstrecke und Bahnsteig (z 500) --------------------------------------------
+
+
+## Die Zug-Zwischenszene: eine zweigleisige Strecke hinter den Feldern,
+## dazu ein Bahnsteig mit Dach, Schild und Uhr — genug „Frankfurt Hbf",
+## dass die Begrüßung einen Ort hat. Der Zug selbst hängt an `zug`;
+## bewegt wird er vom Kapitel (wie der LKW auf der Autobahn).
+func _bahn_bauen() -> void:
+	var gras := _mat(Color(0.40, 0.48, 0.26), 1.0)
+	var schotter := _foto_mat("schotter", Color(0.58, 0.56, 0.54), 0.4, 1.1)
+	var stahl := _mat(Color(0.42, 0.43, 0.46), 0.35)
+	stahl.metallic = 0.5
+	var dunkel := _mat(Color(0.20, 0.20, 0.22), 0.8)
+	var beton := _foto_mat("beton_platten", Color(0.72, 0.72, 0.74), 0.4, 0.7)
+
+	# Wiesen- und Ackerstreifen schließen an die Autobahnfelder (bis z 420) an;
+	# südlich der Strecke erst Wiese, der Acker beginnt weiter hinten.
+	_kasten(Vector3(210.0, 0.005, 460.0), Vector3(380.0, 0.02, 80.0), gras)
+	_kasten(Vector3(210.0, 0.005, 519.0), Vector3(380.0, 0.02, 38.0), gras)
+	_kasten(Vector3(210.0, 0.005, 557.0), Vector3(380.0, 0.02, 38.0),
+		_mat(Color(0.52, 0.46, 0.28), 1.0))
+
+	# Bahndamm: Schotterbett, Schwellen (ein MultiMesh je Gleis), Schienen.
+	# Gleis 1 (z 500) liegt am Bahnsteig, Gleis 2 (z 509,4) dahinter —
+	# erst das zweite Gleis macht aus einem Damm einen Bahnhof.
+	for gleis_z in [500.0, 509.4]:
+		_kasten(Vector3(210.0, 0.17, gleis_z), Vector3(360.0, 0.34, 7.0), schotter)
+		var schwellen := MultiMesh.new()
+		schwellen.transform_format = MultiMesh.TRANSFORM_3D
+		var holz := BoxMesh.new()
+		holz.size = Vector3(0.26, 0.16, 2.6)
+		holz.material = _mat(Color(0.30, 0.26, 0.22), 0.95)
+		schwellen.mesh = holz
+		var plaetze := int(356.0 / 0.8)
+		schwellen.instance_count = plaetze
+		for i in plaetze:
+			schwellen.set_instance_transform(i, Transform3D(Basis.IDENTITY,
+				Vector3(32.0 + i * 0.8, 0.32, gleis_z)))
+		var traeger := MultiMeshInstance3D.new()
+		traeger.multimesh = schwellen
+		add_child(traeger)
+		for seite in [-0.7175, 0.7175]:
+			_kasten(Vector3(210.0, 0.50, gleis_z + seite),
+				Vector3(356.0, 0.16, 0.08), stahl)
+
+	# Oberleitung: Masten mit Ausleger, darüber der Fahrdraht.
+	var mx := 44.0
+	while mx < 385.0:
+		_kasten(Vector3(mx, 3.30, 496.4), Vector3(0.30, 6.6, 0.30), dunkel)
+		_kasten(Vector3(mx, 6.10, 498.2), Vector3(0.12, 0.12, 3.9), dunkel)
+		mx += 36.0
+	_kasten(Vector3(210.0, 5.55, 500.0), Vector3(356.0, 0.05, 0.05), dunkel)
+
+	# Der Bahnsteig (Südseite): Kante auf Wagenbodenhöhe, weißer
+	# Sicherheitsstreifen, Dach auf Stützen, Stationsschilder, Uhr, Bänke.
+	_kasten(Vector3(285.0, 0.575, 504.6), Vector3(96.0, 1.15, 5.7), beton)
+	_bande(Vector3(285.0, 0.575, 504.6), Vector3(96.0, 1.15, 5.7))
+	_kasten(Vector3(285.0, 1.16, 502.05), Vector3(96.0, 0.03, 0.35),
+		_mat(Color(0.88, 0.88, 0.86), 0.6))
+	var sx := 249.0
+	while sx < 325.0:
+		_kasten(Vector3(sx, 2.85, 505.2), Vector3(0.28, 3.40, 0.28), dunkel)
+		sx += 12.0
+	_kasten(Vector3(285.0, 4.62, 504.9), Vector3(84.0, 0.12, 5.4),
+		_mat(Color(0.80, 0.81, 0.83), 0.5))
+	for schild_x in [255.0, 285.0, 315.0]:
+		_bahnhofsschild(Vector3(schild_x, 3.55, 504.2))
+	_bahnhofsuhr(Vector3(270.0, 3.35, 504.2))
+	for bank_x in [262.0, 298.0]:
+		_prop(_BANK, Vector3(bank_x, 1.16, 506.2), 0.0)
+
+	# Ein paar Bäume als Tiefenstaffelung um die Strecke.
+	for baum in [[96.0, 522.0], [118.0, 531.0], [205.0, 521.0],
+			[118.0, 476.0], [352.0, 524.0], [372.0, 481.0]]:
+		_prop(_BAUM, Vector3(baum[0], 0.0, baum[1]), baum[0] * 0.7, 1.2)
+
+	# Der Zug: Front zeigt nach +Z, mit PI/2 fährt er in +X — dieselbe
+	# Konvention wie beim LKW. Startlage setzt das Kapitel.
+	zug = _ICE.instantiate() as Node3D
+	add_child(zug)
+	zug.rotation.y = PI / 2.0
+	zug.position = Vector3(20.0, 0.58, 500.0)
+
+
+## Weißes „Frankfurt (Main) Hbf" auf DB-Blau, von beiden Seiten lesbar.
+func _bahnhofsschild(ort: Vector3) -> void:
+	_kasten(ort, Vector3(4.0, 0.62, 0.10), _mat(Color(0.08, 0.19, 0.42), 0.5))
+	for seite in [-1.0, 1.0]:
+		var text := Label3D.new()
+		text.text = "Frankfurt (Main) Hbf"
+		text.font_size = 96
+		text.pixel_size = 0.004
+		text.modulate = Color(0.96, 0.96, 0.98)
+		add_child(text)
+		text.position = ort + Vector3(0.0, 0.0, 0.06 * seite)
+		if seite < 0.0:
+			text.rotation.y = PI
+	for haenger in [-1.6, 1.6]:
+		_kasten(ort + Vector3(haenger, 0.60, 0.0), Vector3(0.06, 0.62, 0.06),
+			_mat(Color(0.20, 0.20, 0.22), 0.8))
+
+
+## Die Bahnhofsuhr: weiße Scheibe, zwei Zeiger, kurz vor fünf.
+func _bahnhofsuhr(ort: Vector3) -> void:
+	var zeiger := _mat(Color(0.10, 0.10, 0.12), 0.6)
+	_kasten(ort + Vector3(0, 0.62, 0), Vector3(0.08, 0.72, 0.08), zeiger)
+	for seite in [-1.0, 1.0]:
+		var blatt := MeshInstance3D.new()
+		var scheibe := CylinderMesh.new()
+		scheibe.top_radius = 0.36
+		scheibe.bottom_radius = 0.36
+		scheibe.height = 0.05
+		scheibe.material = _mat(Color(0.94, 0.94, 0.92), 0.4)
+		blatt.mesh = scheibe
+		add_child(blatt)
+		blatt.position = ort + Vector3(0, 0, 0.03 * seite)
+		blatt.rotation.x = PI / 2.0
+		_kasten(ort + Vector3(0.0, 0.09, 0.062 * seite),
+			Vector3(0.035, 0.24, 0.012), zeiger)
+		_kasten(ort + Vector3(-0.09, 0.0, 0.062 * seite),
+			Vector3(0.22, 0.035, 0.012), zeiger)
+
+
 # --- Sachsenhausen (x 195–320) ---------------------------------------------------
 
 
@@ -749,8 +876,9 @@ func _satteldach(traufe: Vector3, breite: float, tiefe: float,
 
 ## Vier Passanten am Rand der Gasse. Kein eigenes Modell — umgefärbte
 ## Kopien von Anne und Oliver, in unterschiedlicher Größe (siehe
-## `passant.gd`, dort steht auch, warum das trägt und wo die Grenze liegt).
-## Sie stehen bewusst weit von der Laufstrecke entfernt.
+## `actors/passant.gd`, dort steht auch, warum das trägt und wo die
+## Grenze liegt). Sie stehen bewusst weit von der Laufstrecke entfernt;
+## ohne Wegpunkte stehen sie einfach (Mocap-Ruhebewegung von `Figur`).
 func _passanten_setzen() -> void:
 	var leute: Array = [
 		# Ort, Blickrichtung, Modell, Größe, Kleidung, Haar
@@ -767,8 +895,8 @@ func _passanten_setzen() -> void:
 		var person := Passant.new()
 		person.modell_pfad = "res://actors/models/%s.glb" % daten[2]
 		person.zielhoehe = daten[3]
-		person.kleidung = daten[4]
-		person.haar = daten[5]
+		person.kleid_ton = daten[4]
+		person.haar_ton = daten[5]
 		add_child(person)
 		person.position = daten[0]
 		person.rotation.y = daten[1]

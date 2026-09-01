@@ -110,7 +110,8 @@ mit ihrer 8-cm-Bordsteinkante, für die das Stufen-Steigen gebaut wurde.
   sie **halten an, wenn die Spielerin vor ihnen die Straße quert** (Prüfung
   entlang der Fahrtrichtung in `_verkehr_pflegen`). Rein visuell, keine
   Physik.
-* **Passanten** (`chapters/berlin/passant.gd`, gesetzt in
+* **Passanten** (`actors/passant.gd` — dieselbe Klasse stellt auch die
+  stehenden Passanten in Kapitel 2, gesetzt in
   `_passanten_beleben`): sechs Menschen gehen ihre Abendwege auf den
   Gehwegen — hin und zurück, gewendet statt teleportiert, eine Route je
   Etappe der Spielstrecke. Basis sind die beiden RPM-Modelle (nur auf
@@ -255,14 +256,28 @@ Der Umzug, bei Tag, bewusst als **Sequenzkette** erzählt
    weiter), dann die feste Einstellung am blauen Schild, an dem er
    vorbeizieht. Gegenverkehr, Leitplanken, MultiMesh-Fahrbahnmarkierung,
    Böschungsbäume, drei Kilometerschilder Richtung Frankfurt.
-4. Blende, *„FRANKFURT AM MAIN"* — **Ankunft in Sachsenhausen**: kurzer
-   Dialog, dann Übergabe an die Spielerin.
-5. **Freier Lauf zur Kneipe** (Zielzeile oben links): Fachwerkzeile im
+4. Blende, *„EINIGE WOCHEN SPÄTER — ANNES ERSTER BESUCH"* — die
+   **Zug-Zwischenszene**: ein ICE (`assets/props/ice.glb` aus
+   `tools/make_zug.py` — Konturloft mit heruntergezogener Nase, rotem
+   Streifen, Fensterband, Stromabnehmer) zieht durch die Felder hinter
+   der Autobahn (Bahnstrecke bei z 500 in `kulisse_ffm.gd::_bahn_bauen`:
+   zwei Gleise mit Schotterbett, Schwellen-MultiMesh, Oberleitung), die
+   Skyline steht am Horizont. Zweite Einstellung vom Bahnsteig: der Zug
+   gleitet herein und hält (Bremskurve als Abstandsregel, bewegt wie der
+   LKW aus der Sequenzschleife).
+5. **Bahnsteig „Frankfurt (Main) Hbf"** (Dach, hängende Schilder per
+   Label3D, Bahnhofsuhr, Bänke): kurze Blende — Anne ist ausgestiegen,
+   Oliver läuft ihr über den Bahnsteig entgegen (Tween, das Gangwerk
+   schreitet von selbst), Begrüßungsdialog vor dem stehenden Zug
+   (`ANKUNFT`, jetzt mit Zug-Zeile).
+6. Blende, *„SACHSENHAUSEN — AM ANDEREN MAINUFER"* — kurzer
+   Stadt-Dialog (`STADT`), dann Übergabe an die Spielerin.
+7. **Freier Lauf zur Kneipe** (Zielzeile oben links): Fachwerkzeile im
    Süden, Putzhäuser mit Fassaden-Kit-Fenstern im Norden, Gehwege,
    Straßenmöbel, die Bankentürme im Tageslicht-Dunst dahinter. Die
    Kneipenfront „ZUM GERIPPTEN — APFELWEIN" mit warmer Lampe und zwei
    Deko-Bembeln; die Tür ist ein Area3D-Trigger.
-6. **Krug-Werfen** (`krug_spiel.gd`): drei Bembel-Pyramiden (3+2+1) auf
+8. **Krug-Werfen** (`krug_spiel.gd`): drei Bembel-Pyramiden (3+2+1) auf
    dem Wurftisch in der holzvertäfelten Stube. Zielen und Werfen fühlen
    sich an wie das Spritzen-Werfen aus Kapitel 1 (Fadenkreuz in der Ebene
    der Türme, Kraftbalken mit grüner Zone, Kraft wirkt nur auf die Höhe) —
@@ -272,12 +287,13 @@ Der Umzug, bei Tag, bewusst als **Sequenzkette** erzählt
    bis das Spiel beginnt — sonst setzen sich die Stapel während der langen
    Sequenzen davor von selbst. Der Wurfball fliegt mit `continuous_cd`
    und ohne Dämpfung, sonst tunnelt er oder sackt vor dem Tisch ab.
-7. **Sieg-Dialog, Level-Übergang** (*„Glückwunsch. Du hast es ins dritte
+9. **Sieg-Dialog, Level-Übergang** (*„Glückwunsch. Du hast es ins dritte
    Level geschafft."*), Abspann, zurück zum Titel.
 
-Die Kulisse (`kulisse_ffm.gd`) baut alle vier Schauplätze prozedural:
-Abschiedsstraße, Autobahn, Sachsenhausen, Kneipenstube (Tresen, runde
-Tische mit Bembeln, Bänke, Regal, warmes Licht, Tageslichtfenster).
+Die Kulisse (`kulisse_ffm.gd`) baut alle fünf Schauplätze prozedural:
+Abschiedsstraße, Autobahn, Bahnstrecke mit Bahnsteig, Sachsenhausen,
+Kneipenstube (Tresen, runde Tische mit Bembeln, Bänke, Regal, warmes
+Licht, Tageslichtfenster).
 
 **Tageslicht-Politur (zweiter Durchgang).** Der erste Aufbau lief auf
 flachen Farbflächen und sah neben Kapitel 1 billig aus. Behoben:
@@ -1036,6 +1052,15 @@ Durchlauf still. Der Rahmen-Prüflauf prüft das jetzt mit.
 **Transponierte Transforms.** Godot serialisiert `Transform3D` in `.tscn`
 zeilenweise, nicht spaltenweise. Dadurch stiegen die Rampen zur falschen Seite
 (die Figur lief unten durch) und die Sonne leuchtete nach oben.
+
+**Doppelter `class_name Passant`.** Die Berliner Geh-Passanten bekamen
+denselben Klassennamen wie die (älteren) stehenden Frankfurter Passanten —
+Godot meldete das nicht als Import-Fehler, sondern erst zur **Laufzeit**
+(„Invalid assignment of property 'kleidung'"), und nur im FFM-Kapitel. Die
+Prüfläufe blieben grün, weil nur nach `check: OK` gegrept wurde. Seitdem:
+eine gemeinsame Klasse `actors/passant.gd` (stehend ohne Wegpunkte, gehend
+mit; Tönung, Maske, Blickziel), und die Prüfschleife zählt zusätzlich
+`SCRIPT ERROR`-Zeilen.
 
 ---
 

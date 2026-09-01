@@ -3,9 +3,11 @@ extends Node3D
 
 ## Kapitel 2 — Frankfurt. Ablaufsteuerung, bewusst als **Sequenzkette**:
 ##
-## Abschiedsrede → Blende → LKW-Fahrt auf der A5 → Blende → Ankunft in
-## Frankfurt → spielbarer Lauf zur Apfelweinkneipe → hinein → Krug-Werfen
-## → Sieg-Dialog → „Du hast es ins dritte Level geschafft." → Abspann.
+## Abschiedsrede → Blende → LKW-Fahrt auf der A5 → „Einige Wochen später":
+## der ICE Richtung Frankfurt → Bahnsteig, Annes erster Besuch → Blende →
+## Sachsenhausen → spielbarer Lauf zur Apfelweinkneipe → hinein →
+## Krug-Werfen → Sieg-Dialog → „Du hast es ins dritte Level geschafft."
+## → Abspann.
 ##
 ## Nur der Lauf zur Kneipe ist frei spielbar; alles andere sind kurze,
 ## geschnittene Szenen mit der Filmkamera. Die Texte stehen in
@@ -22,6 +24,12 @@ const _ABSCHIED_ANNE := Vector3(-0.5, 0.3, -4.0)
 const _ABSCHIED_OLIVER := Vector3(1.2, 0.25, -4.3)
 const _ANKUNFT_ANNE := Vector3(202.0, 0.3, 0.5)
 const _ANKUNFT_OLIVER := Vector3(205.0, 0.25, -0.8)
+## Bahnsteig (Oberkante y 1,15): Anne kommt an, Oliver läuft ihr entgegen.
+const _BAHNSTEIG_ANNE := Vector3(272.0, 1.45, 503.2)
+const _BAHNSTEIG_OLIVER_START := Vector3(281.5, 1.4, 506.0)
+const _BAHNSTEIG_OLIVER := Vector3(274.6, 1.4, 503.9)
+## Wo der Zug hält: Mitte des Zuges an der Bahnsteigmitte.
+const _ZUG_HALT := 285.0
 ## Beim Werfen stehen die beiden neben der Wurfbahn (die läuft bei
 ## x 399,2–400,8), im Schlussbild dann einander zugewandt in der Mitte.
 const _KNEIPE_ANNE := Vector3(398.5, 0.3, -97.9)
@@ -110,7 +118,12 @@ func _ablauf() -> void:
 	await _zwischentitel(FrankfurtDialogue.TITEL_AUTOBAHN)
 	await _autobahn_sequenz()
 
-	# 3. Blende → Ankunft in Frankfurt.
+	# 3. Blende → einige Wochen später: Anne kommt mit dem Zug.
+	await _zwischentitel(FrankfurtDialogue.TITEL_WOCHEN)
+	await _zug_sequenz()
+	await _bahnsteig_sequenz()
+
+	# 3b. Blende → Sachsenhausen, Übergabe an die Spielerin.
 	await _zwischentitel(FrankfurtDialogue.TITEL_ANKUNFT)
 	await _ankunft_sequenz()
 
@@ -268,13 +281,65 @@ func _kabine_begleiten() -> void:
 		await get_tree().process_frame
 
 
+## Der ICE Richtung Frankfurt: erst quer durch die Felder (die Skyline
+## steht am Horizont), dann gleitet er vor der Bahnsteigkamera aus.
+## Bewegt wird er wie der LKW aus der Schleife heraus; die Bremskurve
+## ist eine einfache Abstandsregel — je näher am Halt, desto langsamer.
+func _zug_sequenz() -> void:
+	var zug: Node3D = _kulisse.zug
+	zug.position.x = 24.0
+	if test_schnell:
+		zug.position.x = _ZUG_HALT
+		await get_tree().process_frame
+		return
+
+	# Einstellung 1: die Fahrt durch die Felder, die Kamera schwenkt mit.
+	var uhr := 0.0
+	while uhr < 4.4:
+		var delta := get_process_delta_time()
+		uhr += delta
+		zug.position.x += 40.0 * delta
+		_filmkamera.global_position = Vector3(160.0, 3.4, 538.0)
+		_filmkamera.look_at(zug.global_position + Vector3(10.0, 2.4, 0.0))
+		_filmkamera.current = true
+		await get_tree().process_frame
+
+	# Einstellung 2: vom Bahnsteig aus — der Zug gleitet herein und hält.
+	_film(Vector3(263.0, 2.5, 505.8), Vector3(292.0, 1.4, 500.8))
+	while zug.position.x < _ZUG_HALT - 0.1:
+		var delta := get_process_delta_time()
+		var tempo: float = clampf((_ZUG_HALT - zug.position.x) * 0.9, 1.2, 40.0)
+		zug.position.x = minf(zug.position.x + tempo * delta, _ZUG_HALT)
+		await get_tree().process_frame
+	await get_tree().create_timer(_wartezeit(0.9)).timeout
+
+
+## Annes erster Besuch: kurze Blende (sie ist ausgestiegen), Oliver
+## läuft ihr über den Bahnsteig entgegen, Begrüßung vor dem stehenden Zug.
+func _bahnsteig_sequenz() -> void:
+	await _abblenden(0.5)
+	_player.global_position = _BAHNSTEIG_ANNE
+	_player.rotation.y = -PI / 2.0
+	_oliver.hold()
+	_oliver.global_position = _BAHNSTEIG_OLIVER_START
+	_oliver.rotation.y = PI / 2.0
+	_film(Vector3(268.2, 2.15, 507.6), Vector3(273.2, 1.55, 502.9))
+	await _aufblenden(0.6)
+	var gang := create_tween()
+	gang.tween_property(_oliver, ^"global_position", _BAHNSTEIG_OLIVER,
+		_wartezeit(2.2))
+	await get_tree().create_timer(_wartezeit(0.9)).timeout
+	await _dialogue.play(FrankfurtDialogue.ANKUNFT)
+	await get_tree().create_timer(_wartezeit(0.6)).timeout
+
+
 func _ankunft_sequenz() -> void:
 	_player.global_position = _ANKUNFT_ANNE
 	_player.rotation.y = -PI / 2.0
 	_oliver.global_position = _ANKUNFT_OLIVER
 	_oliver.rotation.y = PI / 2.0
 	_film(Vector3(200.0, 1.7, -3.2), Vector3(203.5, 1.35, 0.0))
-	await _dialogue.play(FrankfurtDialogue.ANKUNFT)
+	await _dialogue.play(FrankfurtDialogue.STADT)
 	# Übergabe an die Spielerin: Verfolgerkamera an, Oliver folgt.
 	(_kamera_rig.get_node("SpringArm3D/Camera3D") as Camera3D).current = true
 	_player.input_enabled = true
