@@ -485,8 +485,21 @@ beim Dart-Minispiel in Kapitel 1. Am Kai steht kein Poller mehr auf der
 Mittelachse — ein dunkler Zylinder mitten im Fangring las sich als Teil
 der Hände.
 
-**Das Finale:** nach dem Sieg das Schlussbild am Wasser, dann der
-**Geschenkbildschirm**. Er löst ein, was die Widmung am Anfang verspricht
+**Das Finale:** nach dem Sieg das Schlussbild am Wasser — und dann die
+**Schatztruhe** (`truhe_finale.gd`, Modelle aus `tools/make_truhe.py`):
+verschlossen auf dem roten Teppich, Anne läuft spielbar hin (Area3D auf
+Kollisionsebene 2 — die Standardmaske sähe nur den Boden, siehe
+Kommentar). Das **Zahlenpad** übernimmt: zwei leere Stellen (damit klar
+ist: ein Zwei-Zahlen-Code), darüber der Hinweis *„die Antwort auf die
+Frage nach dem Leben, dem Universum und dem ganzen Rest"* — die 42.
+Falsche Codes schütteln das Pad und leeren es; Eingabe per Klick oder
+Zifferntasten. Bei 42 springt das Vorhängeschloss ab, der Deckel klappt
+nach hinten auf (sein Ursprung liegt im GLB auf der Scharnierlinie;
+Wangen und Mittelband des gewölbten Deckels sind **halbe** Scheiben —
+volle sahen aufgeklappt wie eine Tonne aus), warmes Licht glimmt auf,
+und der **Rucksack schwebt heraus**, dreht sich langsam und atmet auf
+seiner Schwebehöhe. Erst danach kommt der **Geschenkbildschirm**. Er
+löst ein, was die Widmung am Anfang verspricht
 („Um dein Geschenk zu bekommen, musst du zuerst das Spiel unseres Lebens
 gewinnen"), wartet auf einen Tastendruck statt weiterzulaufen, und sein
 Text steht als **markierter Platzhalter** in
@@ -495,7 +508,8 @@ ganzen Projekt.
 
 Prüflauf: `tools/headless_hochzeit_check.gd` — Auftakt, Gästezahl, der
 Traubogen-Trigger, ein bewusst verpasster und ein gefangener Strauß, der
-Sieg, Geschenkbildschirm und Abspann.
+Sieg, die Truhe (falscher Code bleibt zu und leert das Pad, 42 öffnet),
+Geschenkbildschirm und Abspann.
 
 ### Ton (`audio/`, `systems/audio/`)
 **Die Stadt-Ambience ist echt:** `audio/stadt_ambiente.mp3` (ruhige

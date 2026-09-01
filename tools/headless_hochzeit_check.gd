@@ -127,7 +127,47 @@ func _los() -> void:
 	_pruefe(spiel.zustand == StraussSpiel.Zustand.SIEG,
 		"fünf gefangene Sträuße gewinnen die Runde")
 
-	# Sieg-Dialog, Geschenkbildschirm, Abspann — bis zum Kapitelabschluss.
+	# Das Truhen-Finale: warten, bis die Truhe steht und die Steuerung
+	# übergeben ist, dann hinteleportieren.
+	frames = 0
+	while (szene.truhe == null or not spieler.input_enabled) and frames < 3000:
+		frames += 1
+		if dialog.is_playing() and frames % 10 == 0:
+			_druecke(&"interact")
+		await physics_frame
+	_pruefe(szene.truhe != null and spieler.input_enabled,
+		"nach dem Sieg wartet die Truhe und Anne darf laufen")
+	spieler.velocity = Vector3.ZERO
+	spieler.global_position = Vector3(0.0, 0.5, 6.4)
+	frames = 0
+	while not szene.truhe.erreicht() and frames < 600:
+		frames += 1
+		await physics_frame
+	_pruefe(szene.truhe.erreicht(), "die Truhenzone bemerkt die Spielerin")
+	frames = 0
+	while spieler.input_enabled and frames < 300:
+		frames += 1
+		await physics_frame
+
+	# Falscher Code: die Truhe bleibt zu, die Eingabe leert sich.
+	szene.truhe.ziffer_eingeben("1")
+	szene.truhe.ziffer_eingeben("3")
+	for i in 40:
+		await physics_frame
+	_pruefe(not szene.truhe.offen, "ein falscher Code öffnet nichts")
+	_pruefe(szene.truhe.eingabe.is_empty(),
+		"nach dem Fehlversuch ist das Pad wieder leer")
+
+	# 42 — die Antwort. Truhe auf, der Rucksack schwebt, das Signal kommt.
+	szene.truhe.ziffer_eingeben("4")
+	szene.truhe.ziffer_eingeben("2")
+	frames = 0
+	while not szene.truhe.offen and frames < 300:
+		frames += 1
+		await physics_frame
+	_pruefe(szene.truhe.offen, "42 öffnet die Truhe")
+
+	# Geschenkbildschirm, Abspann — bis zum Kapitelabschluss.
 	frames = 0
 	while not _fertig and frames < 9000:
 		frames += 1

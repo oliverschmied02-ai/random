@@ -7,7 +7,8 @@ extends Node3D
 ##
 ##   Kapitelkarte → kurzer Dialog am Traubogen → spielbarer Weg zu den
 ##   Gästen → Regeln → Brautstrauß-Fangen (10 fliegen, 5 fangen) →
-##   Sieg-Dialog → **Geschenkbildschirm** → Abspann → Titel.
+##   Sieg-Dialog → **Truhen-Finale** (Zahlenpad, Code 42, der Rucksack
+##   schwebt heraus) → **Geschenkbildschirm** → Abspann → Titel.
 ##
 ## Der Geschenkbildschirm löst ein, was die Widmung am Anfang verspricht.
 ## Die Texte dazu stehen in `dialogue_lines_hochzeit.gd` und sind bewusst
@@ -44,6 +45,8 @@ const _SCHLUSS_OLIVER := Vector3(0.9, 0.25, 1.5)
 var _bogen_erreicht := false
 var _blendschicht: CanvasLayer
 var _blende: ColorRect
+## Das Truhen-Finale — entsteht erst nach dem Sieg; für Prüfläufe lesbar.
+var truhe: TruhenFinale
 
 
 func _ready() -> void:
@@ -113,13 +116,54 @@ func _auf_runde_geschafft() -> void:
 	_film(Vector3(0.0, 1.90, 6.4), Vector3(0.0, 1.62, 1.5))
 	await _dialogue.play(HochzeitDialogue.GEWONNEN)
 
-	# 5. Das Geschenk, dann der Abspann.
+	# 5. Das Truhen-Finale: der Code öffnet das eigentliche Geschenk.
+	await _truhen_finale()
+
+	# 6. Der Geschenktext, dann der Abspann.
 	await _geschenk_zeigen()
 	await _karte.abspann(HochzeitDialogue.ABSPANN_TITEL,
 		HochzeitDialogue.ABSPANN_ZEILE)
 	kapitel_abgeschlossen.emit()
 	if weiter_nach_abspann:
 		get_tree().change_scene_to_file("res://ui/title_screen.tscn")
+
+
+## Das Finale: eine verschlossene Truhe erscheint auf dem roten Teppich,
+## Anne läuft hin, das Zahlenpad übernimmt (zwei Stellen, Hinweis auf die
+## 42), und nach dem Öffnen schwebt der Rucksack heraus. Erst danach
+## kommt der Geschenktext.
+func _truhen_finale() -> void:
+	await _abblenden(0.8)
+	truhe = TruhenFinale.new()
+	truhe.ort = Vector3(0.0, 0.06, 5.2)
+	add_child(truhe)
+
+	# Oliver tritt beiseite und schaut zu; Anne startet ein Stück entfernt.
+	_oliver.global_position = Vector3(2.6, 0.25, 2.2)
+	_oliver.rotation.y = -0.6
+	_player.global_position = Vector3(0.0, 0.3, 13.0)
+	_player.rotation.y = PI
+	(_kamera_rig.get_node("SpringArm3D/Camera3D") as Camera3D).current = true
+	var auf := create_tween()
+	auf.tween_property(_blende, ^"color:a", 0.0, _wartezeit(0.8))
+	await auf.finished
+
+	_player.input_enabled = true
+	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+	_objective.show_objective(HochzeitDialogue.ZIEL_TRUHE)
+	while not truhe.erreicht():
+		await get_tree().process_frame
+	_player.input_enabled = false
+	_objective.clear()
+
+	# Anne neben die Truhe, Kamera nah — dann übernimmt das Zahlenpad.
+	_player.global_position = Vector3(0.9, 0.3, 6.9)
+	_player.rotation.y = 2.6
+	_film(Vector3(-1.4, 1.35, 7.6), Vector3(0.2, 0.5, 5.2))
+	truhe.pad_zeigen()
+	await truhe.geoeffnet
+	# Den schwebenden Rucksack einen Moment wirken lassen.
+	await get_tree().create_timer(_wartezeit(3.2)).timeout
 
 
 # --- Blenden und Bildschirme ---------------------------------------------------
