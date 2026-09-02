@@ -122,51 +122,66 @@ def mieder_bauen(arm, body, stoff):
     bpy.ops.object.modifier_apply(modifier="stoff")
     mieder.data.materials.clear()
     mieder.data.materials.append(stoff)
+    # Kein Subsurf: das Outfit-Netz ist bereits dicht, eine Unterteilung
+    # vervierfachte nur die Dateigröße (das GLB sprang auf 7 MB).
     bpy.ops.object.shade_smooth()
     return mieder
 
 
-def rock_bauen(arm, body, stoff):
-    """Weiter Rock als Loft, Gewichte per Transfer vom Körper."""
+def _rock_loft(arm, name, radius_oben, radius_unten, saum_z, weite_y,
+               falten, phase):
+    """Ein Rockloft mit vertikalem Faltenwurf und leichter Schleppe.
+
+    Realismus kommt aus drei Dingen: **Falten**, die oben fein beginnen
+    und zum Saum hin kräftig werden (zwei überlagerte Frequenzen, damit
+    kein Muster auffällt), eine **Schleppe** (der Stoff zieht hinten
+    nach außen und tiefer), und ein **welliger Saum**."""
     hueft_z = _knochen_z(arm, "Hips")
-    boden_z = 0.0
     mitte = arm.matrix_world @ arm.data.bones["Hips"].head_local
-    ringe = 9
-    segmente = 28
+    ringe = 14
+    segmente = 48
     verts = []
     faces = []
     for r in range(ringe):
         t = r / (ringe - 1.0)
-        z = hueft_z + 0.015 - t * (hueft_z + 0.015 - (boden_z + 0.055))
-        # Ausstellung: oben anliegend, unten weit — Potenzkurve.
-        radius = 0.172 + (0.46 - 0.172) * (t ** 1.6)
+        z = hueft_z + 0.015 - t * (hueft_z + 0.015 - saum_z)
+        radius = radius_oben + (radius_unten - radius_oben) * (t ** 1.6)
         for s in range(segmente):
             w = math.tau * s / segmente
-            saum = math.sin(w * 7.0) * 0.018 * (t ** 3)
-            verts.append((mitte.x + math.cos(w) * (radius + saum),
-                          mitte.y + math.sin(w) * (radius + saum) * 0.95,
-                          z + math.sin(w * 7.0 + 1.3) * 0.008 * (t ** 3)))
+            falte = (math.sin(w * 9.0 + phase) * 0.55
+                     + math.sin(w * 15.0 + phase * 1.7 + 1.1) * 0.30)                 * falten * (t ** 1.3)
+            # Schleppe: hinten (+Y, die Figur schaut nach −Y) zieht der
+            # Stoff nach außen und der Saum fällt tiefer.
+            hinten = max(0.0, math.sin(w))
+            schleppe = (hinten ** 2) * 0.16 * (t ** 2)
+            r_hier = radius + falte
+            verts.append((mitte.x + math.cos(w) * r_hier,
+                          mitte.y + math.sin(w) * r_hier * weite_y + schleppe,
+                          max(z + math.sin(w * 9.0 + 1.3) * 0.010 * (t ** 2)
+                              - (hinten ** 2) * 0.02 * t, 0.028)))
     for r in range(ringe - 1):
         a = r * segmente
         b = (r + 1) * segmente
         for s in range(segmente):
             s2 = (s + 1) % segmente
             faces.append((a + s, a + s2, b + s2, b + s))
-    netz = bpy.data.meshes.new("kleid_rock")
+    netz = bpy.data.meshes.new(name)
     netz.from_pydata(verts, [], faces)
     netz.update()
-    rock = bpy.data.objects.new("kleid_rock", netz)
+    rock = bpy.data.objects.new(name, netz)
     bpy.context.collection.objects.link(rock)
-    rock.data.materials.append(stoff)
+    return rock
 
+
+def _rock_fertigstellen(rock, body, dicke):
     bpy.ops.object.select_all(action="DESELECT")
     rock.select_set(True)
     bpy.context.view_layer.objects.active = rock
     bpy.ops.object.shade_smooth()
-    solid = rock.modifiers.new("stoff", "SOLIDIFY")
-    solid.thickness = 0.005
-    bpy.ops.object.modifier_apply(modifier="stoff")
-
+    if dicke > 0.0:
+        solid = rock.modifiers.new("stoff", "SOLIDIFY")
+        solid.thickness = dicke
+        bpy.ops.object.modifier_apply(modifier="stoff")
     # Gewichte vom Körper: der nächste Körperpunkt bestimmt die Bindung —
     # unten also das jeweilige Bein, oben die Hüfte.
     bpy.ops.object.select_all(action="DESELECT")
@@ -176,18 +191,77 @@ def rock_bauen(arm, body, stoff):
                                  vert_mapping="POLYINTERP_NEAREST",
                                  layers_select_src="ALL",
                                  layers_select_dst="NAME")
+
+
+def rock_bauen(arm, body, stoff):
+    rock = _rock_loft(arm, "kleid_rock", 0.172, 0.44, 0.05, 0.95,
+                      0.014, 0.0)
+    rock.data.materials.append(stoff)
+    _rock_fertigstellen(rock, body, 0.005)
     return rock
+
+
+def tuell_bauen(arm, body, tuell):
+    """Die halbtransparente Überlage: etwas weiter, etwas kürzer,
+    kräftigere Falten mit anderer Phase — das gibt dem Rock Tiefe."""
+    lage = _rock_loft(arm, "kleid_tuell", 0.180, 0.475, 0.10, 0.96,
+                      0.020, 2.3)
+    lage.data.materials.append(tuell)
+    _rock_fertigstellen(lage, body, 0.0)
+    return lage
+
+
+def schleier_bauen(arm, tuell):
+    """Der Schleier: eine gewölbte Tüllbahn vom Hinterkopf bis zwischen
+    die Schulterblätter, komplett an den Kopfknochen gebunden."""
+    kopf = arm.matrix_world @ arm.data.bones["Head"].head_local
+    reihen = 9
+    spalten = 9
+    verts = []
+    faces = []
+    for r in range(reihen):
+        t = r / (reihen - 1.0)
+        breite = 0.13 + 0.13 * t
+        # Bahn: startet oben am Hinterkopf, schwingt nach hinten-unten.
+        y = kopf.y + 0.065 + 0.10 * t + 0.03 * math.sin(t * math.pi)
+        z = kopf.z + 0.10 - 0.52 * (t ** 1.15)
+        for c in range(spalten):
+            u = c / (spalten - 1.0) - 0.5
+            x = kopf.x + u * 2.0 * breite
+            # Quer gewölbt (um den Kopf) plus leichte Wellen am Rand.
+            verts.append((x,
+                          y - (u * u) * 0.16
+                          + math.sin(u * 9.0 + t * 4.0) * 0.008 * t,
+                          z + math.sin(u * 7.0) * 0.012 * t))
+    for r in range(reihen - 1):
+        for c in range(spalten - 1):
+            a = r * spalten + c
+            b = (r + 1) * spalten + c
+            faces.append((a, a + 1, b + 1, b))
+    netz = bpy.data.meshes.new("kleid_schleier")
+    netz.from_pydata(verts, [], faces)
+    netz.update()
+    schleier = bpy.data.objects.new("kleid_schleier", netz)
+    bpy.context.collection.objects.link(schleier)
+    schleier.data.materials.append(tuell)
+    bpy.ops.object.select_all(action="DESELECT")
+    schleier.select_set(True)
+    bpy.context.view_layer.objects.active = schleier
+    bpy.ops.object.shade_smooth()
+    gruppe = schleier.vertex_groups.new(name="Head")
+    gruppe.add(list(range(len(schleier.data.vertices))), 1.0, "REPLACE")
+    return schleier
 
 
 def band_bauen(arm, schimmer):
     mitte = arm.matrix_world @ arm.data.bones["Hips"].head_local
     bpy.ops.mesh.primitive_torus_add(
-        major_radius=0.180, minor_radius=0.014,
+        major_radius=0.165, minor_radius=0.013,
         location=(mitte.x, mitte.y, _knochen_z(arm, "Hips") + 0.01),
         major_segments=28, minor_segments=8)
     band = bpy.context.active_object
     band.name = "kleid_band"
-    band.scale = (1.0, 0.95, 1.5)
+    band.scale = (1.0, 0.88, 1.5)
     bpy.ops.object.transform_apply(scale=True)
     band.data.materials.append(schimmer)
     bpy.ops.object.shade_smooth()
@@ -213,14 +287,21 @@ def bauen(mit_vorschau=False):
         _knochen_z(arm, "Hips"), _knochen_z(arm, "Neck"),
         min(zs), max(zs), len(zs)))
 
-    stoff = _material("kleid_stoff", SATIN, rauheit=0.62)
+    stoff = _material("kleid_stoff", SATIN, rauheit=0.74)
     schimmer = _material("kleid_band", (0.93, 0.90, 0.84), rauheit=0.32,
                          metall=0.15)
+    tuell = _material("kleid_tuell", (1.0, 1.0, 1.0), rauheit=0.9)
+    tuell.blend_method = "BLEND"
+    tuell.use_backface_culling = False
+    bsdf = tuell.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs["Alpha"].default_value = 0.30
 
     mieder = mieder_bauen(arm, body, stoff)
     rock = rock_bauen(arm, body, stoff)
+    lage = tuell_bauen(arm, body, tuell)
     band = band_bauen(arm, schimmer)
-    for teil in (mieder, rock, band):
+    schleier = schleier_bauen(arm, tuell)
+    for teil in (mieder, rock, lage, band, schleier):
         _skinnen(teil, arm)
 
     if mit_vorschau:
@@ -229,7 +310,7 @@ def bauen(mit_vorschau=False):
     # Nur Kleid + Skelett exportieren — Annes Netze bleiben draußen, das
     # Spiel hängt die Teile an das Skelett der geladenen Figur.
     bpy.ops.object.select_all(action="DESELECT")
-    for o in (arm, mieder, rock, band):
+    for o in (arm, mieder, rock, lage, band, schleier):
         o.select_set(True)
     ZIEL.mkdir(parents=True, exist_ok=True)
     bpy.ops.export_scene.gltf(filepath=str(ZIEL / "kleid.glb"),

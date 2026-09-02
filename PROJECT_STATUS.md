@@ -477,10 +477,19 @@ weiter Loft bis knapp über den Boden mit welligem Saum; seine Gewichte
 kommen per `data_transfer` vom Outfit — unten bindet jeder Punkt ans
 nächstliegende Bein, damit der Rock beim Gehen mitschwingt. Dazu ein
 **Taillenband** (voll an `Hips` gebunden — ohne Gewichte bliebe es beim
-Umhängen starr am Ursprung). Exportiert werden nur Kleid + Skelett
-(~1 MB); `chapter_hochzeit._kleid_anziehen` hängt die Teile an das
-Skelett der geladenen Figur — die Godot-Skins finden ihre Knochen über
-die Namen.
+Umhängen starr am Ursprung). Realismus-Schicht: der Rock trägt einen
+**vertikalen Faltenwurf** (zwei überlagerte Frequenzen, oben fein, zum
+Saum kräftig) und eine leichte **Schleppe** (hinten zieht der Stoff nach
+außen und tiefer), darüber liegt eine halbtransparente **Tüll-Lage**
+(gleicher Loft, weiter, kürzer, andere Faltenphase, Alpha 0,3,
+doppelseitig), und vom Hinterkopf fällt ein **Schleier** — eine gewölbte
+Tüllbahn, voll an `Head` gebunden, sie nickt und schaut also mit.
+Exportiert werden nur Kleid + Skelett (~1 MB);
+`chapter_hochzeit._kleid_anziehen` hängt die Teile an das Skelett der
+geladenen Figur — die Godot-Skins finden ihre Knochen über die Namen.
+Nach dem gewonnenen Fangen trägt Anne den **Brautstrauß in der rechten
+Hand** (`_strauss_in_die_hand`, BoneAttachment am Handknochen) — durchs
+Schlussbild bis zur Truhe.
 
 **Das Minispiel** (`strauss_spiel.gd`): zehn Brautsträuße fliegen von drei
 Werfern heran und drehen sich dabei, **fünf muss man fangen**. Gefangen

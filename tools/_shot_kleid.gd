@@ -40,6 +40,16 @@ func _los() -> void:
 		skelett.add_child(teil)
 	kleid.queue_free()
 
+	# Der Strauß in der rechten Hand — wie chapter_hochzeit._strauss_in_die_hand.
+	var halter := BoneAttachment3D.new()
+	halter.bone_name = "RightHand"
+	skelett.add_child(halter)
+	var strauss := (load("res://assets/props/strauss.glb") as PackedScene).instantiate() as Node3D
+	halter.add_child(strauss)
+	strauss.scale = Vector3.ONE * 0.8
+	strauss.position = Vector3(0.0, 0.09, 0.02)
+	strauss.rotation = Vector3(0.5, 0.0, 0.25)
+
 	spieler.global_position = Vector3(0.0, 0.3, 5.5)
 	spieler.rotation.y = 0.0
 	oliver.global_position = Vector3(1.4, 0.25, 3.2)
@@ -57,4 +67,15 @@ func _los() -> void:
 	kamera.global_position = Vector3(-2.2, 1.8, 9.2)
 	kamera.look_at(Vector3(0.3, 0.9, 5.0))
 	await _schuss("kleid_totale")
+
+	# Von schräg hinten: Schleier und Schleppe.
+	kamera.global_position = Vector3(1.6, 1.6, 8.0)
+	kamera.look_at(Vector3(0.0, 1.0, 5.5))
+	await _schuss("kleid_hinten")
+
+	# Von vorn nah: Mieder, Tüll-Lage, Strauß in der Hand.
+	await create_timer(0.3).timeout
+	kamera.global_position = Vector3(0.6, 1.4, 3.2)
+	kamera.look_at(Vector3(0.0, 1.0, 5.5))
+	await _schuss("kleid_front_nah")
 	quit(0)

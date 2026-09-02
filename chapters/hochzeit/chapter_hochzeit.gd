@@ -50,6 +50,7 @@ var truhe: TruhenFinale
 
 
 const _KLEID := preload("res://assets/hochzeit/kleid.glb")
+const _STRAUSS := preload("res://assets/props/strauss.glb")
 
 
 func _ready() -> void:
@@ -111,6 +112,9 @@ func _auf_runde_geschafft() -> void:
 	_jubel.play()
 	await get_tree().create_timer(_wartezeit(2.6)).timeout
 	_strauss.abschluss_uebernehmen()
+	# Den gefangenen Strauß trägt sie ab jetzt in der rechten Hand —
+	# durchs Schlussbild und bis zur Truhe.
+	_strauss_in_die_hand()
 
 	# 4. Schlussbild am Wasser: die beiden vor der Brücke.
 	_player.global_position = _SCHLUSS_ANNE
@@ -189,6 +193,26 @@ func _kleid_anziehen() -> void:
 		teil.get_parent().remove_child(teil)
 		skelett.add_child(teil)
 	kleid.queue_free()
+
+
+## Der gefangene Brautstrauß wandert in Annes rechte Hand — ein
+## BoneAttachment am Handknochen, der Strauß leicht gekippt, damit die
+## Blüten nach vorn-oben zeigen, während der Arm hängt.
+func _strauss_in_die_hand() -> void:
+	var figur := _player.get_node_or_null("Visual") as Figur
+	if figur == null:
+		return
+	var skelett := figur.skelett_finden()
+	if skelett == null or skelett.find_bone("RightHand") < 0:
+		return
+	var halter := BoneAttachment3D.new()
+	halter.bone_name = "RightHand"
+	skelett.add_child(halter)
+	var strauss := _STRAUSS.instantiate() as Node3D
+	halter.add_child(strauss)
+	strauss.scale = Vector3.ONE * 0.8
+	strauss.position = Vector3(0.0, 0.09, 0.02)
+	strauss.rotation = Vector3(0.5, 0.0, 0.25)
 
 
 # --- Blenden und Bildschirme ---------------------------------------------------
