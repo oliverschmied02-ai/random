@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" path="res://ui/title_screen.gd" id="1_titel"]
 [ext_resource type="Script" path="res://ui/skyline.gd" id="2_skyline"]
-[ext_resource type="AudioStream" path="res://audio/titelmusik.wav" id="3_musik"]
+[ext_resource type="AudioStream" path="res://audio/musik/titel.ogg" id="3_musik"]
 [ext_resource type="AudioStream" path="res://audio/kenney/menue.ogg" id="4_klick"]
 
 [sub_resource type="Gradient" id="Gradient_himmel"]

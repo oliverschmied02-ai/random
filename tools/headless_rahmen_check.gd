@@ -73,8 +73,12 @@ func _titel_pruefen() -> void:
 	_expect(musik != null and musik.stream != null, "the title has music")
 	if musik != null:
 		_expect(musik.bus == &"Musik", "title music runs on the music bus")
+		# WAV und Ogg tragen ihr Loop-Flag unterschiedlich.
 		var welle := musik.stream as AudioStreamWAV
-		_expect(welle != null and welle.loop_mode != AudioStreamWAV.LOOP_DISABLED,
+		var ogg := musik.stream as AudioStreamOggVorbis
+		var loopt := (welle != null and welle.loop_mode != AudioStreamWAV.LOOP_DISABLED) \
+			or (ogg != null and ogg.loop)
+		_expect(loopt,
 			"title music loops instead of falling silent after one pass")
 
 	var ziel: String = titel.kapitel

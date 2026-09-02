@@ -42,6 +42,9 @@ const _SCHLUSS_OLIVER := Vector3(0.9, 0.25, 1.5)
 @onready var _menge: AudioStreamPlayer = $Klang/Menge
 @onready var _jubel: AudioStreamPlayer = $Klang/Jubel
 
+## Die Kapitelmusik (Kanon in D), wird im Finale abgelöst.
+var _musik: AudioStreamPlayer
+
 var _bogen_erreicht := false
 var _blendschicht: CanvasLayer
 var _blende: ColorRect
@@ -64,6 +67,13 @@ func _ready() -> void:
 	wasser.volume_db = -14.0
 	add_child(wasser)
 	wasser.play()
+	# Kapitelmusik: der Kanon in D (Klavier, CC0) — DAS Hochzeitsstück.
+	_musik = AudioStreamPlayer.new()
+	_musik.stream = load("res://audio/musik/hochzeit.ogg")
+	_musik.volume_db = -13.0
+	_musik.bus = &"Musik" if AudioServer.get_bus_index("Musik") >= 0 else &"Master"
+	add_child(_musik)
+	_musik.play()
 	var zone := $Triggers/BogenZone as Area3D
 	zone.body_entered.connect(func(koerper: Node3D) -> void:
 		if koerper == _player:
@@ -181,6 +191,14 @@ func _truhen_finale() -> void:
 	_film(Vector3(-1.4, 1.35, 7.6), Vector3(0.2, 0.5, 5.2))
 	truhe.pad_zeigen()
 	await truhe.geoeffnet
+	# Musikwechsel zum Geschenk: der Kanon blendet aus, „Romantic
+	# Inspiration" trägt Rucksack, Geschenktext und Abspann.
+	var wechsel := create_tween()
+	wechsel.tween_property(_musik, ^"volume_db", -50.0, 2.0)
+	wechsel.tween_callback(func() -> void:
+		_musik.stream = load("res://audio/musik/finale.ogg")
+		_musik.volume_db = -12.0
+		_musik.play())
 	# Den schwebenden Rucksack einen Moment wirken lassen.
 	await get_tree().create_timer(_wartezeit(3.2)).timeout
 

@@ -181,40 +181,99 @@ def _torus(radius, dicke, ort, material):
 
 
 def rucksack_bauen():
-    stoff = _material("rucksack_stoff", (0.55, 0.16, 0.14), rauheit=0.85)
-    stoff2 = _material("rucksack_deckel", (0.48, 0.13, 0.12), rauheit=0.85)
-    gurt = _material("rucksack_gurt", (0.13, 0.13, 0.14), rauheit=0.9)
-    schnalle = _material("rucksack_schnalle", (0.35, 0.36, 0.38),
-                         rauheit=0.4, metall=0.6)
+    """Der echte Rucksack: ein Kapten & Son in Weiß-Creme — hochkantiger
+    Korpus, große glatte Überschlag-Klappe mit Schlaufe darunter,
+    Tragegriff, Seitenriemen. Zweifarbig wie das Original: die Klappe
+    und das obere Frontpanel glattes Kunstleder, der Rest Canvas."""
+    canvas = _material("rucksack_canvas", (0.85, 0.82, 0.75), rauheit=0.88)
+    glatt = _material("rucksack_glatt", (0.90, 0.87, 0.81), rauheit=0.48)
+    gurt = _material("rucksack_gurt", (0.87, 0.84, 0.77), rauheit=0.9)
+    logo_grau = _material("rucksack_logo", (0.38, 0.41, 0.44), rauheit=0.6)
     teile = []
-    # Hauptkorpus: hochkant, weich gerundet — ein Stoffsack, kein Koffer.
-    korpus = _kasten((0.34, 0.22, 0.46), (0, 0, 0.24), stoff, fase=0.0)
-    _fase(korpus, 0.075, 5)
+    # Klappenebene zuerst — der Korpus wird gleich daran abgeschrägt.
+    klappen_tilt = 0.30
+    klappen_mitte = mathutils.Vector((0, -0.02, 0.462))
+    klappen_normale = (mathutils.Euler((klappen_tilt, 0, 0)).to_matrix()
+                       @ mathutils.Vector((0, 0, 1)))
+
+    # Hauptkorpus: hochkant und kastig, nur weich angefast. Oben wird er
+    # entlang der Klappenebene abgeschrägt, damit die Klappe aufliegt wie
+    # beim Original, statt dass die vordere Oberkante durchsticht.
+    korpus = _kasten((0.34, 0.23, 0.52), (0, 0, 0.26), canvas, fase=0.0)
+    _fase(korpus, 0.045, 4)
+    bpy.ops.object.select_all(action="DESELECT")
+    korpus.select_set(True)
+    bpy.context.view_layer.objects.active = korpus
+    bpy.ops.object.mode_set(mode="EDIT")
+    bpy.ops.mesh.select_all(action="SELECT")
+    # clear_outer entfernt die Seite in Normalenrichtung (empirisch
+    # geprüft: clear_inner behält sie) — hier also alles ÜBER der Ebene.
+    bpy.ops.mesh.bisect(
+        plane_co=tuple(klappen_mitte + klappen_normale * -0.008),
+        plane_no=tuple(klappen_normale), clear_outer=True, use_fill=True)
+    bpy.ops.object.mode_set(mode="OBJECT")
     teile.append(korpus)
-    # Deckelklappe oben.
-    klappe = _kasten((0.31, 0.235, 0.14), (0, -0.005, 0.49), stoff2, fase=0.0)
-    _fase(klappe, 0.055, 5)
+    # Oberes Frontpanel in glattem Kunstleder, minimal vor dem Korpus.
+    panel = _kasten((0.315, 0.016, 0.20), (0, -0.118, 0.335), glatt, fase=0.0)
+    _fase(panel, 0.007, 3)
+    teile.append(panel)
+    # Die Überschlag-Klappe: eine große, dünne Platte, die nach vorn
+    # abfällt und über die Kanten hinausragt — das Markenzeichen.
+    # Hinterkante liegt auf der Korpus-Oberkante auf, die Vorderkante
+    # fällt bis auf gut 80 % der Höhe — wie beim Original. Gedrehte Teile
+    # werden am Ursprung gebaut und per Objekt-Transform platziert: die
+    # _kasten-Helfer baken ihre Ablage ins Netz, eine danach gesetzte
+    # Drehung drehte sonst um den Weltursprung.
+    klappe = _kasten((0.37, 0.26, 0.022), (0, 0, 0), glatt, fase=0.0)
+    _fase(klappe, 0.009, 3)
+    klappe.location = klappen_mitte
+    klappe.rotation_euler = (klappen_tilt, 0, 0)
     teile.append(klappe)
-    # Fronttasche.
-    tasche = _kasten((0.24, 0.09, 0.20), (0, -0.115, 0.16), stoff2, fase=0.0)
-    _fase(tasche, 0.04, 5)
-    teile.append(tasche)
+    # Die kleine Schlaufe unter der Klappenkante.
+    teile.append(_kasten((0.036, 0.014, 0.085), (0, -0.175, 0.335),
+                         gurt, fase=0.005))
+    # Tragegriff: taucht direkt an der Klappen-Hinterkante auf, wie beim
+    # Original, und lehnt sich leicht zurück.
+    griff = _kasten((0.13, 0.026, 0.024), (0, 0, 0), gurt, fase=0.008)
+    griff.location = (0, 0.135, 0.575)
+    griff.rotation_euler = (0.35, 0, 0)
+    teile.append(griff)
+    for sx in (-0.055, 0.055):
+        stuetze = _kasten((0.024, 0.026, 0.085), (0, 0, 0), gurt, fase=0.006)
+        stuetze.location = (sx, 0.148, 0.528)
+        stuetze.rotation_euler = (0.35, 0, 0)
+        teile.append(stuetze)
+    # Seitenriemen (Kompressionsband), eng am Korpus.
+    for sx in (-0.172, 0.172):
+        teile.append(_kasten((0.012, 0.24, 0.03), (sx, 0.0, 0.42),
+                             gurt, fase=0.004))
     # Schultergurte hinten (+Y): je zwei Segmente, dicht am Korpus.
     for sx in (-0.09, 0.09):
-        oben = _kasten((0.07, 0.022, 0.20), (sx, 0.103, 0.385), gurt, fase=0.008)
+        oben = _kasten((0.07, 0.022, 0.20), (0, 0, 0), gurt, fase=0.008)
+        oben.location = (sx, 0.122, 0.40)
         oben.rotation_euler = (math.radians(14), 0, 0)
         teile.append(oben)
-        unten = _kasten((0.07, 0.022, 0.18), (sx, 0.118, 0.155), gurt, fase=0.008)
+        unten = _kasten((0.07, 0.022, 0.18), (0, 0, 0), gurt, fase=0.008)
+        unten.location = (sx, 0.132, 0.17)
         unten.rotation_euler = (math.radians(-10), 0, 0)
         teile.append(unten)
-    # Tragegriff oben und zwei Schnallenriemen über die Klappe.
-    griff = _kasten((0.12, 0.03, 0.03), (0, 0.02, 0.555), gurt, fase=0.01)
-    teile.append(griff)
-    for sx in (-0.08, 0.08):
-        teile.append(_kasten((0.035, 0.015, 0.30), (sx, -0.125, 0.36),
-                             gurt, fase=0.004))
-        teile.append(_kasten((0.05, 0.025, 0.04), (sx, -0.135, 0.27),
-                             schnalle, fase=0.006))
+    # Der Schriftzug auf der Klappe — flach ins geneigte Klappen-Deck
+    # gelegt, knapp über der Vorderkante wie beim Original.
+    bpy.ops.object.text_add()
+    text = bpy.context.active_object
+    text.data.body = "KAPTEN & SON"
+    text.data.size = 0.0225
+    text.data.extrude = 0.0016
+    text.data.align_x = "CENTER"
+    text.data.align_y = "CENTER"
+    drehung = mathutils.Euler((klappen_tilt, 0, 0)).to_matrix()
+    text.location = (klappen_mitte
+                     + drehung @ mathutils.Vector((0, -0.06, 0.0135)))
+    text.rotation_euler = (klappen_tilt, 0, 0)
+    bpy.ops.object.convert(target="MESH")
+    text = bpy.context.active_object
+    _zuweisen(text, logo_grau)
+    teile.append(text)
     rucksack = _rotierte_teile_verbinden(teile, "rucksack")
     _pivot_setzen(rucksack, (0, 0, 0))
     return rucksack
@@ -273,8 +332,8 @@ def bauen(mit_vorschau=False):
     _leeren()
     rucksack = rucksack_bauen()
     if mit_vorschau:
-        _vorschau(Path("/tmp/truhe/rucksack.png"), (0.9, -1.1, 0.7),
-                  (0, 0, 0.30))
+        _vorschau(Path("/tmp/truhe/rucksack.png"), (0.45, -0.95, 0.62),
+                  (0, 0, 0.32))
     bpy.ops.object.select_all(action="DESELECT")
     rucksack.select_set(True)
     bpy.ops.export_scene.gltf(filepath=str(ZIEL / "rucksack.glb"),

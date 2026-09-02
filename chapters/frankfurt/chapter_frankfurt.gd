@@ -71,6 +71,15 @@ var _titelfeld: Label
 func _ready() -> void:
 	_player.input_enabled = false
 	_blendschicht_bauen()
+	# Kapitelmusik: „A Waltz For Naseem" (CC0) — der Walzer passt zur
+	# Kneipe und schunkelt unauffällig unter der ganzen Fahrt.
+	var musik := AudioStreamPlayer.new()
+	musik.stream = load("res://audio/musik/frankfurt.ogg")
+	musik.volume_db = -16.0
+	musik.bus = &"Musik" if AudioServer.get_bus_index("Musik") >= 0 else &"Master"
+	add_child(musik)
+	musik.play()
+
 	var tuer := $Triggers/KneipenTuer as Area3D
 	tuer.body_entered.connect(func(koerper: Node3D) -> void:
 		if koerper == _player:

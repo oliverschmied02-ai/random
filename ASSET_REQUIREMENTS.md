@@ -362,16 +362,16 @@ Trefferzone (`MASKEN_RADIUS`) und sichtbare Größe (Skalierung in
 | **Platzhalter** | Trägt so; mehr Silben oder eine dritte Stimme = Skript anpassen und neu erzeugen |
 | **Priorität** | GELIEFERT |
 
-### Stadtatmosphäre und Musik
+### Stadtatmosphäre und Musik — GELIEFERT
 | | |
 | --- | --- |
 | **Zweck** | Der Ort soll klingen, nicht nur aussehen |
-| **Szene** | `chapters/berlin/berlin_chapter.tscn` → `Klang`, `ui/title_screen.tscn` |
-| **Typ** | Stadtschleife (fern, ereignislos), Brummen des Leuchtschilds, Titelmusik |
-| **Stil** | Leer und spätabendlich; die Musik warm, langsam, ohne Pathos |
+| **Szene** | Alle Kapitel + `ui/title_screen.tscn`; Stücke in `audio/musik/` |
+| **Typ** | Fünf CC0-Stücke (SoundSafari/CC0-1.0-Music): Titel-Klavier, Berlin, Frankfurt-Walzer, Kanon in D (Hochzeit), Finale |
+| **Stil** | Warm, langsam, ohne Pathos — der Kanon ist das Hochzeits-Augenzwinkern |
 | **Animation** | — |
-| **Platzhalter** | Synthetisch: Rauschteppich, Netzbrummen, vier Akkorde aus Sinustönen |
-| **Priorität** | IMPORTANT |
+| **Platzhalter** | Keiner mehr; **euer eigenes Lied** wäre der letzte Feinschliff — gleicher Dateiname unter `audio/musik/`, fertig |
+| **Priorität** | GELIEFERT |
 
 Die Platzhalter sind austauschbar, ohne Code anzufassen: gleicher Dateiname
 unter `audio/`, fertig. Schleifen (`stadt`, `bude_summen`, `laden`,

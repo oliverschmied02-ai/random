@@ -536,7 +536,17 @@ nach hinten auf (sein Ursprung liegt im GLB auf der Scharnierlinie;
 Wangen und Mittelband des gewölbten Deckels sind **halbe** Scheiben —
 volle sahen aufgeklappt wie eine Tonne aus), warmes Licht glimmt auf,
 und der **Rucksack schwebt heraus**, dreht sich langsam und atmet auf
-seiner Schwebehöhe. Erst danach kommt der **Geschenkbildschirm**. Er
+seiner Schwebehöhe. Der Rucksack ist das echte Geschenk: ein
+**Kapten & Son in Weiß-Creme** — kastiger Korpus mit schräg
+abgeschnittener Oberseite, darauf die große glatte Überschlag-Klappe
+mit „KAPTEN & SON"-Schriftzug (Blender-Textnetz), Schlaufe unter der
+Klappenkante, Tragegriff an der Hinterkante, Seitenriemen. Achtung im
+Werkzeug: gedrehte Teile am Ursprung bauen und per Objekt-Transform
+platzieren — `_kasten` bakt die Ablage ins Netz, `rotation_euler`
+drehte sonst um den Weltursprung (die Klappe rutschte einen halben
+Rucksack nach vorn). Der Korpus wird per angewinkeltem `bisect` an der
+Klappenebene abgeschrägt; empirisch geprüft: `clear_outer` entfernt
+die Seite in Normalenrichtung, `clear_inner` behält sie. Erst danach kommt der **Geschenkbildschirm**. Er
 löst ein, was die Widmung am Anfang verspricht
 („Um dein Geschenk zu bekommen, musst du zuerst das Spiel unseres Lebens
 gewinnen"), wartet auf einen Tastendruck statt weiterzulaufen, und sein
@@ -591,11 +601,29 @@ Halt). Alle Filter laufen über die FFT — zirkulare Faltung, darum sind
 die Loops an der Naht mathematisch nahtlos; LFOs nutzen nur ganze Zyklen
 pro Loop.
 
-Die übrigen Klänge (Schritte, Einschläge, Jubel, Titelmusik …) sind
-**synthetische Platzhalter** aus `tools/make_placeholder_audio.py` — ohne
+**Echte Musik durchs ganze Spiel** (`audio/musik/`, Quellen und
+Zuordnung in `HERKUNFT.txt`): fünf CC0-Stücke aus dem GitHub-Korpus
+`SoundSafari/CC0-1.0-Music` (40 GB — beschafft per Blob-losem Klon und
+gezieltem Checkout einzelner Dateien). „Lovely Piano Song" trägt Titel
+und Tinder-Intro, Komikus „Finally together" liegt unter Berlin, „A
+Waltz For Naseem" unter Frankfurt, der **Kanon in D** (Klavier) unter
+der Hochzeit, und beim Öffnen der Truhe blendet „Romantic Inspiration"
+ein und trägt bis durch den Abspann. Aufbereitung in
+`tools/make_musik.py`: 32 kHz Stereo-Vorbis (44,1 kHz Stereo stürzt in
+dieser libsndfile ab; außerdem blockweise schreiben — ein großer
+Einzel-Write crasht den Encoder), Schnitt auf Ziellänge, Loop-Naht als
+Crossfade auf den Anfang. Die `.import`-Dateien der fünf Stücke brauchen
+`loop=true`. Alle Player hängen am **Musik**-Bus (Regler im Pausenmenü).
+Platz dafür schafften die Kulissen-Texturen: die fünf 1024er-Sätze unter
+`assets/texturen/` sind jetzt 512er (kachelnde Oberflächen, im Bild kein
+Unterschied — im Build ~10 MiB).
+
+Die übrigen Klänge (Einschläge, Jubel …) sind **synthetische
+Platzhalter** aus `tools/make_placeholder_audio.py` — ohne
 Fremdmaterial, reproduzierbar. Ein Schritt kürzer oder ein Einschlag
 trockener heißt: eine Zahl im Skript ändern und neu erzeugen. Ersetzen
-heißt: gleiche Datei, gleicher Name.
+heißt: gleiche Datei, gleicher Name. Die alte synthetische
+`titelmusik.wav` liegt nur noch ungenutzt im Ordner.
 
 * Vier Tritte, Stadtschleife, Brummen des Budenschilds, Dart-Einschlag,
   Ladeton, Volltreffer, Siegfanfare, Menüklick, Titelmusik

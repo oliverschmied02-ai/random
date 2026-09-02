@@ -1,0 +1,18 @@
+Musik aus dem CC0-Korpus SoundSafari/CC0-1.0-Music
+(https://github.com/SoundSafari/CC0-1.0-Music, Lizenz CC0 1.0 /
+Public Domain; die Sammlung bündelt CC0-Stücke von freepd.com,
+chosic.com und freemusicarchive.org).
+
+Aufbereitung: tools/make_musik.py — 32 kHz Stereo-Vorbis, auf
+Ziellänge geschnitten, Loop-Naht als Crossfade auf den Anfang.
+
+titel.ogg      <- "Lovely Piano Song" (freepd.com)
+                  Titelbildschirm und Tinder-Intro
+berlin.ogg     <- Komiku, "Level 10 — Finally together" (chosic.com)
+                  Kapitel 1, unter der Abendstadt
+frankfurt.ogg  <- "A Waltz For Naseem" (freepd.com)
+                  Kapitel 2, Fahrt und Kneipe
+hochzeit.ogg   <- Ava Drumm, "Canon in D Major (piano only)"
+                  (freemusicarchive.org) — Kapitel 3, das Fest
+finale.ogg     <- "Romantic Inspiration" (freepd.com)
+                  Truhe, Geschenktext und Abspann

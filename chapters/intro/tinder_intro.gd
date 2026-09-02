@@ -497,8 +497,10 @@ func _toene_bauen() -> void:
 	stadt.play()
 
 	var laeufer := AudioStreamPlayer.new()
-	laeufer.stream = load("res://audio/titelmusik.wav")
-	laeufer.volume_db = -18.0
+	# „Lovely Piano Song" (CC0, audio/musik/HERKUNFT.txt) — leise unterm
+	# Wischen, die Stadt bleibt im Vordergrund.
+	laeufer.stream = load("res://audio/musik/titel.ogg")
+	laeufer.volume_db = -16.0
 	laeufer.bus = &"Musik" if AudioServer.get_bus_index("Musik") >= 0 else &"Master"
 	add_child(laeufer)
 	laeufer.play()

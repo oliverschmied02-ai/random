@@ -81,6 +81,15 @@ var _szene_laeuft: bool = false
 
 
 func _ready() -> void:
+	# Kapitelmusik: Komiku, „Level 10 — Finally together" (CC0) — ein
+	# ruhiger Loop unter der Abendstadt.
+	var musik := AudioStreamPlayer.new()
+	musik.stream = load("res://audio/musik/berlin.ogg")
+	musik.volume_db = -15.0
+	musik.bus = &"Musik" if AudioServer.get_bus_index("Musik") >= 0 else &"Master"
+	add_child(musik)
+	musik.play()
+
 	var tuer := _oliver.get_node("Interactable") as Interactable
 	tuer.interacted.connect(_on_oliver_abgeholt)
 
