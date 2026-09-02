@@ -491,8 +491,8 @@ verschlossen auf dem roten Teppich, Anne läuft spielbar hin (Area3D auf
 Kollisionsebene 2 — die Standardmaske sähe nur den Boden, siehe
 Kommentar). Das **Zahlenpad** übernimmt: acht leere Stellen (damit klar
 ist: acht Ziffern, und die Trennpunkte gruppieren sie als TT.MM.JJJJ —
-ein Datum), darüber der Hinweis *„der Tag, an dem ihr euch das Ja-Wort
-gegeben habt"* — das Hochzeitsdatum 22.09.2023.
+ein Datum), darüber der bewusst vage Hinweis *„Eine Kombination, die
+uns viel bedeutet."* — gemeint ist das Hochzeitsdatum 22.09.2023.
 Falsche Codes schütteln das Pad und leeren es; Eingabe per Klick oder
 Zifferntasten. Beim richtigen Datum springt das Vorhängeschloss ab, der Deckel klappt
 nach hinten auf (sein Ursprung liegt im GLB auf der Scharnierlinie;
