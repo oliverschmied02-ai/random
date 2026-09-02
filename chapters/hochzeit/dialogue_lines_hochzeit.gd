@@ -44,10 +44,10 @@ const ZIEL_BOGEN: String = "Zu den Gästen an den Traubogen"
 
 ## Das Truhen-Finale nach dem Sieg.
 const ZIEL_TRUHE: String = "Da steht noch etwas für dich — sieh nach"
-## Der Hinweis überm Zahlenpad — die deutsche Fassung der Antwort auf
-## die große Frage (Douglas Adams, „Per Anhalter durch die Galaxis").
-const TRUHE_HINWEIS: String = ("Hinweis: die Antwort auf die Frage nach dem " +
-	"Leben, dem Universum und dem ganzen Rest.")
+## Der Hinweis überm Zahlenpad — der Code ist das Hochzeitsdatum
+## (22.09.2023), die Trennpunkte im Pad verraten das Datumsformat.
+const TRUHE_HINWEIS: String = ("Hinweis: der Tag, an dem ihr euch das " +
+	"Ja-Wort gegeben habt.")
 
 ## --- Das Finale --------------------------------------------------------------
 ##

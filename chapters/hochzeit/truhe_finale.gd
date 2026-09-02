@@ -3,10 +3,11 @@ extends Node3D
 
 ## Das Finale nach dem gewonnenen Straußfangen: eine verschlossene
 ## Schatztruhe auf dem roten Teppich. Anne läuft hin, ein Zahlenpad
-## erscheint — **zwei Stellen**, dazu der Hinweis („Die Antwort auf die
-## Frage nach dem Leben, dem Universum und dem ganzen Rest"). Bei 42
-## springt das Schloss ab, der Deckel öffnet sich, und aus der Truhe
-## schwebt ein Rucksack — das Geschenk.
+## erscheint — **acht Stellen im Datumsformat TT.MM.JJJJ** (die
+## Trennpunkte machen das Format selbsterklärend), dazu der Hinweis
+## auf den Hochzeitstag. Bei 22092023 springt das Schloss ab, der
+## Deckel öffnet sich, und aus der Truhe schwebt ein Rucksack — das
+## Geschenk.
 ##
 ## Falsche Codes schütteln das Pad und leeren die Eingabe; verlieren
 ## kann man hier nichts mehr, nur rätseln. Eingabe per Mausklick auf
@@ -16,7 +17,9 @@ signal geoeffnet
 
 const _TRUHE := preload("res://assets/hochzeit/truhe.glb")
 const _RUCKSACK := preload("res://assets/hochzeit/rucksack.glb")
-const CODE := "42"
+## Das Hochzeitsdatum, TTMMJJJJ. Nach den Stellen 2 und 4 zeigt das Pad
+## Trennpunkte — TT.MM.JJJJ liest jeder ohne Erklärung.
+const CODE := "22092023"
 
 ## Weltlage der Truhe (Front schaut nach +Z; `gier` dreht sie).
 @export var ort: Vector3 = Vector3.ZERO
@@ -106,7 +109,7 @@ func _pad_bauen() -> void:
 	_pad.add_child(spalte)
 
 	var titel := Label.new()
-	titel.text = "EIN SCHLOSS MIT ZWEI ZAHLEN"
+	titel.text = "EIN SCHLOSS MIT ACHT ZIFFERN"
 	titel.add_theme_font_size_override("font_size", 24)
 	titel.add_theme_color_override("font_color", Color(0.95, 0.88, 0.70))
 	titel.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -121,17 +124,18 @@ func _pad_bauen() -> void:
 	_hinweis.custom_minimum_size = Vector2(420, 0)
 	spalte.add_child(_hinweis)
 
-	# Die zwei Stellen — groß und leer, damit klar ist: genau zwei Ziffern.
+	# Die acht Stellen, leer und gruppiert als TT.MM.JJJJ — die
+	# Trennpunkte sagen ohne ein Wort, was gesucht ist: ein Datum.
 	var stellen := HBoxContainer.new()
 	stellen.alignment = BoxContainer.ALIGNMENT_CENTER
-	stellen.add_theme_constant_override("separation", 18)
+	stellen.add_theme_constant_override("separation", 7)
 	spalte.add_child(stellen)
-	for i in 2:
+	for i in CODE.length():
 		var feld := Label.new()
 		feld.text = "_"
-		feld.add_theme_font_size_override("font_size", 54)
+		feld.add_theme_font_size_override("font_size", 36)
 		feld.add_theme_color_override("font_color", Color(0.97, 0.92, 0.78))
-		feld.custom_minimum_size = Vector2(64, 0)
+		feld.custom_minimum_size = Vector2(38, 0)
 		feld.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		var kasten := PanelContainer.new()
 		var feld_stil := StyleBoxFlat.new()
@@ -143,6 +147,12 @@ func _pad_bauen() -> void:
 		kasten.add_child(feld)
 		stellen.add_child(kasten)
 		_stellen.append(feld)
+		if i == 1 or i == 3:
+			var punkt := Label.new()
+			punkt.text = "."
+			punkt.add_theme_font_size_override("font_size", 36)
+			punkt.add_theme_color_override("font_color", Color(0.72, 0.62, 0.40))
+			stellen.add_child(punkt)
 
 	# Das Pad: 1–9, darunter ⌫ 0 — Telefonanordnung.
 	var gitter := GridContainer.new()
@@ -195,13 +205,14 @@ func _auf_knopf(zeichen: String) -> void:
 		ziffer_eingeben(zeichen)
 
 
-## Öffentlich, damit der Prüflauf tippen kann. Zwei Ziffern → Prüfung.
+## Öffentlich, damit der Prüflauf tippen kann. Ist die letzte Stelle
+## gefüllt, wird geprüft.
 func ziffer_eingeben(ziffer: String) -> void:
-	if offen or eingabe.length() >= 2:
+	if offen or eingabe.length() >= CODE.length():
 		return
 	eingabe += ziffer
 	_stellen_zeigen()
-	if eingabe.length() == 2:
+	if eingabe.length() == CODE.length():
 		if eingabe == CODE:
 			_oeffnen()
 		else:
@@ -214,7 +225,7 @@ func _loeschen() -> void:
 
 
 func _stellen_zeigen() -> void:
-	for i in 2:
+	for i in CODE.length():
 		_stellen[i].text = eingabe[i] if i < eingabe.length() else "_"
 
 

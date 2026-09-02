@@ -489,11 +489,12 @@ der Hände.
 **Schatztruhe** (`truhe_finale.gd`, Modelle aus `tools/make_truhe.py`):
 verschlossen auf dem roten Teppich, Anne läuft spielbar hin (Area3D auf
 Kollisionsebene 2 — die Standardmaske sähe nur den Boden, siehe
-Kommentar). Das **Zahlenpad** übernimmt: zwei leere Stellen (damit klar
-ist: ein Zwei-Zahlen-Code), darüber der Hinweis *„die Antwort auf die
-Frage nach dem Leben, dem Universum und dem ganzen Rest"* — die 42.
+Kommentar). Das **Zahlenpad** übernimmt: acht leere Stellen (damit klar
+ist: acht Ziffern, und die Trennpunkte gruppieren sie als TT.MM.JJJJ —
+ein Datum), darüber der Hinweis *„der Tag, an dem ihr euch das Ja-Wort
+gegeben habt"* — das Hochzeitsdatum 22.09.2023.
 Falsche Codes schütteln das Pad und leeren es; Eingabe per Klick oder
-Zifferntasten. Bei 42 springt das Vorhängeschloss ab, der Deckel klappt
+Zifferntasten. Beim richtigen Datum springt das Vorhängeschloss ab, der Deckel klappt
 nach hinten auf (sein Ursprung liegt im GLB auf der Scharnierlinie;
 Wangen und Mittelband des gewölbten Deckels sind **halbe** Scheiben —
 volle sahen aufgeklappt wie eine Tonne aus), warmes Licht glimmt auf,
@@ -508,7 +509,7 @@ ganzen Projekt.
 
 Prüflauf: `tools/headless_hochzeit_check.gd` — Auftakt, Gästezahl, der
 Traubogen-Trigger, ein bewusst verpasster und ein gefangener Strauß, der
-Sieg, die Truhe (falscher Code bleibt zu und leert das Pad, 42 öffnet),
+Sieg, die Truhe (falscher Code bleibt zu und leert das Pad, 22092023 öffnet),
 Geschenkbildschirm und Abspann.
 
 ### Ton (`audio/`, `systems/audio/`)

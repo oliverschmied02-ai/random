@@ -50,15 +50,17 @@ func _los() -> void:
 	truhe.pad_zeigen()
 	await _schuss("truhe_pad")
 
-	# Falscher Code kurz zeigen (geschüttelt wird live).
-	truhe.ziffer_eingeben("1")
+	# Halb eingegebenes Datum zeigen (geschüttelt wird live).
+	for z in "2209":
+		truhe.ziffer_eingeben(z)
 	await _schuss("truhe_eingabe")
-	truhe.ziffer_eingeben("3")
+	for z in "1999":
+		truhe.ziffer_eingeben(z)
 	await create_timer(1.0).timeout
 
-	# 42: öffnen und den schwebenden Rucksack abwarten.
-	truhe.ziffer_eingeben("4")
-	truhe.ziffer_eingeben("2")
+	# Das Hochzeitsdatum: öffnen und den schwebenden Rucksack abwarten.
+	for z in "22092023":
+		truhe.ziffer_eingeben(z)
 	await create_timer(1.2).timeout
 	await _schuss("truhe_offen")
 	await create_timer(2.6).timeout

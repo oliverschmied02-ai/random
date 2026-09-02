@@ -150,22 +150,22 @@ func _los() -> void:
 		await physics_frame
 
 	# Falscher Code: die Truhe bleibt zu, die Eingabe leert sich.
-	szene.truhe.ziffer_eingeben("1")
-	szene.truhe.ziffer_eingeben("3")
+	for z in "13051999":
+		szene.truhe.ziffer_eingeben(z)
 	for i in 40:
 		await physics_frame
 	_pruefe(not szene.truhe.offen, "ein falscher Code öffnet nichts")
 	_pruefe(szene.truhe.eingabe.is_empty(),
 		"nach dem Fehlversuch ist das Pad wieder leer")
 
-	# 42 — die Antwort. Truhe auf, der Rucksack schwebt, das Signal kommt.
-	szene.truhe.ziffer_eingeben("4")
-	szene.truhe.ziffer_eingeben("2")
+	# Das Hochzeitsdatum. Truhe auf, der Rucksack schwebt, das Signal kommt.
+	for z in "22092023":
+		szene.truhe.ziffer_eingeben(z)
 	frames = 0
 	while not szene.truhe.offen and frames < 300:
 		frames += 1
 		await physics_frame
-	_pruefe(szene.truhe.offen, "42 öffnet die Truhe")
+	_pruefe(szene.truhe.offen, "22.09.2023 öffnet die Truhe")
 
 	# Geschenkbildschirm, Abspann — bis zum Kapitelabschluss.
 	frames = 0
