@@ -35,9 +35,30 @@ var _revealed: float = 0.0
 var _line_time: float = 0.0
 var _running: bool = false
 
+# --- Gebrabbel: Sims-artige Fantasiesilben, solange die Zeile tippt. ------
+# Je Sprecher ein Silbenvorrat (synthetisiert in tools/make_gebrabbel.py);
+# die Silben werden zufällig aneinandergereiht, mit kleinen Atempausen und
+# leicht streuender Tonhöhe. Unbekannte Sprecher brabbeln mit Olivers
+# Silben, einen Halbton verschoben — so hat jede Nebenfigur eine Stimme.
+var _stimmen: Dictionary = {}
+var _brabbler: AudioStreamPlayer
+var _silben: Array = []
+var _brabbel_tonlage := 1.0
+var _brabbel_pause := 0.0
+
 
 func _ready() -> void:
 	_root.visible = false
+	_brabbler = AudioStreamPlayer.new()
+	_brabbler.volume_db = -10.0
+	add_child(_brabbler)
+	for stimme in ["anne", "oliver"]:
+		var vorrat: Array = []
+		for i in range(1, 13):
+			var pfad := "res://audio/gebrabbel/%s_%02d.ogg" % [stimme, i]
+			if ResourceLoader.exists(pfad):
+				vorrat.append(load(pfad))
+		_stimmen[stimme] = vorrat
 
 
 ## Shows the given lines. Await this call to continue once the player has read
@@ -66,8 +87,23 @@ func _process(delta: float) -> void:
 		_revealed += characters_per_second * delta
 		_text_label.visible_characters = int(_revealed)
 		_hint.visible = false
+		_brabbeln(delta)
 	else:
 		_hint.visible = true
+
+
+## Reiht Silben aneinander, solange die Zeile noch tippt. Zwischen den
+## Silben liegen kurze Lücken, ab und zu eine längere „Wortpause".
+func _brabbeln(delta: float) -> void:
+	if _silben.is_empty() or _brabbler.playing:
+		return
+	_brabbel_pause -= delta
+	if _brabbel_pause > 0.0:
+		return
+	_brabbler.stream = _silben[randi() % _silben.size()]
+	_brabbler.pitch_scale = _brabbel_tonlage * randf_range(0.94, 1.07)
+	_brabbler.play()
+	_brabbel_pause = 0.28 if randf() < 0.22 else randf_range(0.01, 0.09)
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -105,3 +141,16 @@ func _show_line() -> void:
 	_revealed = 0.0
 	_line_time = 0.0
 	_hint.visible = false
+	_stimme_waehlen(_speaker_label.text)
+
+
+func _stimme_waehlen(sprecher: String) -> void:
+	var kennung := sprecher.to_lower()
+	_brabbel_tonlage = 1.0
+	if _stimmen.has(kennung):
+		_silben = _stimmen[kennung]
+	else:
+		# Nebenfiguren: Olivers Vorrat, pro Name eine eigene feste Tonlage.
+		_silben = _stimmen.get("oliver", [])
+		_brabbel_tonlage = 1.06 + 0.12 * float(hash(kennung) % 5) / 4.0
+	_brabbel_pause = 0.0

@@ -561,8 +561,25 @@ Widmung.
 Match-Jingle im Tinder-Intro, der Menüklick, das Krug-Klirren, die
 Siegfanfare aller drei Minispiele (`sieg_fanfare.ogg` — Montage aus zwei
 aufsteigenden Sax-Jingles mit 0,12-s-Crossfade, per numpy/soundfile
-gebaut) und das komplette Truhen-Finale: Zahlenpad-Tasten, Fehlversuch,
-fallendes Schloss, knarrender Deckel, schwebender Rucksack.
+gebaut), das komplette Truhen-Finale (Zahlenpad-Tasten, Fehlversuch,
+fallendes Schloss, knarrender Deckel, schwebender Rucksack) und **die
+Schritte**: vier echte Kenney-Tritte (`schritt_1–4.ogg`, spektral
+ausgesucht — vier Aufnahmen derselben Oberfläche mit ähnlichem
+Klangzentrum) ersetzen die Ferse-Ballen-Synthese, die metallisch klang.
+`schritte.gd` lädt sie bevorzugt und fällt auf die alten WAVs zurück,
+falls sie fehlen.
+
+**Dialog-Gebrabbel wie bei den Sims:** solange eine Dialogzeile tippt,
+brabbelt die Sprecherfigur Fantasiesilben (`audio/gebrabbel/`,
+synthetisiert in `tools/make_gebrabbel.py`: je Silbe ein Konsonanten-
+Ansatz plus ein Vokal — Obertonreihe auf gleitender Grundfrequenz,
+geformt von drei Formant-Resonanzen echter Vokale F1–F3). Anne liegt um
+210 Hz mit angehobenen Formanten, Oliver um 118 Hz. Die `DialogueBox`
+reiht zufällige Silben mit kurzen Atem- und gelegentlichen Wortpausen
+aneinander und streut die Tonhöhe leicht; unbekannte Sprecher bekommen
+Olivers Vorrat in einer aus dem Namen abgeleiteten festen Tonlage. Wer
+die Zeile per Tastendruck vervollständigt, stoppt damit auch das
+Gebrabbel (die laufende Silbe klingt aus).
 
 **Drei Ambiences sind synthetisiert** (`tools/make_ambience.py`,
 numpy + soundfile): `wellen_moewen.wav` (24-s-Loop — Spree-Wellen,

@@ -15,3 +15,7 @@ schloss        <- RPG sounds/metalLatch
 deckel         <- RPG sounds/creak2
 schweben       <- Digital sounds/highUp
 krug_klirren   <- RPG sounds/metalPot2
+schritt_1      <- RPG sounds/footstep00
+schritt_2      <- RPG sounds/footstep01
+schritt_3      <- RPG sounds/footstep07
+schritt_4      <- RPG sounds/footstep08

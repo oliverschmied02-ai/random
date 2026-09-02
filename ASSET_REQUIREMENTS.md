@@ -341,16 +341,26 @@ Trefferzone (`MASKEN_RADIUS`) und sichtbare Größe (Skalierung in
 | **Platzhalter** | Synthetisch aus `tools/make_placeholder_audio.py` |
 | **Priorität** | IMPORTANT |
 
-### Footstep Sounds
+### Footstep Sounds — GELIEFERT
 | | |
 | --- | --- |
 | **Zweck** | Schritte tragen das Gewicht der Bewegung |
 | **Szene** | `actors/player/player.tscn` |
-| **Typ** | Sound-Set (Asphalt, Pflaster) |
+| **Typ** | Sound-Set (vier Varianten) |
 | **Stil** | Trocken, nah, leicht stilisiert |
 | **Animation** | An Schrittzeitpunkte der Lauf-Animation koppeln — bis dahin zählt `Schritte` den Weg |
-| **Platzhalter** | Vier synthetische Tritte aus `tools/make_placeholder_audio.py` |
-| **Priorität** | IMPORTANT |
+| **Platzhalter** | Keiner mehr: vier echte Kenney-Tritte (CC0, `audio/kenney/schritt_1–4.ogg`); die alten synthetischen WAVs bleiben als Rückfallebene |
+| **Priorität** | GELIEFERT |
+
+### Dialog-Gebrabbel — GELIEFERT
+| | |
+| --- | --- |
+| **Zweck** | Man hört, dass gesprochen wird — Sims-artige Fantasiesilben |
+| **Szene** | `systems/dialogue/dialogue_box.gd`, Silben in `audio/gebrabbel/` |
+| **Typ** | 2 Stimmen × 12 Silben (Anne hoch, Oliver tief) |
+| **Stil** | Formant-Synthese (`tools/make_gebrabbel.py`), kein echtes Wort |
+| **Platzhalter** | Trägt so; mehr Silben oder eine dritte Stimme = Skript anpassen und neu erzeugen |
+| **Priorität** | GELIEFERT |
 
 ### Stadtatmosphäre und Musik
 | | |

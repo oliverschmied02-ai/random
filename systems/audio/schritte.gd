@@ -11,6 +11,8 @@ extends AudioStreamPlayer3D
 ##
 ## Vier Aufnahmen mit leicht zufälliger Tonhöhe, damit aus dem Gehen kein
 ## Metronom wird — dieselbe Datei zweimal hintereinander hört man sofort.
+## Die Aufnahmen sind echte Kenney-Schritte (CC0, audio/kenney/) — die
+## alte Ferse-Ballen-Synthese klang metallisch.
 
 signal aufgetreten
 
@@ -46,7 +48,10 @@ func _ready() -> void:
 		return
 
 	for nummer in range(1, 5):
-		var pfad := "res://audio/schritt_%d.wav" % nummer
+		var pfad := "res://audio/kenney/schritt_%d.ogg" % nummer
+		if not ResourceLoader.exists(pfad):
+			# Rückfall auf die synthetischen Tritte, falls die Aufnahmen fehlen.
+			pfad = "res://audio/schritt_%d.wav" % nummer
 		if ResourceLoader.exists(pfad):
 			_aufnahmen.append(load(pfad))
 	if _aufnahmen.is_empty():
