@@ -91,10 +91,10 @@ def wellen_moewen() -> None:
             links[ab:ende] += ruf[: ende - ab] * pegel * (1.0 - pan)
             rechts[ab:ende] += ruf[: ende - ab] * pegel * pan
 
-    # Mono: das macOS-Zip kratzt am 100-MiB-Limit von GitHub — der
-    # Stereoeindruck der Wellen ist den halben Speicher nicht wert.
-    mono = normieren(links + rechts)
-    sf.write("audio/wellen_moewen.wav", mono, SR, subtype="PCM_16")
+    # Stereo: seit der Build in Teilstücken ausgeliefert wird, zählt das
+    # 100-MiB-Limit pro Datei nicht mehr — die Möwen dürfen wieder wandern.
+    stereo = np.stack([normieren(links), normieren(rechts)], axis=1)
+    sf.write("audio/wellen_moewen.wav", stereo, SR, subtype="PCM_16")
     print("wellen_moewen.wav:", dauer, "s Loop")
 
 
@@ -132,7 +132,8 @@ def zug_rumpeln() -> None:
     schiene = normieren(schiene, 0.5)
 
     mono = normieren(rumpeln + brumm + wind + schiene, 0.88)
-    sf.write("audio/zug_rumpeln.wav", mono, SR, subtype="PCM_16")
+    stereo = np.stack([mono, np.roll(mono, int(0.0006 * SR))], axis=1)
+    sf.write("audio/zug_rumpeln.wav", stereo, SR, subtype="PCM_16")
     print("zug_rumpeln.wav:", dauer, "s Loop")
 
 
@@ -161,7 +162,8 @@ def brems_zisch() -> None:
     quietsch *= (0.5 + 0.5 * np.sin(2.0 * np.pi * 9.0 * t)) * huelle * 0.10
 
     mono = normieren(zisch + nach + quietsch, 0.9)
-    sf.write("audio/brems_zisch.wav", mono, SR, subtype="PCM_16")
+    stereo = np.stack([mono, mono * 0.94], axis=1)
+    sf.write("audio/brems_zisch.wav", stereo, SR, subtype="PCM_16")
     print("brems_zisch.wav: One-Shot,", dauer, "s")
 
 

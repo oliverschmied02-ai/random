@@ -609,14 +609,20 @@ und Tinder-Intro, Komikus „Finally together" liegt unter Berlin, „A
 Waltz For Naseem" unter Frankfurt, der **Kanon in D** (Klavier) unter
 der Hochzeit, und beim Öffnen der Truhe blendet „Romantic Inspiration"
 ein und trägt bis durch den Abspann. Aufbereitung in
-`tools/make_musik.py`: 32 kHz Stereo-Vorbis (44,1 kHz Stereo stürzt in
-dieser libsndfile ab; außerdem blockweise schreiben — ein großer
-Einzel-Write crasht den Encoder), Schnitt auf Ziellänge, Loop-Naht als
-Crossfade auf den Anfang. Die `.import`-Dateien der fünf Stücke brauchen
-`loop=true`. Alle Player hängen am **Musik**-Bus (Regler im Pausenmenü).
-Platz dafür schafften die Kulissen-Texturen: die fünf 1024er-Sätze unter
-`assets/texturen/` sind jetzt 512er (kachelnde Oberflächen, im Bild kein
-Unterschied — im Build ~10 MiB).
+`tools/make_musik.py`: 48 kHz Stereo-Vorbis (44,1 kHz Stereo stürzt in
+dieser libsndfile ab, 48 kHz läuft; außerdem blockweise schreiben — ein
+großer Einzel-Write crasht den Encoder), Schnitt auf Ziellänge,
+Loop-Naht als Crossfade auf den Anfang. Die `.import`-Dateien der fünf
+Stücke brauchen `loop=true`. Alle Player hängen am **Musik**-Bus
+(Regler im Pausenmenü).
+
+**Das 100-MiB-Limit ist entschärft:** GitHub deckelt nur die einzelne
+Datei, nicht das Repository — der macOS-Build liegt deshalb in
+`download/` als **Teilstücke** (`OurStory-macOS.zip.001` …, `split -b`),
+plus `OurStory-macOS-zusammensetzen.command` zum Zusammenbau per
+Rechtsklick → Öffnen (oder `cat OurStory-macOS.zip.0* > OurStory-macOS.zip`).
+Damit sind die Sparmaßnahmen zurückgedreht: Kulissen-Texturen wieder in
+1024, die Ambiences in Stereo, die Musik in 48 kHz.
 
 Die übrigen Klänge (Einschläge, Jubel …) sind **synthetische
 Platzhalter** aus `tools/make_placeholder_audio.py` — ohne

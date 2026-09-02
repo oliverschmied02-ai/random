@@ -3,7 +3,7 @@ Musik aus dem CC0-Korpus SoundSafari/CC0-1.0-Music
 Public Domain; die Sammlung bündelt CC0-Stücke von freepd.com,
 chosic.com und freemusicarchive.org).
 
-Aufbereitung: tools/make_musik.py — 32 kHz Stereo-Vorbis, auf
+Aufbereitung: tools/make_musik.py — 48 kHz Stereo-Vorbis, auf
 Ziellänge geschnitten, Loop-Naht als Crossfade auf den Anfang.
 
 titel.ogg      <- "Lovely Piano Song" (freepd.com)

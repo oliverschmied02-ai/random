@@ -3,9 +3,10 @@
 # Quelle ist der GitHub-Korpus SoundSafari/CC0-1.0-Music (CC0 1.0,
 # Sammlungen von freepd.com, chosic.com, freemusicarchive.org) — der
 # Blob-lose Klon liegt im Scratchpad, ausgecheckt werden nur die fünf
-# gewählten Stücke. Jedes wird auf 32 kHz Stereo gebracht (Vorbis
-# ~0,77 MB/min — 44,1 kHz Stereo stürzt in dieser libsndfile ab),
-# auf Ziellänge geschnitten und als **Crossfade-Loop** gebaut: die
+# gewählten Stücke. Jedes wird auf 48 kHz Stereo gebracht (44,1 kHz
+# Stereo stürzt in dieser libsndfile ab, 48 kHz läuft; seit dem Split-
+# Versand zählt das 100-MiB-Limit nicht mehr pro Build), auf Ziellänge
+# geschnitten und als **Crossfade-Loop** gebaut: die
 # letzten Sekunden blenden auf den Anfang über, damit die Schleife
 # nicht hörbar anschlägt. Pegel normalisiert auf −1 dB Spitze.
 #
@@ -16,7 +17,7 @@ import os
 import numpy as np
 import soundfile as sf
 
-SR = 32000
+SR = 48000
 KLON = ("/tmp/claude-0/-home-user-random/"
         "77c066ea-c61b-542f-b037-cab2bed7c7f3/scratchpad/musik_probe")
 
