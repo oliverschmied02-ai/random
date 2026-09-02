@@ -489,7 +489,12 @@ Exportiert werden nur Kleid + Skelett (~1 MB);
 geladenen Figur — die Godot-Skins finden ihre Knochen über die Namen.
 Nach dem gewonnenen Fangen trägt Anne den **Brautstrauß in der rechten
 Hand** (`_strauss_in_die_hand`, BoneAttachment am Handknochen) — durchs
-Schlussbild bis zur Truhe.
+Schlussbild bis zur Truhe. Die leichten Lagen — Tüll-Überrock und
+Schleier — bewegt ein **Wind-Vertex-Shader** (`_windstoff`): der
+Ausschlag wächst zum Saum hin an (`oben`/`unten` grenzen die Höhenspanne
+im Skelettraum ein), zwei überlagerte Sinusböen verschieben die Punkte
+seitlich. Möglich, weil Godot skinnt, *bevor* der Vertex-Shader läuft —
+der Wind legt sich also über die Pose.
 
 **Das Minispiel** (`strauss_spiel.gd`): zehn Brautsträuße fliegen von drei
 Werfern heran und drehen sich dabei, **fünf muss man fangen**. Gefangen
@@ -506,7 +511,12 @@ Uferwind schiebt ihn seitlich (die Kurve kehrt zum Zielpunkt zurück —
 sichtbar windig, aber fair, und die Prüfläufe bleiben gültig), die
 Ziele streuen über die volle Reichweite, der Fangradius ist enger
 (0,46 m) und ein Fehlgriff kostet 0,4 s Pause. Wer alle zehn verpasst,
-bekommt eine freundliche Zeile und eine neue Runde. Die Flugbahn wird
+bekommt eine freundliche Zeile und eine neue Runde. **Beim Sieg feiert
+die Szene mit:** drei Salven Blütenkonfetti über den Stuhlreihen
+(`_konfetti_werfen`, CPUParticles3D, rosa-weiße Blättchen mit
+Farbverlauf), und gut zwei Drittel der stehenden Gäste **hüpfen** vier
+Sekunden lang in eigenem Takt (`_gaeste_jubeln`; die Sitzenden bleiben
+sitzen). Die Flugbahn wird
 über den Fortschritt ausgewertet, nicht aufsummiert — derselbe Grund wie
 beim Dart-Minispiel in Kapitel 1. Am Kai steht kein Poller mehr auf der
 Mittelachse — ein dunkler Zylinder mitten im Fangring las sich als Teil
@@ -543,10 +553,32 @@ Geschenkbildschirm und Abspann.
 **Die Stadt-Ambience ist echt:** `audio/stadt_ambiente.mp3` (ruhige
 Straße, ferne Sirenen — Aufnahme von Vincent Mets, von Oliver
 bereitgestellt) loopt im Kapitel, in der Tinder-Intro und unter der
-Widmung. Alle übrigen Klänge sind **synthetische Platzhalter** und entstehen in
-`tools/make_placeholder_audio.py` — ohne Fremdmaterial, ohne Abhängigkeiten,
-reproduzierbar. Ein Schritt kürzer oder ein Einschlag trockener heißt: eine Zahl
-im Skript ändern und neu erzeugen. Ersetzen heißt: gleiche Datei, gleicher Name.
+Widmung.
+
+**Echte CC0-Aufnahmen aus dem Kenney Asset Pack** liegen in `audio/kenney/`
+(Zuordnung und Quelle in `HERKUNFT.txt`; verifiziert per Klon von
+`github.com/iwenzhou/kenney`): Kartenwischen und -zurück, Tippen und
+Match-Jingle im Tinder-Intro, der Menüklick, das Krug-Klirren, die
+Siegfanfare aller drei Minispiele (`sieg_fanfare.ogg` — Montage aus zwei
+aufsteigenden Sax-Jingles mit 0,12-s-Crossfade, per numpy/soundfile
+gebaut) und das komplette Truhen-Finale: Zahlenpad-Tasten, Fehlversuch,
+fallendes Schloss, knarrender Deckel, schwebender Rucksack.
+
+**Drei Ambiences sind synthetisiert** (`tools/make_ambience.py`,
+numpy + soundfile): `wellen_moewen.wav` (24-s-Loop — Spree-Wellen,
+Schaum auf den Kämmen, vier FM-Möwenrufe; läuft leise unterm
+Hochzeitskapitel), `zug_rumpeln.wav` (8-s-Loop — Fahrwerk, 34-Hz-Brummen,
+Schienenstoß-Doppelklack alle 1,6 s; läuft während der Zugfahrt und wird
+mit der Bremskurve leiser) und `brems_zisch.wav` (Druckluft-One-Shot beim
+Halt). Alle Filter laufen über die FFT — zirkulare Faltung, darum sind
+die Loops an der Naht mathematisch nahtlos; LFOs nutzen nur ganze Zyklen
+pro Loop.
+
+Die übrigen Klänge (Schritte, Einschläge, Jubel, Titelmusik …) sind
+**synthetische Platzhalter** aus `tools/make_placeholder_audio.py` — ohne
+Fremdmaterial, reproduzierbar. Ein Schritt kürzer oder ein Einschlag
+trockener heißt: eine Zahl im Skript ändern und neu erzeugen. Ersetzen
+heißt: gleiche Datei, gleicher Name.
 
 * Vier Tritte, Stadtschleife, Brummen des Budenschilds, Dart-Einschlag,
   Ladeton, Volltreffer, Siegfanfare, Menüklick, Titelmusik

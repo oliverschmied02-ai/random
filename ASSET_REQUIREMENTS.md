@@ -365,8 +365,29 @@ Trefferzone (`MASKEN_RADIUS`) und sichtbare Größe (Skalierung in
 
 Die Platzhalter sind austauschbar, ohne Code anzufassen: gleicher Dateiname
 unter `audio/`, fertig. Schleifen (`stadt`, `bude_summen`, `laden`,
-`titelmusik`) brauchen in der `.import`-Datei `edit/loop_mode=2` — die Werte
-des Importeurs sind *0 = aus WAV lesen, 1 = aus, 2 = vorwärts*.
+`titelmusik`, `wellen_moewen`, `zug_rumpeln`) brauchen in der
+`.import`-Datei `edit/loop_mode=2` — die Werte des Importeurs sind
+*0 = aus WAV lesen, 1 = aus, 2 = vorwärts*.
+
+### Kenney-Klänge (CC0) — GELIEFERT
+| | |
+| --- | --- |
+| **Zweck** | Echte Aufnahmen statt Synthese für UI, Karten, Sieg, Truhe |
+| **Szene** | `audio/kenney/` — Zuordnung in `audio/kenney/HERKUNFT.txt` |
+| **Typ** | Kartenwischen, Tippen, Menüklick, Match-/Sieg-Jingle, Zahlenpad, Schloss, Deckelknarren, Schweben, Krug-Klirren |
+| **Stil** | Kenney Asset Pack, CC0 — keine Attributionspflicht |
+| **Platzhalter** | Keiner mehr; `sieg_fanfare.ogg` ist eine Montage aus zwei aufsteigenden Sax-Jingles (`tools`-frei, per numpy/soundfile gebaut) |
+| **Priorität** | GELIEFERT |
+
+### Ambience-Synthese — GELIEFERT
+| | |
+| --- | --- |
+| **Zweck** | Spree-Wellen mit Möwen (Hochzeit), Zugrumpeln + Bremszischen (Zugszene) |
+| **Szene** | `chapters/hochzeit/chapter_hochzeit.gd` (`wellen_moewen`), `chapters/frankfurt/chapter_frankfurt.gd` → `_zug_sequenz` |
+| **Typ** | `audio/wellen_moewen.wav` (24-s-Loop), `audio/zug_rumpeln.wav` (8-s-Loop), `audio/brems_zisch.wav` (One-Shot) |
+| **Stil** | FFT-gefiltert und darum an der Loop-Naht mathematisch nahtlos; Möwenrufe als FM-Synthese |
+| **Platzhalter** | `tools/make_ambience.py` — echte Feldaufnahmen wären noch schöner, gleiche Dateinamen genügen |
+| **Priorität** | POLISH |
 
 ---
 

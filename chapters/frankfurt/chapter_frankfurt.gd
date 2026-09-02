@@ -295,6 +295,14 @@ func _zug_sequenz() -> void:
 		await get_tree().process_frame
 		return
 
+	# Fahrgeräusch: tiefes Rumpeln mit Schienenstößen (Loop), das beim
+	# Bremsen leiser wird; am Halt zischt die Druckluft.
+	var rumpeln := AudioStreamPlayer.new()
+	rumpeln.stream = load("res://audio/zug_rumpeln.wav")
+	rumpeln.volume_db = -8.0
+	add_child(rumpeln)
+	rumpeln.play()
+
 	# Einstellung 1: die Fahrt durch die Felder, die Kamera schwenkt mit.
 	var uhr := 0.0
 	while uhr < 4.4:
@@ -312,7 +320,17 @@ func _zug_sequenz() -> void:
 		var delta := get_process_delta_time()
 		var tempo: float = clampf((_ZUG_HALT - zug.position.x) * 0.9, 1.2, 40.0)
 		zug.position.x = minf(zug.position.x + tempo * delta, _ZUG_HALT)
+		# Je langsamer der Zug, desto leiser das Fahrwerk.
+		rumpeln.volume_db = linear_to_db(clampf(tempo / 40.0, 0.12, 1.0)) - 8.0
 		await get_tree().process_frame
+	var zisch := AudioStreamPlayer.new()
+	zisch.stream = load("res://audio/brems_zisch.wav")
+	zisch.volume_db = -8.0
+	add_child(zisch)
+	zisch.play()
+	var ausrollen := create_tween()
+	ausrollen.tween_property(rumpeln, ^"volume_db", -60.0, 1.2)
+	ausrollen.tween_callback(rumpeln.stop)
 	await get_tree().create_timer(_wartezeit(0.9)).timeout
 
 

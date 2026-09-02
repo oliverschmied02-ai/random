@@ -41,6 +41,14 @@ var _pad: PanelContainer
 var _stellen: Array[Label] = []
 var _hinweis: Label
 
+# Kenney-Klänge (CC0, audio/kenney/HERKUNFT.txt): Pad, Schloss, Deckel,
+# Schweben — jeder Schritt des Finales bekommt sein eigenes Geräusch.
+var _ton_ziffer: AudioStreamPlayer
+var _ton_falsch: AudioStreamPlayer
+var _ton_schloss: AudioStreamPlayer
+var _ton_deckel: AudioStreamPlayer
+var _ton_schweben: AudioStreamPlayer
+
 
 func _ready() -> void:
 	_truhe = _TRUHE.instantiate() as Node3D
@@ -69,6 +77,19 @@ func _ready() -> void:
 			_erreicht = true)
 
 	_pad_bauen()
+	_ton_ziffer = _ton("res://audio/kenney/pad_ziffer.ogg", -6.0)
+	_ton_falsch = _ton("res://audio/kenney/pad_falsch.ogg", -4.0)
+	_ton_schloss = _ton("res://audio/kenney/schloss.ogg", -2.0)
+	_ton_deckel = _ton("res://audio/kenney/deckel.ogg", -4.0)
+	_ton_schweben = _ton("res://audio/kenney/schweben.ogg", -8.0)
+
+
+func _ton(pfad: String, pegel: float) -> AudioStreamPlayer:
+	var spieler := AudioStreamPlayer.new()
+	spieler.stream = load(pfad)
+	spieler.volume_db = pegel
+	add_child(spieler)
+	return spieler
 
 
 ## Wahr, sobald eine Spielerfigur die Truhe erreicht hat.
@@ -211,6 +232,8 @@ func ziffer_eingeben(ziffer: String) -> void:
 	if offen or eingabe.length() >= CODE.length():
 		return
 	eingabe += ziffer
+	if _ton_ziffer != null:
+		_ton_ziffer.play()
 	_stellen_zeigen()
 	if eingabe.length() == CODE.length():
 		if eingabe == CODE:
@@ -231,6 +254,8 @@ func _stellen_zeigen() -> void:
 
 ## Falscher Code: rot aufleuchten, schütteln, leeren.
 func _falsch() -> void:
+	if _ton_falsch != null:
+		_ton_falsch.play()
 	for feld in _stellen:
 		feld.add_theme_color_override("font_color", Color(0.92, 0.30, 0.26))
 	var ruck := create_tween()
@@ -253,6 +278,8 @@ func _oeffnen() -> void:
 	abgang.tween_callback(func() -> void: _schicht.visible = false)
 
 	# Das Schloss springt auf und fällt vor die Truhe.
+	if _ton_schloss != null:
+		_ton_schloss.play()
 	if _schloss != null:
 		var fall := create_tween()
 		fall.tween_property(_schloss, ^"position",
@@ -266,6 +293,8 @@ func _oeffnen() -> void:
 	await get_tree().create_timer(0.45).timeout
 
 	# Deckel auf — Scharnier liegt im GLB an der hinteren Oberkante.
+	if _ton_deckel != null:
+		_ton_deckel.play()
 	if _deckel != null:
 		var auf := create_tween()
 		auf.tween_property(_deckel, ^"rotation:x", -1.65, 1.1) \
@@ -286,6 +315,8 @@ func _oeffnen() -> void:
 	add_child(_rucksack)
 	_rucksack.position = ort + Vector3(0, 0.1, 0)
 	_rucksack.scale = Vector3.ONE * 0.6
+	if _ton_schweben != null:
+		_ton_schweben.play()
 	var flug := create_tween()
 	flug.tween_property(_rucksack, ^"position:y", ort.y + 1.35, 2.2) \
 		.set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_SINE)

@@ -258,7 +258,8 @@ func _toene_bauen() -> void:
 	_jubelklang.volume_db = -6.0
 	add_child(_jubelklang)
 	_siegklang = AudioStreamPlayer.new()
-	_siegklang.stream = load("res://audio/gewonnen.wav")
+	# Kenney-Fanfare (CC0) — zwei aufsteigende Sax-Jingles, montiert.
+	_siegklang.stream = load("res://audio/kenney/sieg_fanfare.ogg")
 	add_child(_siegklang)
 
 

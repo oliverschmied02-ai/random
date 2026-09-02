@@ -57,6 +57,13 @@ func _ready() -> void:
 	_player.input_enabled = false
 	_kleid_anziehen()
 	_blendschicht_bauen()
+	# Die Spree unterm Fest: Wellen und Möwen als leiser Loop neben der
+	# Menge (synthetisiert, tools/make_ambience.py).
+	var wasser := AudioStreamPlayer.new()
+	wasser.stream = load("res://audio/wellen_moewen.wav")
+	wasser.volume_db = -14.0
+	add_child(wasser)
+	wasser.play()
 	var zone := $Triggers/BogenZone as Area3D
 	zone.body_entered.connect(func(koerper: Node3D) -> void:
 		if koerper == _player:
@@ -110,6 +117,10 @@ func _ablauf() -> void:
 func _auf_runde_geschafft() -> void:
 	Spielstand.freischalten(3)
 	_jubel.play()
+	# Der Moment gehört gefeiert: Blütenkonfetti über den Gästen, und die
+	# Stehenden hüpfen ein paar Sekunden mit.
+	_konfetti_werfen()
+	_gaeste_jubeln(4.0)
 	await get_tree().create_timer(_wartezeit(2.6)).timeout
 	_strauss.abschluss_uebernehmen()
 	# Den gefangenen Strauß trägt sie ab jetzt in der rechten Hand —
@@ -192,7 +203,121 @@ func _kleid_anziehen() -> void:
 		var teil := kind as MeshInstance3D
 		teil.get_parent().remove_child(teil)
 		skelett.add_child(teil)
+		# Die leichten Lagen — Tüll-Überrock und Schleier — bekommen einen
+		# Wind-Shader: unten stärker als oben, damit der Stoff lebt statt
+		# wie gegossen zu stehen.
+		if teil.name == "kleid_tuell":
+			teil.material_override = _windstoff(0.95, 0.10, 0.030)
+		elif teil.name == "kleid_schleier":
+			teil.material_override = _windstoff(1.55, 0.95, 0.022)
 	kleid.queue_free()
+
+
+## Ein durchscheinender Stoff, den der Spree-Wind bewegt. `oben`/`unten`
+## grenzen die Höhenspanne ein (Skelettraum), dazwischen wächst der
+## Ausschlag zum Saum hin an.
+func _windstoff(oben: float, unten: float, staerke: float) -> ShaderMaterial:
+	var wind := Shader.new()
+	wind.code = """
+shader_type spatial;
+render_mode cull_disabled, depth_prepass_alpha;
+uniform vec4 farbe : source_color = vec4(1.0, 1.0, 1.0, 0.30);
+uniform float staerke = 0.03;
+uniform float oben = 1.0;
+uniform float unten = 0.1;
+void vertex() {
+	float saum = clamp((oben - VERTEX.y) / max(oben - unten, 0.001), 0.0, 1.0);
+	float boee = sin(TIME * 1.7 + VERTEX.y * 4.0 + VERTEX.x * 2.3) * 0.6
+		+ sin(TIME * 2.9 + VERTEX.z * 5.1) * 0.4;
+	VERTEX.x += boee * staerke * saum;
+	VERTEX.z += cos(TIME * 1.3 + VERTEX.y * 3.2) * staerke * 0.6 * saum;
+}
+void fragment() {
+	ALBEDO = farbe.rgb;
+	ALPHA = farbe.a;
+	ROUGHNESS = 0.9;
+}
+"""
+	var stoff := ShaderMaterial.new()
+	stoff.shader = wind
+	stoff.set_shader_parameter("oben", oben)
+	stoff.set_shader_parameter("unten", unten)
+	stoff.set_shader_parameter("staerke", staerke)
+	return stoff
+
+
+## Blütenkonfetti beim gewonnenen Fangen: drei Salven über den Stuhlreihen,
+## rosa und weiße Blättchen, die trudelnd zu Boden segeln.
+func _konfetti_werfen() -> void:
+	for ort in [Vector3(-4.5, 2.4, 8.2), Vector3(0.0, 2.7, 9.0),
+			Vector3(4.5, 2.4, 8.2)]:
+		var salve := CPUParticles3D.new()
+		salve.one_shot = true
+		salve.amount = 70
+		salve.lifetime = 3.4
+		salve.explosiveness = 0.92
+		salve.direction = Vector3.UP
+		# Eng gebündelt und nicht zu schnell — eine weite, schnelle Salve
+		# las sich im Bild wie Schneetreiben über der ganzen Szene.
+		salve.spread = 40.0
+		salve.initial_velocity_min = 1.4
+		salve.initial_velocity_max = 2.8
+		salve.gravity = Vector3(0.0, -1.4, 0.0)
+		salve.damping_min = 0.6
+		salve.damping_max = 1.4
+		salve.angular_velocity_min = -220.0
+		salve.angular_velocity_max = 220.0
+		salve.scale_amount_min = 0.7
+		salve.scale_amount_max = 1.3
+		var blatt := QuadMesh.new()
+		blatt.size = Vector2(0.06, 0.06)
+		var stoff := StandardMaterial3D.new()
+		stoff.albedo_color = Color(1.0, 0.62, 0.72)
+		stoff.vertex_color_use_as_albedo = true
+		stoff.roughness = 1.0
+		stoff.cull_mode = BaseMaterial3D.CULL_DISABLED
+		stoff.billboard_mode = BaseMaterial3D.BILLBOARD_PARTICLES
+		blatt.material = stoff
+		salve.mesh = blatt
+		salve.color_ramp = _konfetti_farben()
+		add_child(salve)
+		salve.global_position = ort
+		salve.emitting = true
+		# Räumt sich selbst weg, wenn alles gelandet ist.
+		get_tree().create_timer(salve.lifetime + 1.0).timeout.connect(
+			salve.queue_free)
+
+
+func _konfetti_farben() -> Gradient:
+	var verlauf := Gradient.new()
+	verlauf.set_color(0, Color(1.0, 0.72, 0.80))
+	verlauf.set_color(1, Color(1.0, 0.98, 0.94))
+	return verlauf
+
+
+## Die stehenden Gäste hüpfen ein paar Sekunden — jeder mit eigenem
+## Rhythmus und Versatz, damit es nach Jubel aussieht, nicht nach Ballett.
+func _gaeste_jubeln(dauer: float) -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 92023
+	var gaeste: Array[Node3D] = _kulisse.gaeste
+	for gast in gaeste:
+		if gast.get("sitzend"):
+			continue
+		# Nicht alle: gut zwei Drittel springen, der Rest freut sich still.
+		if rng.randf() < 0.3:
+			continue
+		var boden := gast.position.y
+		var hop := create_tween()
+		hop.tween_interval(rng.randf_range(0.0, 0.5))
+		var takt := rng.randf_range(0.30, 0.42)
+		var hoehe := rng.randf_range(0.12, 0.22)
+		var spruenge := int(dauer / (takt * 2.0))
+		for i in spruenge:
+			hop.tween_property(gast, ^"position:y", boden + hoehe, takt) \
+				.set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_QUAD)
+			hop.tween_property(gast, ^"position:y", boden, takt) \
+				.set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_QUAD)
 
 
 ## Der gefangene Brautstrauß wandert in Annes rechte Hand — ein

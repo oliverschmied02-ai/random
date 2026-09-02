@@ -1,0 +1,17 @@
+Klänge aus dem Kenney Asset Pack (kenney.nl), Lizenz CC0 1.0
+(Public Domain). Bezogen über den GitHub-Spiegel
+https://github.com/iwenzhou/kenney (komplettes Asset Pack 1).
+
+karte_wisch    <- Casino sounds/cardSlide5
+karte_zurueck  <- Casino sounds/cardShove1
+tipp           <- UI sounds/click1
+menue          <- UI sounds/switch13
+match          <- Jingle sounds/jingles_SAX02
+sieg_fanfare   <- jingles_SAX04 + jingles_SAX02 (montiert, tools-frei
+                  per numpy/soundfile: 0,12 s Überblendung)
+pad_ziffer     <- RPG sounds/metalClick
+pad_falsch     <- Digital sounds/lowThreeTone
+schloss        <- RPG sounds/metalLatch
+deckel         <- RPG sounds/creak2
+schweben       <- Digital sounds/highUp
+krug_klirren   <- RPG sounds/metalPot2

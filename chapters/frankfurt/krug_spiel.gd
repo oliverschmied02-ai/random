@@ -278,13 +278,14 @@ func _toene_bauen() -> void:
 	_wischklang.volume_db = -6.0
 	add_child(_wischklang)
 	_klirrklang = AudioStreamPlayer3D.new()
-	_klirrklang.stream = load("res://audio/klirren.wav")
+	# Kenney-Metallklang (CC0) — klingt nach echtem Krug statt Sinus-Klirren.
+	_klirrklang.stream = load("res://audio/kenney/krug_klirren.ogg")
 	_klirrklang.max_polyphony = 6
 	_klirrklang.unit_size = 6.0
 	add_child(_klirrklang)
 	_klirrklang.global_position = TISCH
 	_siegklang = AudioStreamPlayer.new()
-	_siegklang.stream = load("res://audio/gewonnen.wav")
+	_siegklang.stream = load("res://audio/kenney/sieg_fanfare.ogg")
 	add_child(_siegklang)
 
 
