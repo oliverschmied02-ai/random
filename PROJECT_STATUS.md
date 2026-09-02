@@ -464,6 +464,24 @@ sind auf das RPM-Rig geeicht und verbiegen das Mixamo-Skelett; die
 Armsenkung aus der T-Pose arbeitet dagegen rein über Knochennamen und
 greift nach dem Umbenennen (`mixamorig:` weg) unverändert.
 
+**Das Hochzeitskleid** (`assets/hochzeit/kleid.glb`, gebaut in
+`tools/make_kleid.py`): fertige, auf das RPM-Skelett geriggte Kleider
+sind aus der Arbeitsumgebung nicht beziehbar — das Kleid entsteht
+deshalb auf Annes eigenem Avatar. Das **Mieder** ist eine Kopie des
+Rumpfes ihres Outfit-Netzes (wichtig: RPM-Avatare haben unter der
+Kleidung **keinen Körper** — `AvatarBody` sind nur Hände, Arme, Hals;
+die Rumpfform trägt allein das Outfit), leicht nach außen versetzt, mit
+Stoffstärke, und bis unter die Po-Wölbung gezogen (ein Stoß auf
+Hüfthöhe ließ die Jeans seitlich hervorblitzen). Der **Rock** ist ein
+weiter Loft bis knapp über den Boden mit welligem Saum; seine Gewichte
+kommen per `data_transfer` vom Outfit — unten bindet jeder Punkt ans
+nächstliegende Bein, damit der Rock beim Gehen mitschwingt. Dazu ein
+**Taillenband** (voll an `Hips` gebunden — ohne Gewichte bliebe es beim
+Umhängen starr am Ursprung). Exportiert werden nur Kleid + Skelett
+(~1 MB); `chapter_hochzeit._kleid_anziehen` hängt die Teile an das
+Skelett der geladenen Figur — die Godot-Skins finden ihre Knochen über
+die Namen.
+
 **Das Minispiel** (`strauss_spiel.gd`): zehn Brautsträuße fliegen von drei
 Werfern heran und drehen sich dabei, **fünf muss man fangen**. Gefangen
 wird in Ich-Perspektive mit **Annes echten Händen** — aus `anne.glb`

@@ -49,8 +49,12 @@ var _blende: ColorRect
 var truhe: TruhenFinale
 
 
+const _KLEID := preload("res://assets/hochzeit/kleid.glb")
+
+
 func _ready() -> void:
 	_player.input_enabled = false
+	_kleid_anziehen()
 	_blendschicht_bauen()
 	var zone := $Triggers/BogenZone as Area3D
 	zone.body_entered.connect(func(koerper: Node3D) -> void:
@@ -164,6 +168,27 @@ func _truhen_finale() -> void:
 	await truhe.geoeffnet
 	# Den schwebenden Rucksack einen Moment wirken lassen.
 	await get_tree().create_timer(_wartezeit(3.2)).timeout
+
+
+## Das Hochzeitskleid: Mieder, Rock und Taillenband aus `kleid.glb`
+## (gebaut auf Annes eigenem Avatar, `tools/make_kleid.py`) werden an
+## das Skelett ihrer geladenen Figur gehängt — gleiche Knochennamen,
+## gleiche Bindposen, die Godot-Skins finden ihre Knochen über den
+## Namen. Das Kleid liegt über dem Alltagsoutfit; sichtbar bleiben von
+## ihm nur Arme, Schultern und die Schuhe unterm bodenlangen Rock.
+func _kleid_anziehen() -> void:
+	var figur := _player.get_node_or_null("Visual") as Figur
+	if figur == null:
+		return
+	var skelett := figur.skelett_finden()
+	if skelett == null:
+		return
+	var kleid := _KLEID.instantiate() as Node3D
+	for kind in kleid.find_children("*", "MeshInstance3D", true, false):
+		var teil := kind as MeshInstance3D
+		teil.get_parent().remove_child(teil)
+		skelett.add_child(teil)
+	kleid.queue_free()
 
 
 # --- Blenden und Bildschirme ---------------------------------------------------
