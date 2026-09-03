@@ -818,7 +818,8 @@ func _sachsenhausen_bauen() -> void:
 	# Abgestellte Räder — in Sachsenhausen lehnt an jeder zweiten Wand eins.
 	for daten in [[232.0, 7.4, PI / 2.0], [251.0, -7.2, -PI / 2.0],
 			[288.0, 7.3, PI / 2.0]]:
-		_prop(_FAHRRAD, Vector3(daten[0], 0, daten[1]), daten[2])
+		# Reifen-Tiefpunkt des neu gebauten Rades liegt bei −0,049.
+		_prop(_FAHRRAD, Vector3(daten[0], 0.05, daten[1]), daten[2])
 
 	_passanten_setzen()
 

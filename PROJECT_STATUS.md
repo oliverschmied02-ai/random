@@ -30,6 +30,20 @@ Namen, jede Runde sieht gleich aus). Die Blöcke selbst und damit Kollision,
 Route und Zeiten bleiben unangetastet; einzige Ausnahme sind die Gehwegplatten
 mit ihrer 8-cm-Bordsteinkante, für die das Stufen-Steigen gebaut wurde.
 
+**Feinschliff-Runde:** Die erleuchteten Fenster sind jetzt **warm statt
+überstrahlt** — Emission unter ~1,2, ab 2,0 frisst der Tonemapper die
+Farbe und jedes Fenster strahlt klinisch weiß; dafür leuchten mehr davon
+(`fenster_an_anteil` 0,18). Auf den Gehwegen liegen **Pfützen**
+(spiegelglatte elliptische Scheiben, die SSR-Reflexionen der Szene holen
+Laternen und Fenster hinein) und an den Hauswänden lehnen **zehn
+Fahrräder** (`_fahrraeder_abstellen`). Das Fahrradmodell selbst wurde
+dabei repariert: die alte Baufunktion verließ sich auf Objektrotationen,
+die beim Export um den Weltursprung liefen — die Laufräder lagen flach,
+das Rad war 94 cm breit und 44 cm hoch. Jetzt wird jede Teildrehung
+sofort ins Netz gebacken (`make_ffm_props.fahrrad`), gemessen 0,55 m
+breit und 0,94 m hoch; auch die drei Räder in Sachsenhausen stehen
+damit erstmals richtig.
+
 * **Echte Foto-PBR-Materialien (ambientCG, CC0)**, von Oliver heruntergeladen
   und per `tools/import_fototexturen.py` eingebaut: Plaster001 (Fassaden),
   Asphalt025B (Fahrbahn — die Pfützen werden beim Einbau hineingerechnet:
@@ -706,6 +720,23 @@ Gemessen: Füße bis 0,73 m auseinander, 0,58 m Armschwung, Blick folgt und
 kehrt zurück. **Das Gangwerk bleibt als Rückfallebene** — fehlen die
 Mocap-Daten oder ein Knochen, übernimmt es lautlos (`mocap_aktiv` am
 Knoten `Visual` ist der Schalter).
+
+**Hüftleben über der Aufnahme:** die BVH-Übertragung liefert nur
+Drehungen — der Rumpf glitt wie auf Schienen, die sichtbarste Steifheit
+des Gangs. Jetzt liegt eine dünne Positionsschicht obendrauf: die Hüfte
+federt bei jedem Schritt ein und verlagert das Gewicht seitlich übers
+Standbein (gemessen: 18 mm Wippen, 36 mm seitlich), in Kurven lehnt sich
+der Oberkörper hinein (`gier_rate`), im Stand pendelt das Gewicht
+langsam, und ohne Blickziel schaut die Figur beiläufig umher — alles
+Mechaniken, die das Gangwerk schon konnte und die Mocap-Schicht bisher
+verlor. Dazu ist die **Dialog-Regie jetzt in allen Kapiteln verdrahtet**
+(vorher nur Berlin): `zeile_begonnen` → Nicken und Sprechgesten des
+Sprechers, Anne sieht während des Gesprächs zu Oliver, der Blick löst
+sich mit `finished`. Und die **Hochzeitsgäste leben**: eine dünne
+Idle-Schicht (`hochzeitsgast.gd`) bewegt Brustkorb (Atmen, Pendeln) und
+Kopf (beiläufiges Umherschauen) — je Gast eigene Frequenzen aus der
+Standposition gesät, Sitzende verhaltener. Gemessen: 3,5° Kopf-Gier in
+3 s.
 
 ### Prozedurales Gangwerk (`systems/figur/gangwerk.gd`) — Rückfallebene
 Die Modelle bringen keine Animationen mit, und eine Figur, die starr durch

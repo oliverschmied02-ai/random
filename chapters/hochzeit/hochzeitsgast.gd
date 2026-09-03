@@ -42,6 +42,68 @@ func _ready() -> void:
 	_toenen()
 	if sitzend:
 		_hinsetzen()
+	_idle_einrichten()
+
+
+# --- Idle-Leben ---------------------------------------------------------------
+#
+# Mocap und Gangwerk sind auf das RPM-Rig geeicht und bleiben hier aus —
+# aber fünfzig komplett eingefrorene Menschen sehen aus wie Pappaufsteller.
+# Diese dünne Schicht bewegt nur Brustkorb und Kopf: Atmen, ein ganz
+# langsames Pendeln, beiläufiges Umherschauen. Jeder Gast bekommt eigene
+# Frequenzen und Phasen, sonst atmet die ganze Reihe im Gleichtakt.
+# Gesetzt wird im Skelettraum über der einmal eingerichteten Pose (auch
+# der sitzenden), wie beim Armsenken in `Figur`.
+
+var _idle_skelett: Skeleton3D
+var _idle_spine: int = -1
+var _idle_kopf: int = -1
+var _idle_spine_basis: Basis
+var _idle_kopf_basis: Basis
+var _idle_zeit: float = 0.0
+var _idle_saat: float = 0.0
+var _idle_mass: float = 1.0
+
+
+func _idle_einrichten() -> void:
+	var skelett := skelett_finden()
+	if skelett == null:
+		return
+	_idle_spine = skelett.find_bone("Spine2")
+	_idle_kopf = skelett.find_bone("Head")
+	if _idle_spine < 0 or _idle_kopf < 0:
+		return
+	_idle_skelett = skelett
+	_idle_spine_basis = skelett.get_bone_global_pose(_idle_spine).basis
+	_idle_kopf_basis = skelett.get_bone_global_pose(_idle_kopf).basis
+	_idle_saat = fposmod(absf(position.x * 12.9898 + position.z * 78.233), TAU)
+	# Sitzende bewegen sich verhaltener — sie hören zu, sie warten nicht.
+	_idle_mass = 0.55 if sitzend else 1.0
+	set_process(true)
+
+
+func _process(delta: float) -> void:
+	if _idle_skelett == null:
+		return
+	_idle_zeit += delta
+	var t := _idle_zeit + _idle_saat * 10.0
+	# Atmen (Nicken des Brustkorbs) + langsames seitliches Pendeln.
+	var atmen := 0.020 * sin(TAU * (0.24 + 0.04 * sin(_idle_saat)) * t)
+	var pendeln := 0.017 * sin(0.31 * t + _idle_saat) \
+		+ 0.008 * sin(0.53 * t + _idle_saat * 1.7)
+	var lage := _idle_skelett.get_bone_global_pose(_idle_spine)
+	_idle_skelett.set_bone_global_pose(_idle_spine, Transform3D(
+		Basis(Vector3(0, 0, 1), pendeln * _idle_mass)
+		* Basis(Vector3.RIGHT, -atmen * _idle_mass)
+		* _idle_spine_basis, lage.origin))
+	# Beiläufiger Blick: zwei ungleiche, langsame Wellen — kein Muster.
+	var gier := (0.14 * sin(0.19 * t + _idle_saat)
+		+ 0.07 * sin(0.67 * t + _idle_saat * 2.3)) * _idle_mass
+	var nick := 0.04 * sin(0.27 * t + _idle_saat * 0.6) * _idle_mass
+	lage = _idle_skelett.get_bone_global_pose(_idle_kopf)
+	_idle_skelett.set_bone_global_pose(_idle_kopf, Transform3D(
+		Basis(Vector3.UP, gier) * Basis(Vector3.RIGHT, nick)
+		* _idle_kopf_basis, lage.origin))
 
 
 ## Setzt die Figur hin — dieselbe Skelettraum-Technik wie das Armsenken

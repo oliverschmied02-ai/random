@@ -834,30 +834,50 @@ def blumenkasten():
 
 def fahrrad():
     """Abgestelltes Stadtrad: zwei Speichenräder, Rahmen, Lenker, Sattel.
-    Steht auf dem Ständer, leicht schräg — senkrecht sieht es aus wie
-    hingestellt statt abgestellt. Fahrtrichtung -Y."""
+    Steht leicht schräg — senkrecht sieht es aus wie hingestellt statt
+    abgestellt. Fahrtrichtung -Y.
+
+    Jedes gedrehte Teil bekommt seine Drehung sofort per transform_apply
+    ins Netz gebacken (Ort bleibt Objekt-Transform): die erste Fassung
+    verließ sich auf die Objektrotationen, und im Export lagen die
+    Laufräder flach — das Rad war 94 cm breit und 44 cm hoch."""
     bpy.ops.wm.read_factory_settings(use_empty=True)
     gummi = _material("reifen", (0.06, 0.06, 0.065), rauheit=0.95)
     stahl = _material("rahmen", (0.16, 0.32, 0.42), rauheit=0.45, metall=0.4)
     chrom = _material("chrom", (0.62, 0.63, 0.66), rauheit=0.3, metall=0.6)
     leder = _material("sattel", (0.20, 0.13, 0.09), rauheit=0.7)
 
+    def _backen(obj):
+        bpy.ops.object.select_all(action="DESELECT")
+        obj.select_set(True)
+        bpy.context.view_layer.objects.active = obj
+        bpy.ops.object.transform_apply(location=False, rotation=True,
+                                       scale=False)
+        return obj
+
     teile = []
     for y in (-0.53, 0.53):
+        # Laufrad: Torus am Ursprung aufrichten (Radebene = YZ), dann an
+        # die Nabe schieben.
         bpy.ops.mesh.primitive_torus_add(
-            major_radius=0.33, minor_radius=0.022,
-            location=(0, y, 0.33), rotation=(0, math.radians(90), 0),
+            major_radius=0.33, minor_radius=0.022, location=(0, 0, 0),
+            rotation=(0, math.radians(90), 0),
             major_segments=28, minor_segments=8)
         reifen = bpy.context.active_object
         reifen.name = "reifen"
         reifen.data.materials.append(gummi)
         bpy.ops.object.shade_smooth()
+        _backen(reifen)
+        reifen.location = (0, y, 0.33)
         teile.append(reifen)
         for i in range(6):
             w = math.pi * i / 6
-            teile.append(_rohr(0.005, 0.62, (0, y, 0.33), chrom, achse="Z",
-                               seiten=6, name="speiche"))
-            teile[-1].rotation_euler = (w, 0, 0)
+            speiche = _rohr(0.005, 0.62, (0, 0, 0), chrom, achse="Z",
+                            seiten=6, name="speiche")
+            speiche.rotation_euler = (w, 0, 0)
+            _backen(speiche)
+            speiche.location = (0, y, 0.33)
+            teile.append(speiche)
     # Rahmen: Unterrohr, Oberrohr, Sattelrohr, Gabel, Steuerrohr.
     for anfang, ende, dicke in [((0, -0.42, 0.30), (0, 0.30, 0.28), 0.020),
                                 ((0, -0.36, 0.62), (0, 0.16, 0.58), 0.018),
@@ -866,18 +886,27 @@ def fahrrad():
                                 ((0, 0.36, 0.30), (0, 0.53, 0.33), 0.016)]:
         mitte = tuple((a + b) / 2 for a, b in zip(anfang, ende))
         laenge = math.dist(anfang, ende)
-        rohr = _rohr(dicke, laenge, mitte, stahl, name="rahmenrohr")
+        rohr = _rohr(dicke, laenge, (0, 0, 0), stahl, name="rahmenrohr")
         rohr.rotation_euler = (
             math.atan2(ende[1] - anfang[1], ende[2] - anfang[2]) * -1.0, 0, 0)
+        _backen(rohr)
+        rohr.location = mitte
         teile.append(rohr)
-    teile.append(_rohr(0.014, 0.44, (0, -0.50, 0.86), chrom, achse="X",
-                       name="lenker"))
+    lenker = _rohr(0.014, 0.44, (0, 0, 0), chrom, achse="X", name="lenker")
+    _backen(lenker)
+    lenker.location = (0, -0.50, 0.86)
+    teile.append(lenker)
     teile.append(_kasten((0.10, 0.22, 0.05), (0, 0.20, 0.68), fase=0.02,
                          name="sattel"))
     teile[-1].data.materials.append(leder)
 
     modell = _verbinden(teile, "fahrrad")
-    # Leicht angelehnt — die Neigung macht aus „hingestellt" „abgestellt".
+    # Alles einbacken, dann die leichte Anlehnung als Wurzeldrehung — die
+    # Neigung macht aus „hingestellt" „abgestellt".
+    bpy.ops.object.select_all(action="DESELECT")
+    modell.select_set(True)
+    bpy.context.view_layer.objects.active = modell
+    bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
     modell.rotation_euler = (0, math.radians(7), 0)
     _export([modell], "fahrrad")
 

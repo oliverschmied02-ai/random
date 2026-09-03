@@ -32,6 +32,8 @@ const _SCHLUSS_OLIVER := Vector3(0.9, 0.25, 1.5)
 
 @onready var _player: Player = $Player
 @onready var _oliver: Companion = $Oliver
+@onready var _figur_anne: Figur = $Player/Visual
+@onready var _figur_oliver: Figur = $Oliver/Visual
 @onready var _kamera_rig: Node3D = $ThirdPersonCamera
 @onready var _filmkamera: Camera3D = $Filmkamera
 @onready var _dialogue: DialogueBox = $UI/DialogueBox
@@ -60,6 +62,10 @@ func _ready() -> void:
 	_player.input_enabled = false
 	_kleid_anziehen()
 	_blendschicht_bauen()
+	# Dialog-Regie wie in Berlin: wer spricht, nickt und gestikuliert;
+	# während des Gesprächs sehen die beiden einander an.
+	_dialogue.zeile_begonnen.connect(_auf_sprechzeile)
+	_dialogue.finished.connect(func() -> void: _figur_anne.schaue_an(null))
 	# Die Spree unterm Fest: Wellen und Möwen als leiser Loop neben der
 	# Menge (synthetisiert, tools/make_ambience.py).
 	var wasser := AudioStreamPlayer.new()
@@ -83,6 +89,17 @@ func _ready() -> void:
 
 func _wartezeit(sekunden: float) -> float:
 	return 0.05 if test_schnell else sekunden
+
+
+## Wer spricht, nickt und bewegt die Hände; Anne sieht währenddessen zu
+## Oliver hinüber (er erwidert das von selbst, sobald sie nah steht).
+func _auf_sprechzeile(sprecher: String) -> void:
+	match sprecher:
+		"ANNE":
+			_figur_anne.betone()
+		"OLIVER":
+			_figur_oliver.betone()
+	_figur_anne.schaue_an(_oliver)
 
 
 # --- Der rote Faden -----------------------------------------------------------

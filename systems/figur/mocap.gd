@@ -44,6 +44,11 @@ var voll_bei_tempo: float = 1.3
 ## Abspreizen wird Richtung Ruhehaltung gedämpft.
 var arm_seite_anteil: float = 0.3
 var glaettung: float = 8.0
+## Die Aufnahme liefert nur Drehungen — Einfedern und Gewichtsverlagerung
+## der Hüfte kommen als dünne Positionsschicht obendrauf, sonst gleitet
+## der Rumpf wie auf Schienen (die sichtbarste Steifheit des alten Gangs).
+var wippen_meter: float = 0.018
+var gewicht_seitlich: float = 0.018
 var blick_gier_max: float = 1.05
 var blick_nick_max: float = 0.4
 var blick_folge: float = 5.0
@@ -79,6 +84,8 @@ var _skelett: Skeleton3D
 var _index: Dictionary = {}
 var _ruhe_basis: Dictionary = {}
 var _ruhe_richtung: Dictionary = {}
+var _hueft_ruhe: Vector3
+var _lehnen: float = 0.0
 var _zyklus_meter: float = 3.0
 var _weg: float = 0.0
 var _zeit: float = 0.0
@@ -136,11 +143,12 @@ func einrichten(skelett: Skeleton3D) -> bool:
 	# hier wird sie mit der Hüfthöhe des Modells zu Metern.
 	var hueft_hoehe: float = skelett.get_bone_global_pose(_index[&"Hips"]).origin.y
 	_zyklus_meter = maxf(0.5, _gehen["weg_je_schleife"] * hueft_hoehe * strecken_faktor)
+	_hueft_ruhe = skelett.get_bone_pose_position(skelett.find_bone("Hips"))
 	_skelett = skelett
 	return true
 
 
-func tick(delta: float, tempo: float, _gier_rate: float = 0.0) -> void:
+func tick(delta: float, tempo: float, gier_rate: float = 0.0) -> void:
 	if _skelett == null:
 		return
 	_zeit += delta
@@ -148,6 +156,10 @@ func tick(delta: float, tempo: float, _gier_rate: float = 0.0) -> void:
 	var ziel := clampf(tempo / voll_bei_tempo, 0.0, 1.0)
 	_intensitaet = lerpf(_intensitaet, ziel, 1.0 - exp(-glaettung * delta))
 	betonung = maxf(betonung - delta * 2.2, 0.0)
+	# In Kurven lehnt sich der Oberkörper hinein — die Aufnahme kennt nur
+	# den geraden Gang.
+	_lehnen = lerpf(_lehnen, clampf(-gier_rate * 0.045, -0.08, 0.08),
+		1.0 - exp(-6.0 * delta))
 	# Beim Sprechen erklärt die Figur mit den Händen — nur im Stand, und
 	# weich ein- und ausgeblendet.
 	var sprech_ziel := 1.0 if (spricht and not _sprechen.is_empty()) else 0.0
@@ -160,11 +172,22 @@ func tick(delta: float, tempo: float, _gier_rate: float = 0.0) -> void:
 	var gehen_bilder: int = _gehen["bilder"]
 	var gehen_bild := fposmod(_weg / _zyklus_meter, 1.0) * gehen_bilder
 
+	# Hüfte: einfedern bei jedem Schritt (zwei Tritte je Zyklus), Gewicht
+	# seitlich übers Standbein; im Stand ein ganz langsames Pendeln.
+	var ph := fposmod(_weg / _zyklus_meter, 1.0) * TAU
+	var pendeln := (1.0 - _intensitaet) * 0.012 * sin(TAU * 0.09 * _zeit)
+	var seitlich := gewicht_seitlich * _intensitaet * sin(ph + PI * 0.5) + pendeln
+	var einfedern := -wippen_meter * _intensitaet * absf(sin(ph))
+	_skelett.set_bone_pose_position(_index[&"Hips"],
+		_hueft_ruhe + Vector3(seitlich, einfedern, 0.0))
+
 	for name in _KNOCHEN:
-		var soll := _stand_und_gang(name, gehen_bild, gehen_bilder)
+		var soll := Basis(_stand_und_gang(name, gehen_bild, gehen_bilder))
 		if name == &"Neck" or name == &"Head":
 			continue  # kommt gleich, mit Blick obendrauf
-		_setze_global(name, Basis(soll))
+		if name == &"Spine1":
+			soll = Basis(Vector3(0, 0, 1), _lehnen + pendeln * 1.6) * soll
+		_setze_global(name, soll)
 
 	_blick(delta,
 		Basis(_stand_und_gang(&"Neck", gehen_bild, gehen_bilder)),
@@ -230,6 +253,12 @@ func _blick(delta: float, nacken_grund: Basis, kopf_grund: Basis) -> void:
 		var flach := Vector2(d.x, d.z).length()
 		soll_gier = clampf(atan2(d.x, d.z), -blick_gier_max, blick_gier_max)
 		soll_nick = clampf(atan2(d.y, flach), -blick_nick_max * 0.6, blick_nick_max)
+	else:
+		# Ohne Ziel schaut die Figur im Stand beiläufig umher — zwei
+		# ungleiche, langsame Wellen, wie im Gangwerk bewährt.
+		var ruhe := 1.0 - _intensitaet
+		soll_gier = ruhe * (0.11 * sin(0.23 * _zeit) + 0.06 * sin(0.71 * _zeit + 1.7))
+		soll_nick = ruhe * 0.04 * sin(0.31 * _zeit + 0.8)
 	var w := 1.0 - exp(-blick_folge * delta)
 	_gier = lerpf(_gier, soll_gier, w)
 	_nick = lerpf(_nick, soll_nick, w)

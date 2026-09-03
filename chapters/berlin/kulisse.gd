@@ -27,7 +27,9 @@ extends Node3D
 ##   MultiMeshes — ein Zeichenaufruf je Materialgruppe.
 
 ## Anteil erleuchteter Fenster. 2020, halb elf: die meisten sind zu Hause.
-@export_range(0.0, 1.0, 0.01) var fenster_an_anteil: float = 0.14
+## Seit die Emission gedimmt ist (warm statt überstrahlt), dürfen es ein
+## paar mehr sein — die Stadt wirkt bewohnt, nicht beleuchtet.
+@export_range(0.0, 1.0, 0.01) var fenster_an_anteil: float = 0.18
 ## Etagenhöhe der Altbauten.
 @export_range(2.0, 5.0, 0.1) var etage: float = 3.0
 ## Fensterabstand entlang der Fassade.
@@ -133,6 +135,8 @@ func _ready() -> void:
 	_baeume_pflanzen()
 	_verkehr_starten()
 	_passanten_beleben()
+	_fahrraeder_abstellen()
+	_pfuetzen_giessen()
 	_regen_bauen()
 	_tram_bauen()
 	_flugzeug_starten()
@@ -193,9 +197,12 @@ func _materialien_anlegen() -> void:
 		&"rahmen": _mat(Color(0.82, 0.78, 0.70), 0.8),
 		&"laibung": _mat(Color(0.04, 0.045, 0.06), 0.6),
 		&"glas_dunkel": _mat(Color(0.07, 0.09, 0.13), 0.25, Color(0.10, 0.13, 0.20), 0.35),
-		&"glas_hell": _mat(Color(0.85, 0.68, 0.42), 0.6, Color(1.0, 0.72, 0.38), 2.2),
-		&"glas_hell2": _mat(Color(0.88, 0.78, 0.55), 0.6, Color(1.0, 0.85, 0.55), 1.8),
-		&"glas_tv": _mat(Color(0.5, 0.6, 0.8), 0.6, Color(0.55, 0.7, 1.2), 1.7),
+		# Fensterlicht: Emission bewusst unter ~1,2 — ab 2,0 frisst der
+		# Tonemapper die Farbe und jedes Fenster strahlt klinisch weiß.
+		# So bleibt es warmes Wohnzimmerlicht.
+		&"glas_hell": _mat(Color(0.85, 0.60, 0.32), 0.6, Color(1.0, 0.60, 0.24), 1.1),
+		&"glas_hell2": _mat(Color(0.88, 0.72, 0.46), 0.6, Color(1.0, 0.78, 0.42), 0.85),
+		&"glas_tv": _mat(Color(0.5, 0.6, 0.8), 0.6, Color(0.5, 0.65, 1.1), 1.0),
 		&"vorhang": _mat(Color(0.38, 0.26, 0.17), 0.9),
 		&"sockel": _foto_mat("beton_rau", Color(0.64, 0.62, 0.59), 0.3, 1.2),
 		&"tuer": _mat(Color(0.23, 0.17, 0.13), 0.7),
@@ -623,6 +630,65 @@ func _oberleitung_spannen() -> void:
 
 
 ## Stellt ein in Blender gebautes Requisit auf (assets/props/<name>.glb).
+## Abgestellte Fahrräder an den Hauswänden — nichts sagt schneller
+## „Berlin". Das Modell liegt mit Gier 0 längs der Z-Achse (wie in
+## Sachsenhausen erprobt); `lehnen` kippt es leicht zur Wand, als
+## stünde es angelehnt statt auf einem unsichtbaren Ständer.
+func _fahrraeder_abstellen() -> void:
+	# [x, z, gier, lehnen] — an den Innenkanten der Gehwege, mit Abstand
+	# zu Bäumen, Türen und den freigehaltenen Fronten (Büro, Café).
+	for daten: Array in [
+		[-11.3, 8.0, 0.0, -0.09], [-11.3, -18.5, 0.0, -0.07],
+		[11.35, -22.5, PI, 0.09], [30.0, -46.2, PI * 0.5, -0.08],
+		[51.2, -80.0, PI, 0.08], [68.85, -83.0, 0.0, -0.09],
+		[86.0, -146.6, PI * 0.5, -0.07], [121.1, -180.0, PI, 0.08],
+		[141.6, -212.0, PI, 0.08], [111.1, -232.0, 0.0, -0.08],
+	]:
+		# Der Reifen-Tiefpunkt liegt durch die eingebaute Anlehnung bei
+		# −0,049 im Netz — der Aufsatzpunkt gehört auf die Gehwegplatte.
+		var rad := _prop("fahrrad", Vector3(daten[0], 0.08 + 0.058, daten[1]), daten[2])
+		if rad != null:
+			rad.scale = Vector3.ONE * 1.18
+			rad.rotation.z = daten[3]
+
+
+## Pfützen auf den Gehwegen: flache, spiegelglatte Scheiben — die
+## Screen-Space-Reflexionen der Szene holen Laternen und erleuchtete
+## Fenster hinein, wie auf der Fahrbahn. Leicht elliptisch und gedreht,
+## damit keine zwei gleich aussehen.
+func _pfuetzen_giessen() -> void:
+	var wasser := StandardMaterial3D.new()
+	# Ein Hauch Himmelston statt Schwarz — ganz dunkle Scheiben lasen
+	# sich als Löcher im Gehweg, nicht als Wasser.
+	wasser.albedo_color = Color(0.10, 0.12, 0.17)
+	wasser.roughness = 0.03
+	wasser.metallic = 0.15
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 1904
+	for daten: Array in [
+		[-10.2, 12.5], [-9.5, -8.0], [-10.8, -28.0],
+		[10.5, 3.0], [9.4, -18.0], [10.9, -39.0],
+		[26.0, -44.8], [44.0, -45.6], [63.0, -44.2],
+		[49.6, -92.0], [50.6, -118.0], [70.2, -84.0], [69.4, -108.0],
+		[72.0, -145.8], [100.0, -144.4], [92.0, -124.4], [118.0, -125.8],
+		[119.6, -164.0], [120.7, -190.0], [139.6, -185.0], [140.9, -218.0],
+		[109.8, -226.0],
+	]:
+		var lache := MeshInstance3D.new()
+		var scheibe := CylinderMesh.new()
+		scheibe.top_radius = 1.0
+		scheibe.bottom_radius = 1.0
+		scheibe.height = 0.006
+		scheibe.radial_segments = 20
+		scheibe.material = wasser
+		lache.mesh = scheibe
+		lache.scale = Vector3(rng.randf_range(0.45, 1.05), 1.0,
+			rng.randf_range(0.3, 0.75))
+		lache.rotation.y = rng.randf() * TAU
+		lache.position = Vector3(daten[0], 0.083, daten[1])
+		add_child(lache)
+
+
 func _prop(name: String, ort: Vector3, gier: float = 0.0) -> Node3D:
 	var szene := load("res://assets/props/%s.glb" % name) as PackedScene
 	if szene == null:

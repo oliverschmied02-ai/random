@@ -49,6 +49,8 @@ const _ERINNERUNGEN := [
 
 @onready var _player: Player = $Player
 @onready var _oliver: Companion = $Oliver
+@onready var _figur_anne: Figur = $Player/Visual
+@onready var _figur_oliver: Figur = $Oliver/Visual
 @onready var _kamera_rig: Node3D = $ThirdPersonCamera
 @onready var _filmkamera: Camera3D = $Filmkamera
 @onready var _dialogue: DialogueBox = $UI/DialogueBox
@@ -71,6 +73,11 @@ var _titelfeld: Label
 func _ready() -> void:
 	_player.input_enabled = false
 	_blendschicht_bauen()
+	# Dialog-Regie: wer spricht, nickt und gestikuliert; solange geredet
+	# wird, sieht Anne Oliver an (er erwidert das von selbst, sobald sie
+	# nah ist). Danach gibt sie den Blick wieder frei.
+	_dialogue.zeile_begonnen.connect(_auf_sprechzeile)
+	_dialogue.finished.connect(func() -> void: _figur_anne.schaue_an(null))
 	# Kapitelmusik: „A Waltz For Naseem" (CC0) — der Walzer passt zur
 	# Kneipe und schunkelt unauffällig unter der ganzen Fahrt.
 	var musik := AudioStreamPlayer.new()
@@ -106,6 +113,17 @@ func _process(delta: float) -> void:
 
 func _wartezeit(sekunden: float) -> float:
 	return 0.05 if test_schnell else sekunden
+
+
+## Wer spricht, nickt und bewegt die Hände; Anne sieht während des
+## Gesprächs zu Oliver hinüber.
+func _auf_sprechzeile(sprecher: String) -> void:
+	match sprecher:
+		"ANNE":
+			_figur_anne.betone()
+		"OLIVER":
+			_figur_oliver.betone()
+	_figur_anne.schaue_an(_oliver)
 
 
 # --- Der rote Faden -----------------------------------------------------------
