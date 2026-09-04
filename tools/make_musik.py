@@ -21,6 +21,12 @@ SR = 48000
 KLON = ("/tmp/claude-0/-home-user-random/"
         "77c066ea-c61b-542f-b037-cab2bed7c7f3/scratchpad/musik_probe")
 
+# Olivers eigenes Stück für die Hochzeit (AcidPlanet-Archiv, von ihm
+# hochgeladen; nur für den privaten Build). Liegt es im Repo, ersetzt es
+# den Kanon in D. Der Ordner trägt eine .gdignore, damit die MP3-Quelle
+# nicht mit ins Spiel exportiert wird.
+EIGENES_HOCHZEIT = "audio/quellen/hochzeit_eigenes.mp3"
+
 # Ziel, Quelldatei im Korpus, Schnittlänge in Sekunden (None = ganz),
 # Crossfade-Länge für die Loop-Naht.
 STUECKE = [
@@ -58,14 +64,35 @@ def main(nur: int = -1) -> None:
     os.makedirs("audio/musik", exist_ok=True)
     auswahl = STUECKE if nur < 0 else [STUECKE[nur]]
     for name, quelle, laenge, fade in auswahl:
-        x, sr = sf.read(os.path.join(KLON, quelle))
+        eigenes = name == "hochzeit" and os.path.exists(EIGENES_HOCHZEIT)
+        pfad = EIGENES_HOCHZEIT if eigenes else os.path.join(KLON, quelle)
+        x, sr = sf.read(pfad)
         if x.ndim == 1:
             x = np.stack([x, x], axis=1)
-        if laenge is not None:
+        if eigenes:
+            # Das eigene Stück endet mit Fadeout — die stille Schwanzspitze
+            # abschneiden, sonst blendet der Loop ins Nichts über.
+            fenster = int(0.5 * sr)
+            huelle = np.sqrt(np.convolve((x ** 2).mean(axis=1),
+                                         np.ones(fenster) / fenster, "same"))
+            laut = np.nonzero(huelle > 0.02)[0]
+            if len(laut) > 0:
+                x = x[: laut[-1]]
+            fade = 5.0
+        elif laenge is not None:
             x = x[: int(laenge * sr)]
         y = resample(x, sr)
         y = loop_bauen(y, fade)
-        y = y / max(np.max(np.abs(y)), 1e-9) * 0.89
+        if eigenes:
+            # Deutlich lauter gemastert als die CC0-Stücke — auf das
+            # RMS-Niveau der Musikbetten angleichen statt auf die Spitze.
+            rms = float(np.sqrt((y ** 2).mean()))
+            y = y * (0.11 / max(rms, 1e-9))
+            spitze = float(np.max(np.abs(y)))
+            if spitze > 0.95:
+                y = y * (0.95 / spitze)
+        else:
+            y = y / max(np.max(np.abs(y)), 1e-9) * 0.89
         ziel = "audio/musik/%s.ogg" % name
         # Blockweise schreiben: ein einzelner grosser Write laesst den
         # Vorbis-Encoder dieser libsndfile abstuerzen.

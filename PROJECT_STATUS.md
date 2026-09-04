@@ -620,9 +620,15 @@ Zuordnung in `HERKUNFT.txt`): fünf CC0-Stücke aus dem GitHub-Korpus
 `SoundSafari/CC0-1.0-Music` (40 GB — beschafft per Blob-losem Klon und
 gezieltem Checkout einzelner Dateien). „Lovely Piano Song" trägt Titel
 und Tinder-Intro, Komikus „Finally together" liegt unter Berlin, „A
-Waltz For Naseem" unter Frankfurt, der **Kanon in D** (Klavier) unter
-der Hochzeit, und beim Öffnen der Truhe blendet „Romantic Inspiration"
-ein und trägt bis durch den Abspann. Aufbereitung in
+Waltz For Naseem" unter Frankfurt, und beim Öffnen der Truhe blendet
+„Romantic Inspiration" ein und trägt bis durch den Abspann. **Unter der
+Hochzeit läuft Olivers eigenes Stück** (AcidPlanet-Archiv, von ihm
+hochgeladen; Quelle unter `audio/quellen/` mit `.gdignore`, damit die
+MP3 nicht mit exportiert wird): `make_musik.py` schneidet den stillen
+Fadeout-Schwanz ab, baut die Loop-Naht mit 5 s Crossfade und gleicht
+den Pegel per RMS an die Musikbetten an (das Stück ist deutlich lauter
+gemastert als die CC0-Titel). Liegt die Quelle nicht im Repo, fällt das
+Werkzeug auf den Kanon in D zurück. Aufbereitung in
 `tools/make_musik.py`: 48 kHz Stereo-Vorbis (44,1 kHz Stereo stürzt in
 dieser libsndfile ab, 48 kHz läuft; außerdem blockweise schreiben — ein
 großer Einzel-Write crasht den Encoder), Schnitt auf Ziellänge,
