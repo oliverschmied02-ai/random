@@ -23,6 +23,10 @@ signal zeile_begonnen(sprecher: String)
 ## Ignore advance presses for this long after a line appears, so the button
 ## press that started the conversation does not skip the first line.
 @export_range(0.0, 1.0, 0.05) var advance_lockout: float = 0.25
+## Sims-Gebrabbel zu den Sprechzeilen. Auf Olivers Wunsch abgeschaltet —
+## die Silben liegen weiter unter audio/gebrabbel/, ein `true` holt sie
+## zurück.
+@export var gebrabbel_aktiv: bool = false
 
 @onready var _root: Control = $Root
 @onready var _speaker_label: Label = $Root/Panel/Margin/VBox/Speaker
@@ -95,7 +99,7 @@ func _process(delta: float) -> void:
 ## Reiht Silben aneinander, solange die Zeile noch tippt. Zwischen den
 ## Silben liegen kurze Lücken, ab und zu eine längere „Wortpause".
 func _brabbeln(delta: float) -> void:
-	if _silben.is_empty() or _brabbler.playing:
+	if not gebrabbel_aktiv or _silben.is_empty() or _brabbler.playing:
 		return
 	_brabbel_pause -= delta
 	if _brabbel_pause > 0.0:

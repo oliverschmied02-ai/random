@@ -255,6 +255,19 @@ Tresen, Dialog, Abspann wie gehabt. Das „zweite Level" ist der Teaser für
 Kapitel 2.
 
 ### Kapitel 2 — Frankfurt (`chapters/frankfurt/`)
+**Der Bahnsteig lebt:** fünf Wartende (Passant-Klasse) abseits der
+Begrüßungszone, dazu hallige Bahnhofsluft mit fernem Rollen
+(`bahnsteig_halle.wav`, 20-s-Loop) und der Dreiklang-Gong zur Einfahrt
+(`bahnhof_gong.wav`) — beides synthetisiert in `tools/make_ambience.py`.
+Der ICE hat **Einzelfenster statt Fensterband** und einen intakten
+hinteren Triebkopf: der gespiegelte Loft (nase_hinten) kollabierte beim
+Export zu einer flachen Platte — der letzte Wagen fehlte im Spiel; jetzt
+ist das Heck der um 180° gedrehte vordere Kopf. Der Besuch kommt „ein
+paar Tage später" (Zwischentitel), Bahnsteig-Begrüßung und Sachsenhausen-
+Titel tragen Olivers echte Worte. **Das Sims-Gebrabbel ist auf Olivers
+Wunsch abgeschaltet** (`DialogueBox.gebrabbel_aktiv = false` — die
+Silben bleiben im Projekt, ein true holt sie zurück).
+
 **Der Abschiedstag ist grau und regnerisch:** bedeckter Himmel, fahles
 kühles Licht, Sättigung 0,82, und ein Regen-Emitter, der der jeweils
 aktiven Kamera folgt (`kulisse_ffm._regen_bauen`) — es regnet vor der

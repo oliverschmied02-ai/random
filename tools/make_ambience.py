@@ -201,8 +201,56 @@ def stadt_fern() -> None:
     print("stadt_fern.wav:", dauer, "s Loop")
 
 
+def bahnhof_gong() -> None:
+    """Der Dreiklang-Gong vor einer Bahnsteigansage: drei Glockentoene
+    absteigend, jeder mit Obertoenen und langem Ausklang. One-Shot."""
+    dauer = 3.2
+    n = int(dauer * SR)
+    t = np.arange(n) / SR
+    ton = np.zeros(n)
+    for start, f in [(0.0, 784.0), (0.45, 659.0), (0.9, 523.0)]:
+        ab = int(start * SR)
+        m = n - ab
+        tt = np.arange(m) / SR
+        glocke = (np.sin(2.0 * np.pi * f * tt)
+                  + 0.4 * np.sin(2.0 * np.pi * f * 2.76 * tt)
+                  + 0.2 * np.sin(2.0 * np.pi * f * 5.4 * tt))
+        huelle = np.minimum(tt / 0.008, 1.0) * np.exp(-tt / 0.9)
+        ton[ab:] += glocke * huelle * 0.5
+    mono = normieren(ton, 0.7)
+    stereo = np.stack([mono, mono * 0.96], axis=1)
+    sf.write("audio/bahnhof_gong.wav", stereo, SR, subtype="PCM_16")
+    print("bahnhof_gong.wav: One-Shot,", dauer, "s")
+
+
+def bahnsteig_halle() -> None:
+    """Bahnsteig-Grundklang: hallige Luft unter dem Dach, fernes tiefes
+    Rollen, ab und zu ein leises Quietschen weit weg. 20-s-Loop."""
+    dauer = 20.0
+    n = int(dauer * SR)
+    t = np.arange(n) / SR
+    luft = bandpass_loop(RNG.standard_normal(n), 300.0, 2200.0)
+    luft *= 0.16 + 0.05 * lfo(dauer, n, 3, 0.4)
+    rollen = bandpass_loop(RNG.standard_normal(n), 35.0, 160.0)
+    rollen *= 0.45 + 0.12 * lfo(dauer, n, 2, 1.2)
+    # Zwei ferne Quietscher, fest im Loop.
+    quietschen = np.zeros(n)
+    for start, f in [(6.5, 2900.0), (15.0, 3400.0)]:
+        ab = int(start * SR)
+        m = int(0.8 * SR)
+        tt = np.arange(m) / SR
+        laut = np.sin(2.0 * np.pi * (f - 300.0 * tt) * tt)
+        quietschen[ab:ab + m] += laut * np.sin(np.pi * tt / 0.8) * 0.05
+    mono = normieren(luft + rollen + quietschen, 0.7)
+    stereo = np.stack([mono, np.roll(mono, int(0.0012 * SR))], axis=1)
+    sf.write("audio/bahnsteig_halle.wav", stereo, SR, subtype="PCM_16")
+    print("bahnsteig_halle.wav:", dauer, "s Loop")
+
+
 if __name__ == "__main__":
     wellen_moewen()
     zug_rumpeln()
     brems_zisch()
     stadt_fern()
+    bahnhof_gong()
+    bahnsteig_halle()

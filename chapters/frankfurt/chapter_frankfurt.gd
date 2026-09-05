@@ -51,6 +51,10 @@ const _ERINNERUNGEN := [
 @onready var _oliver: Companion = $Oliver
 @onready var _figur_anne: Figur = $Player/Visual
 @onready var _figur_oliver: Figur = $Oliver/Visual
+
+## Der Bahnsteig-Grundklang — startet mit der Einfahrt, endet nach der
+## Begrüßung.
+var _halle: AudioStreamPlayer
 @onready var _kamera_rig: Node3D = $ThirdPersonCamera
 @onready var _filmkamera: Camera3D = $Filmkamera
 @onready var _dialogue: DialogueBox = $UI/DialogueBox
@@ -342,6 +346,18 @@ func _zug_sequenz() -> void:
 		await get_tree().process_frame
 
 	# Einstellung 2: vom Bahnsteig aus — der Zug gleitet herein und hält.
+	# Dazu die Bahnhofskulisse: hallige Luft unterm Dach und der
+	# Dreiklang-Gong, als käme gleich die Einfahrtsansage.
+	_halle = AudioStreamPlayer.new()
+	_halle.stream = load("res://audio/bahnsteig_halle.wav")
+	_halle.volume_db = -14.0
+	add_child(_halle)
+	_halle.play()
+	var gong := AudioStreamPlayer.new()
+	gong.stream = load("res://audio/bahnhof_gong.wav")
+	gong.volume_db = -12.0
+	add_child(gong)
+	gong.play()
 	_film(Vector3(263.0, 2.5, 505.8), Vector3(292.0, 1.4, 500.8))
 	while zug.position.x < _ZUG_HALT - 0.1:
 		var delta := get_process_delta_time()
@@ -378,6 +394,10 @@ func _bahnsteig_sequenz() -> void:
 	await get_tree().create_timer(_wartezeit(0.9)).timeout
 	await _dialogue.play(FrankfurtDialogue.ANKUNFT)
 	await get_tree().create_timer(_wartezeit(0.6)).timeout
+	if _halle != null:
+		var leiser := create_tween()
+		leiser.tween_property(_halle, ^"volume_db", -50.0, _wartezeit(1.2))
+		leiser.tween_callback(_halle.stop)
 
 
 func _ankunft_sequenz() -> void:

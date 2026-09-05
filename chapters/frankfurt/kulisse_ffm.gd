@@ -87,6 +87,7 @@ func _ready() -> void:
 	_abschied_bauen()
 	_autobahn_bauen()
 	_bahn_bauen()
+	_bahnsteig_passanten()
 	_sachsenhausen_bauen()
 	_kneipe_bauen()
 	_regen_bauen()
@@ -926,6 +927,34 @@ func _passanten_setzen() -> void:
 			Color(0.20, 0.32, 0.30), Color(0.62, 0.52, 0.34)],
 		[Vector3(281.0, 0.0, 7.0), 0.5, "oliver", 1.78,
 			Color(0.42, 0.40, 0.30), Color(0.35, 0.28, 0.20)],
+	]
+	for daten: Array in leute:
+		var person := Passant.new()
+		person.modell_pfad = "res://actors/models/%s.glb" % daten[2]
+		person.zielhoehe = daten[3]
+		person.kleid_ton = daten[4]
+		person.haar_ton = daten[5]
+		add_child(person)
+		person.position = daten[0]
+		person.rotation.y = daten[1]
+
+
+## Wartende auf dem Bahnsteig — ein Bahnsteig ohne Menschen liest sich
+## wie ein Museum. Sie stehen abseits der Mittelzone (dort spielen Anne
+## und Oliver ihre Begrüßung) und schauen Richtung Gleis.
+func _bahnsteig_passanten() -> void:
+	var leute: Array = [
+		# Ort (Bahnsteig-Oberkante y 1,15), Blick, Modell, Größe, Kleidung, Haar
+		[Vector3(257.5, 1.15, 502.4), -1.4, "oliver", 1.82,
+			Color(0.24, 0.26, 0.32), Color(0.16, 0.12, 0.10)],
+		[Vector3(263.0, 1.15, 504.6), -2.0, "anne", 1.68,
+			Color(0.46, 0.30, 0.24), Color(0.55, 0.44, 0.28)],
+		[Vector3(288.5, 1.15, 503.9), -1.1, "anne", 1.75,
+			Color(0.26, 0.30, 0.24), Color(0.20, 0.14, 0.10)],
+		[Vector3(293.5, 1.15, 502.1), -1.7, "oliver", 1.76,
+			Color(0.36, 0.34, 0.40), Color(0.40, 0.32, 0.22)],
+		[Vector3(299.0, 1.15, 504.8), -1.3, "anne", 1.63,
+			Color(0.52, 0.46, 0.34), Color(0.30, 0.20, 0.12)],
 	]
 	for daten: Array in leute:
 		var person := Passant.new()

@@ -39,13 +39,15 @@ const ANRUF: Array[Dictionary] = [
 ]
 
 ## Auf dem Bahnsteig: Annes erster Besuch, Oliver wartet schon.
+## **Echte Zeilen von Oliver**, behutsam verfeinert.
 const ANKUNFT: Array[Dictionary] = [
-	{"speaker": "OLIVER", "text": "Da bist du ja."},
-	{"speaker": "ANNE", "text": "Da bin ich ja. Vier Stunden. Der Zug war schneller als dein LKW."},
-	{"speaker": "OLIVER", "text": "Der LKW hatte auch unser ganzes Leben geladen."},
-	{"speaker": "ANNE", "text": "Na dann. Zeig mir dein Frankfurt."},
-	{"speaker": "OLIVER", "text": "Es ist noch nicht meins. Aber ich kenne schon eine Kneipe."},
-	{"speaker": "ANNE", "text": "Natürlich kennst du schon eine Kneipe."},
+	{"speaker": "OLIVER", "text": "Da bist du ja. Endlich."},
+	{"speaker": "ANNE", "text": "Die Tage ohne dich haben sich angefühlt wie eine halbe Ewigkeit."},
+	{"speaker": "OLIVER", "text": "Ich habe dich so sehr vermisst."},
+	{"speaker": "ANNE", "text": "Zum Glück haben wir uns jetzt endlich wieder."},
+	{"speaker": "OLIVER", "text": "Ja. Endlich."},
+	{"speaker": "ANNE", "text": "Na dann — zeig mir mal dein Frankfurt."},
+	{"speaker": "OLIVER", "text": "Es ist noch nicht wirklich meins. Aber ich gebe mein Bestes."},
 ]
 
 ## Angekommen in Sachsenhausen, kurz vor dem gemeinsamen Lauf.
@@ -104,8 +106,8 @@ const LEVEL_ZEILE: String = "Du hast es ins dritte Level geschafft."
 
 ## Zwischentitel der Sequenzen.
 const TITEL_AUTOBAHN: String = "A5 — RICHTUNG SÜDEN"
-const TITEL_WOCHEN: String = "EINIGE WOCHEN SPÄTER — ANNES ERSTER BESUCH"
-const TITEL_ANKUNFT: String = "SACHSENHAUSEN — AM ANDEREN MAINUFER"
+const TITEL_WOCHEN: String = "EIN PAAR TAGE SPÄTER — ANNES ERSTER BESUCH"
+const TITEL_ANKUNFT: String = "SACHSENHAUSEN — WECHSEL AUF DIE ANDERE MAINSEITE"
 
 ## Das Missionsziel während des Laufs zur Kneipe.
 const ZIEL_KNEIPE: String = "Zeig mir dein Frankfurt — zur Apfelweinkneipe"

@@ -134,14 +134,28 @@ def _kasten_gedreht(masse, ort, material, drehung, fase=0.01):
 
 
 def _streifen(y_von, y_bis, rot, fenster):
-    """Roter Streifen und Fensterband, beidseitig, einen Zentimeter vor
-    der Wand."""
+    """Roter Streifen und **einzelne Fenster** statt des durchgehenden
+    Bandes, beidseitig, einen Zentimeter vor der Wand — ein Band ohne
+    Unterteilung las sich als Zierstreifen, nicht als Fensterreihe."""
     laenge = abs(y_bis - y_von)
     mitte_y = (y_von + y_bis) * 0.5
     for seite in (1.0, -1.0):
         x = seite * (BREITE * 0.5 + 0.012)
         _kasten((0.02, laenge, 0.20), (x, mitte_y, 1.66), rot, fase=0.0)
-        _kasten((0.02, laenge, 0.62), (x, mitte_y, 2.42), fenster, fase=0.0)
+    _fensterreihe(y_von, y_bis, fenster)
+
+
+def _fensterreihe(y_von, y_bis, fenster):
+    """Einzelfenster im 2,1-m-Raster, mittig im Abschnitt verteilt."""
+    lo, hi = min(y_von, y_bis), max(y_von, y_bis)
+    laenge = hi - lo
+    anzahl = max(int((laenge - 0.8) / 2.1), 1)
+    start = lo + (laenge - (anzahl - 1) * 2.1) * 0.5
+    for seite in (1.0, -1.0):
+        x = seite * (BREITE * 0.5 + 0.012)
+        for i in range(anzahl):
+            _kasten((0.02, 1.30, 0.58), (x, start + i * 2.1, 2.42),
+                    fenster, fase=0.0)
 
 
 def _tueren(y, dunkel):
@@ -237,12 +251,16 @@ def bauen(mit_vorschau=False):
             _stromabnehmer(y + WAGEN_LAENGE * 0.5, dunkel)
         y += WAGEN_LAENGE + FUGE
 
-    # Hinterer Triebkopf: Nase nach +Y (gespiegelt).
-    kopf_h = _leib("kopf_hinten", KOPF_LAENGE, False, True)
+    # Hinterer Triebkopf: derselbe Leib wie vorn, als Objekt um 180°
+    # gedreht — der gespiegelte Loft (nase_hinten) kollabierte beim
+    # Export zu einer flachen Platte, deshalb fehlte der letzte Wagen.
+    kopf_h = _leib("kopf_hinten", KOPF_LAENGE, True, False)
+    kopf_h.rotation_euler = (0.0, 0.0, math.pi)
     kopf_h.location = (0.0, y, 0.0)
     hinten = y + KOPF_LAENGE
     _streifen(y, hinten - 6.5, rot, fenster)
     _frontscheibe(hinten, 1.0, fenster)
+    _licht(hinten, 1.0, leucht)
     _drehgestell(y + 3.4, dunkel, stahl)
     _drehgestell(y + 13.4, dunkel, stahl)
     _schuerze(y, hinten - 5.2, grau)
