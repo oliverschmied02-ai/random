@@ -52,17 +52,18 @@ const WERFER: Array[Vector3] = [
 @export_range(0.5, 3.0, 0.1) var reichweite_breit: float = 1.7
 @export_range(0.4, 2.0, 0.1) var reichweite_hoch: float = 1.15
 ## Wie weit vom Handmittelpunkt ein Strauß noch gefangen wird.
-@export_range(0.2, 1.2, 0.05) var fang_radius: float = 0.46
+## Nach dem Probespielen von 0,46 auf 0,56 gelockert — „etwas zu schwer".
+@export_range(0.2, 1.2, 0.05) var fang_radius: float = 0.56
 ## Wie lange die Hände nach einem Klick geschlossen bleiben.
 @export_range(0.1, 1.0, 0.05) var greifdauer: float = 0.32
 ## Pause zwischen zwei Griffen — der Preis eines Fehlgriffs.
-@export_range(0.0, 1.0, 0.05) var greif_pause: float = 0.40
+@export_range(0.0, 1.0, 0.05) var greif_pause: float = 0.25
 ## Mittlere Flugzeit eines Straußes; jeder Wurf streut um sie herum.
-@export_range(0.8, 3.0, 0.1) var flugzeit: float = 1.2
+@export_range(0.8, 3.0, 0.1) var flugzeit: float = 1.45
 ## Wie stark der Uferwind die Sträuße unterwegs seitlich schiebt (Meter).
-@export_range(0.0, 2.0, 0.05) var wind_staerke: float = 1.0
+@export_range(0.0, 2.0, 0.05) var wind_staerke: float = 0.7
 ## Abstand zwischen zwei Würfen.
-@export_range(0.5, 4.0, 0.1) var wurf_abstand: float = 1.9
+@export_range(0.5, 4.0, 0.1) var wurf_abstand: float = 2.1
 @export_range(0.0, 6.0, 0.1) var intro_dauer: float = 2.8
 
 const _STRAUSS := preload("res://assets/props/strauss.glb")
@@ -381,11 +382,12 @@ func _werfen() -> void:
 	add_child(strauss)
 	var start: Vector3 = WERFER[(geworfen - 1) % WERFER.size()]
 	strauss.global_position = start
-	# Das Ziel streut über die volle Reichweite — sonst müsste man sich
-	# nie bewegen.
+	# Das Ziel streut breit, aber nicht bis an den äußersten Rand — die
+	# Eck-Würfe waren der Hauptgrund, warum sich das Spiel zu schwer
+	# anfühlte.
 	var streuung := Vector2(
-		randf_range(-reichweite_breit, reichweite_breit),
-		randf_range(-reichweite_hoch, reichweite_hoch) * 0.9)
+		randf_range(-reichweite_breit, reichweite_breit) * 0.85,
+		randf_range(-reichweite_hoch, reichweite_hoch) * 0.8)
 	var ziel := Vector3(streuung.x, HAND_HOEHE + streuung.y, FANG_Z)
 	# Jeder Wurf hat seinen eigenen Charakter: schnelle kommen flach,
 	# langsame in hohem Bogen, und der Wind schiebt unterwegs zur Seite

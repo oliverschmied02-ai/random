@@ -523,8 +523,8 @@ aus 2,4 m ein Fleck. **Schwer macht es der Flug:** jeder Strauß hat
 seine eigene Flugzeit (schnelle flach, langsame in hohem Bogen), der
 Uferwind schiebt ihn seitlich (die Kurve kehrt zum Zielpunkt zurück —
 sichtbar windig, aber fair, und die Prüfläufe bleiben gültig), die
-Ziele streuen über die volle Reichweite, der Fangradius ist enger
-(0,46 m) und ein Fehlgriff kostet 0,4 s Pause. Wer alle zehn verpasst,
+Ziele streuen über die volle Reichweite, der Fangradius liegt bei 0,56 m
+(nach dem Probespielen von 0,46 gelockert) und ein Fehlgriff kostet 0,25 s Pause. Wer alle zehn verpasst,
 bekommt eine freundliche Zeile und eine neue Runde. **Beim Sieg feiert
 die Szene mit:** drei Salven Blütenkonfetti über den Stuhlreihen
 (`_konfetti_werfen`, CPUParticles3D, rosa-weiße Blättchen mit
