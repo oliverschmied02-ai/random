@@ -21,11 +21,14 @@ SR = 48000
 KLON = ("/tmp/claude-0/-home-user-random/"
         "77c066ea-c61b-542f-b037-cab2bed7c7f3/scratchpad/musik_probe")
 
-# Olivers eigenes Stück für die Hochzeit (AcidPlanet-Archiv, von ihm
-# hochgeladen; nur für den privaten Build). Liegt es im Repo, ersetzt es
-# den Kanon in D. Der Ordner trägt eine .gdignore, damit die MP3-Quelle
-# nicht mit ins Spiel exportiert wird.
-EIGENES_HOCHZEIT = "audio/quellen/hochzeit_eigenes.mp3"
+# Olivers eigene Stücke (von ihm hochgeladen; nur für den privaten
+# Build). Liegt eine der Dateien im Repo, ersetzt sie das CC0-Stück des
+# jeweiligen Kapitels. Der Ordner trägt eine .gdignore, damit die
+# MP3-Quellen nicht mit ins Spiel exportiert werden.
+EIGENE = {
+    "hochzeit": "audio/quellen/hochzeit_eigenes.mp3",
+    "frankfurt": "audio/quellen/frankfurt_eigenes.mp3",
+}
 
 # Ziel, Quelldatei im Korpus, Schnittlänge in Sekunden (None = ganz),
 # Crossfade-Länge für die Loop-Naht.
@@ -64,8 +67,9 @@ def main(nur: int = -1) -> None:
     os.makedirs("audio/musik", exist_ok=True)
     auswahl = STUECKE if nur < 0 else [STUECKE[nur]]
     for name, quelle, laenge, fade in auswahl:
-        eigenes = name == "hochzeit" and os.path.exists(EIGENES_HOCHZEIT)
-        pfad = EIGENES_HOCHZEIT if eigenes else os.path.join(KLON, quelle)
+        eigen_pfad = EIGENE.get(name, "")
+        eigenes = eigen_pfad != "" and os.path.exists(eigen_pfad)
+        pfad = eigen_pfad if eigenes else os.path.join(KLON, quelle)
         x, sr = sf.read(pfad)
         if x.ndim == 1:
             x = np.stack([x, x], axis=1)
@@ -88,7 +92,7 @@ def main(nur: int = -1) -> None:
             # RMS-Niveau der Musikbetten angleichen statt auf die Spitze.
             rms = float(np.sqrt((y ** 2).mean()))
             y = y * (0.11 / max(rms, 1e-9))
-            # Das Intro des Stücks ist leiser als der Rest — die ersten
+            # Die Intros der Stücke sind leiser als der Rest — die ersten
             # Sekunden bekommen einen sanft auslaufenden Schub (+2,5 dB
             # auf Eins in 18 s), damit der Einstieg trägt.
             t = np.arange(len(y)) / SR

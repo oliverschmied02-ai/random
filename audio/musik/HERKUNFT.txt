@@ -10,8 +10,12 @@ titel.ogg      <- "Lovely Piano Song" (freepd.com)
                   Titelbildschirm und Tinder-Intro
 berlin.ogg     <- Komiku, "Level 10 — Finally together" (chosic.com)
                   Kapitel 1, unter der Abendstadt
-frankfurt.ogg  <- "A Waltz For Naseem" (freepd.com)
-                  Kapitel 2, Fahrt und Kneipe
+frankfurt.ogg  <- Olivers eigenes Stück (von ihm hochgeladen, Quelle
+                  unter audio/quellen/frankfurt_eigenes.mp3, nur für
+                  den privaten Build) — Kapitel 2, Abschied, Fahrt und
+                  Kneipe. Ersetzt "A Waltz For Naseem" (freepd.com),
+                  der über tools/make_musik.py zurückkommt, wenn die
+                  Quelle entfernt wird.
 hochzeit.ogg   <- Olivers eigenes Stück (AcidPlanet-Archiv auf
                   archive.org, Item acidplanet-audio-00530103; Quelle
                   liegt unter audio/quellen/, nur für den privaten
