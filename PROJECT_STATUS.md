@@ -255,6 +255,16 @@ Tresen, Dialog, Abspann wie gehabt. Das „zweite Level" ist der Teaser für
 Kapitel 2.
 
 ### Kapitel 2 — Frankfurt (`chapters/frankfurt/`)
+**Der Abschiedstag ist grau und regnerisch:** bedeckter Himmel, fahles
+kühles Licht, Sättigung 0,82, und ein Regen-Emitter, der der jeweils
+aktiven Kamera folgt (`kulisse_ffm._regen_bauen`) — es regnet vor der
+Wohnung, über der Autobahn und in der Gasse. Als Musikbett läuft
+Olivers zweites eigenes Stück. **Abschied und Freisprech-Telefonat
+tragen echte Zeilen von Oliver** (behutsam verfeinert,
+`dialogue_lines_ffm.gd`) — die letzten Monate waren schwer, und genau
+das darf man hören; die Hochzeit in Kapitel 3 holt danach die Farben
+zurück.
+
 Der Umzug, bei Tag, bewusst als **Sequenzkette** erzählt
 (`chapter_frankfurt.gd`, `_ablauf()` liest sich von oben nach unten):
 

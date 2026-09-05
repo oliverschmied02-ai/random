@@ -89,9 +89,44 @@ func _ready() -> void:
 	_bahn_bauen()
 	_sachsenhausen_bauen()
 	_kneipe_bauen()
+	_regen_bauen()
+
+
+## Der Abschiedstag ist grau und regnerisch — derselbe Tropfen-Bau wie
+## in Berlin, aber der Emitter folgt der jeweils aktiven Kamera: so
+## regnet es vor der Wohnung, über der Autobahn und in der Gasse,
+## ohne dass jede Sequenz einen eigenen Schauer braucht.
+var _regen: CPUParticles3D
+
+
+func _regen_bauen() -> void:
+	_regen = CPUParticles3D.new()
+	_regen.amount = 420
+	_regen.lifetime = 1.5
+	_regen.emission_shape = CPUParticles3D.EMISSION_SHAPE_BOX
+	_regen.emission_box_extents = Vector3(13, 0.5, 13)
+	_regen.direction = Vector3(0.05, -1, 0.04)
+	_regen.spread = 0.0
+	_regen.gravity = Vector3.ZERO
+	_regen.initial_velocity_min = 7.0
+	_regen.initial_velocity_max = 9.0
+	_regen.particle_flag_align_y = true
+	var tropfen := BoxMesh.new()
+	tropfen.size = Vector3(0.01, 0.32, 0.01)
+	var nass := StandardMaterial3D.new()
+	nass.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	nass.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	nass.albedo_color = Color(0.62, 0.7, 0.85, 0.13)
+	tropfen.material = nass
+	_regen.mesh = tropfen
+	add_child(_regen)
 
 
 func _process(delta: float) -> void:
+	if _regen != null:
+		var kamera := get_viewport().get_camera_3d()
+		if kamera != null:
+			_regen.global_position = kamera.global_position + Vector3(0, 8, 0)
 	for auto in _gegenverkehr:
 		auto.position.x -= 22.0 * delta
 		if auto.position.x < -290.0:

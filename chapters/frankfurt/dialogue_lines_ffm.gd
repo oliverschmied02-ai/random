@@ -11,20 +11,31 @@ extends RefCounted
 ## damals gehören genau hierher.
 
 ## Der Abschied vor der Berliner Wohnung, der LKW ist beladen.
+## **Echte Zeilen von Oliver**, behutsam verfeinert — die letzten Monate
+## waren schwer, und genau das darf man hier hören.
 const ABSCHIED: Array[Dictionary] = [
-	{"speaker": "OLIVER", "text": "Das ist dann wohl alles."},
-	{"speaker": "ANNE", "text": "Du hast den Wasserkocher vergessen. Absichtlich?"},
-	{"speaker": "OLIVER", "text": "Der bleibt hier. Dann habe ich einen Grund wiederzukommen."},
-	{"speaker": "ANNE", "text": "Du brauchst keinen Grund."},
-	{"speaker": "OLIVER", "text": "Frankfurt ist nur vier Stunden. Ich rufe an, sobald ich da bin."},
-	{"speaker": "ANNE", "text": "Fahr vorsichtig. Und schreib mir bei jeder Raststätte."},
+	{"speaker": "ANNE", "text": "Jetzt ist es also wirklich so weit. Du gehst."},
+	{"speaker": "OLIVER", "text": "Ja. Und es fällt mir schwerer, als ich zugeben wollte."},
+	{"speaker": "ANNE", "text": "Ich hoffe, wir schaffen das."},
+	{"speaker": "OLIVER", "text": "Ich glaube fest daran. Auch wenn es ein ganz neues Kapitel für uns ist."},
+	{"speaker": "ANNE", "text": "Die letzten Monate waren nicht einfach. Für mich nicht."},
+	{"speaker": "OLIVER", "text": "Für mich auch nicht. Aber ich will weiter an uns arbeiten. Jeden Tag."},
+	{"speaker": "ANNE", "text": "Ich hoffe, du kannst das. Ich will dich nämlich nicht verlieren."},
+	{"speaker": "OLIVER", "text": "Du verlierst mich nicht. Nicht wegen ein paar hundert Kilometern."},
+	{"speaker": "OLIVER", "text": "Ich muss jetzt los. Es ist so schwer — aber ich melde mich bei der ersten Pause."},
+	{"speaker": "ANNE", "text": "Fahr bitte vorsichtig."},
+	{"speaker": "OLIVER", "text": "Versprochen."},
 ]
 
-## Das Telefonat über die Freisprechanlage, mitten auf der A5.
+## Das Telefonat über die Freisprechanlage, kurz vor Frankfurt —
+## **echte Zeilen von Oliver**, behutsam verfeinert.
 const ANRUF: Array[Dictionary] = [
 	{"speaker": "ANNE", "text": "Wo bist du?"},
-	{"speaker": "OLIVER", "text": "Kurz hinter der Raststätte mit dem furchtbaren Kaffee."},
-	{"speaker": "ANNE", "text": "Das hilft mir nicht. Das sind alle."},
+	{"speaker": "OLIVER", "text": "Kurz vor Frankfurt. Ich musste die ganze Fahrt die Tränen zurückhalten."},
+	{"speaker": "ANNE", "text": "Ich auch. Ich hoffe, du bist dir sicher mit deiner Entscheidung."},
+	{"speaker": "OLIVER", "text": "Ich hoffe es auch. Aber ich muss es versuchen — ich war in Berlin einfach nicht mehr glücklich."},
+	{"speaker": "ANNE", "text": "Fahr bitte weiter vorsichtig. Und melde dich, sobald du da bist."},
+	{"speaker": "OLIVER", "text": "Mach ich. Versprochen."},
 ]
 
 ## Auf dem Bahnsteig: Annes erster Besuch, Oliver wartet schon.
