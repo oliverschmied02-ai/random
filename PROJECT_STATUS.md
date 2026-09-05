@@ -536,6 +536,27 @@ beim Dart-Minispiel in Kapitel 1. Am Kai steht kein Poller mehr auf der
 Mittelachse — ein dunkler Zylinder mitten im Fangring las sich als Teil
 der Hände.
 
+**Die Kulisse nach den Fotos vom echten Ort:** hinter dem Rasen (echte
+Rasen-Textur, kachelbar aus `tools/make_rasen.py` — FFT-Rauschen ist
+zirkular und damit nahtlos) steht jetzt der **Spreespeicher**
+(`_spreespeicher_bauen`): lange Klinkerfassade mit fünf Reihen
+Bogenfenstern (Fasche + dunkles Glas + Zylindersturz), Terrassenbögen
+und Schirmen unten, offene Eck-Loggien mit Balkonplatten, Mansarddach
+als Prisma mit Gaubenreihe und zwei Zwerchgiebeln. Der Läufer ist
+**rosé** statt rot, flankiert von vier **Kerzenlaternen** — beides wie
+auf den Fotos. Als Ambience läuft **leises Tages-Stadtrauschen**
+(`stadt_fern.wav`, drei weiche Vorbeifahrten je Loop) statt der alten
+Wellen-Möwen-Schleife — die Spree liegt mitten in Berlin, kein Meer.
+
+**Die Hochzeitsrede** (`_rede_sequenz`, nach dem gewonnenen Fangen):
+das Paar setzt sich auf eine Bank vor den Bogen (Sitzpose per
+Skelettraum wie bei den Gästen; Mocap wird dafür angehalten und stellt
+die Figuren danach von selbst wieder hin), ein Gast im Anzug tritt als
+Redner davor, die Kamera wechselt in drei Einstellungen über die Dauer
+der Rede, die Musik duckt sich. **Die Audiodatei fehlt noch:** Olivers
+echte Rede (~2 min) gehört als `audio/rede.ogg` oder `audio/rede.mp3`
+ins Projekt — liegt keine da, läuft eine kurze stumme Fassung.
+
 **Das Finale:** nach dem Sieg das Schlussbild am Wasser — und dann die
 **Schatztruhe** (`truhe_finale.gd`, Modelle aus `tools/make_truhe.py`):
 verschlossen auf dem roten Teppich, Anne läuft spielbar hin (Area3D auf

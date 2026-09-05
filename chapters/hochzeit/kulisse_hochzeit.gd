@@ -48,6 +48,7 @@ func _ready() -> void:
 	_ufer_bauen()
 	_bruecke_bauen()
 	_gegenueber_bauen()
+	_spreespeicher_bauen()
 	_fest_bauen()
 	_gaeste_setzen()
 
@@ -167,7 +168,9 @@ func _wasser_bauen() -> void:
 func _ufer_bauen() -> void:
 	var pflaster := _foto_mat("beton_platten", Color(0.50, 0.49, 0.46), 0.34, 0.7)
 	var beton := _foto_mat("beton_rau", Color(0.38, 0.37, 0.35), 0.26, 0.8)
-	var wiese := _mat(Color(0.27, 0.36, 0.19), 1.0)
+	# Echter Rasen statt grüner Farbfläche (kachelbarer Satz aus
+	# tools/make_rasen.py — Halm-Strichel, Farbflecken, Normal-Map).
+	var wiese := _foto_mat("rasen", Color(1.0, 1.0, 1.0), 0.5, 1.1)
 
 	# Uferpromenade und Wiese dahinter.
 	_kasten(Vector3(0.0, -0.02, 7.0), Vector3(200.0, 0.16, 14.0), pflaster)
@@ -541,6 +544,121 @@ func _gegenueber_bauen() -> void:
 		_mat(Color(0.44, 0.48, 0.50), 0.95))
 
 
+# --- Der Spreespeicher --------------------------------------------------------
+
+
+## Das Backstein-Lagerhaus hinter dem Fest — nach den Fotos vom echten
+## Ort: lange Klinkerfassade mit Reihen von Bogenfenstern, dunkles
+## Mansarddach mit Gaubenreihe und zwei Zwerchgiebeln, offene Loggien an
+## den Ecken, unten Terrassenbögen mit Schirmen. Steht hinter dem Rasen
+## (Front bei z = 38), außerhalb der Banden — reine Kulisse.
+func _spreespeicher_bauen() -> void:
+	var klinker := _foto_mat("klinker", Color(0.72, 0.52, 0.42), 0.14, 0.9)
+	var dunkel := _mat(Color(0.10, 0.11, 0.12), 0.4)
+	var fasche := _mat(Color(0.78, 0.70, 0.58), 0.85)
+	var dach := _mat(Color(0.26, 0.23, 0.21), 0.9)
+	var weiss := _mat(Color(0.88, 0.86, 0.82), 0.7)
+
+	# Baugrund hinter dem Rasen, sonst schwebte der Speicher im Nichts.
+	_kasten(Vector3(0.0, -0.02, 47.0), Vector3(200.0, 0.16, 18.0),
+		_foto_mat("beton_platten", Color(0.48, 0.47, 0.44), 0.3, 0.7))
+
+	# Hauptkorpus.
+	_kasten(Vector3(0.0, 10.5, 46.0), Vector3(116.0, 21.0, 16.0), klinker)
+
+	# Ein Bogenfenster: Fasche, dunkles Glas, runder Sturz (Zylinder mit
+	# Achse in die Fassade).
+	var bogenfenster := func(x: float, y: float, breit: float, hoch: float) -> void:
+		_kasten(Vector3(x, y, 37.94), Vector3(breit + 0.34, hoch + 0.3, 0.12), fasche)
+		_kasten(Vector3(x, y - 0.1, 37.90), Vector3(breit, hoch, 0.14), dunkel)
+		var bogen := MeshInstance3D.new()
+		var form := CylinderMesh.new()
+		form.top_radius = breit * 0.5
+		form.bottom_radius = breit * 0.5
+		form.height = 0.14
+		form.radial_segments = 14
+		form.material = dunkel
+		bogen.mesh = form
+		add_child(bogen)
+		bogen.position = Vector3(x, y + hoch * 0.5 - 0.1, 37.90)
+		bogen.rotation.x = PI / 2.0
+
+	# Fensterraster: fünf Geschosse, die Eck-Loggien bleiben frei.
+	for geschoss in 5:
+		var y := 5.4 + geschoss * 3.0
+		for spalte in 24:
+			var x := -48.3 + spalte * 4.2
+			if absf(x) > 45.0:
+				continue
+			bogenfenster.call(x, y, 1.15, 1.9)
+
+	# Erdgeschoss: Terrassenbögen, doppelt so breit.
+	for i in 12:
+		var x := -49.5 + i * 9.0
+		bogenfenster.call(x, 1.9, 2.2, 2.6)
+
+	# Eck-Loggien: dunkle, offene Nischen mit hellen Balkonplatten.
+	for sx: float in [-1.0, 1.0]:
+		var x := sx * 51.5
+		_kasten(Vector3(x, 10.5, 37.95), Vector3(6.0, 19.0, 0.5), dunkel)
+		for geschoss in 6:
+			var y := 3.4 + geschoss * 3.0
+			_kasten(Vector3(x, y, 37.55), Vector3(6.2, 0.22, 1.1), weiss)
+			_kasten(Vector3(x, y + 0.55, 37.15), Vector3(6.2, 0.06, 0.06), weiss)
+
+	# Mansarddach als Prisma, darüber nichts mehr — der Himmel gehört
+	# der Brücke. Gauben und zwei Zwerchgiebel wie auf dem Foto.
+	var first := MeshInstance3D.new()
+	var prisma := PrismMesh.new()
+	prisma.size = Vector3(117.0, 6.5, 17.5)
+	prisma.material = dach
+	first.mesh = prisma
+	add_child(first)
+	first.position = Vector3(0.0, 24.25, 46.0)
+	for i in 11:
+		var x := -45.0 + i * 9.0
+		if absf(absf(x) - 18.0) < 2.5:
+			continue  # Platz für die Zwerchgiebel
+		_kasten(Vector3(x, 23.2, 41.4), Vector3(1.5, 1.7, 1.4), fasche)
+		_kasten(Vector3(x, 23.15, 40.65), Vector3(0.9, 1.0, 0.1), dunkel)
+	for sx: float in [-1.0, 1.0]:
+		var x := sx * 18.0
+		_kasten(Vector3(x, 22.9, 40.6), Vector3(5.2, 3.8, 1.6), fasche)
+		_kasten(Vector3(x, 22.7, 39.75), Vector3(2.6, 2.0, 0.1), dunkel)
+		var giebel := MeshInstance3D.new()
+		var gform := PrismMesh.new()
+		gform.size = Vector3(5.4, 1.8, 1.7)
+		gform.material = dach
+		giebel.mesh = gform
+		add_child(giebel)
+		giebel.position = Vector3(x, 25.7, 40.6)
+
+	# Terrasse: Schirme vor den Bögen — überwiegend weiß, zwei dunkle.
+	var schirm := func(x: float, hell: bool) -> void:
+		var stiel := MeshInstance3D.new()
+		var sform := CylinderMesh.new()
+		sform.top_radius = 0.03
+		sform.bottom_radius = 0.03
+		sform.height = 2.4
+		sform.material = dunkel
+		stiel.mesh = sform
+		add_child(stiel)
+		stiel.position = Vector3(x, 1.2, 36.4)
+		var dachteil := MeshInstance3D.new()
+		var dform := CylinderMesh.new()
+		dform.top_radius = 0.03
+		dform.bottom_radius = 1.35
+		dform.height = 0.55
+		dform.radial_segments = 8
+		dform.material = weiss if hell else _mat(Color(0.16, 0.17, 0.18), 0.8)
+		dachteil.mesh = dform
+		add_child(dachteil)
+		dachteil.position = Vector3(x, 2.45, 36.4)
+	for daten: Array in [[-40.0, true], [-27.0, true], [-13.5, false],
+			[4.5, true], [17.5, true], [31.0, false], [43.0, true]]:
+		schirm.call(daten[0], daten[1])
+
+
 # --- Der Hochzeitsaufbau ------------------------------------------------------
 
 
@@ -564,9 +682,22 @@ func _fest_bauen() -> void:
 			var gier := PI + rng.randf_range(-0.14, 0.14)
 			_prop(_STUHL, Vector3(x, 0.06, z), gier)
 			_stuhlplaetze.append({"ort": Vector3(x, 0.0, z), "gier": gier})
-	# Roter Teppich vom Gang zum Bogen — hier steht später die Braut.
+	# Rosa Läufer vom Gang zum Bogen — wie auf den Fotos vom echten Ort.
 	_kasten(Vector3(0.0, 0.055, 5.6), Vector3(1.9, 0.03, 7.6),
-		_mat(Color(0.52, 0.20, 0.22), 0.9))
+		_mat(Color(0.76, 0.52, 0.55), 0.92))
+	# Kerzenlaternen am Läufer: Metallrahmen, warm glimmender Kern.
+	var metall := _mat(Color(0.55, 0.56, 0.58), 0.35)
+	var kerze := _mat(Color(1.0, 0.85, 0.55), 0.6, Color(1.0, 0.75, 0.4), 1.4)
+	for ort: Vector3 in [Vector3(-1.35, 0.0, 9.0), Vector3(1.35, 0.0, 9.0),
+			Vector3(-1.35, 0.0, 3.6), Vector3(1.35, 0.0, 3.6)]:
+		_kasten(ort + Vector3(0, 0.02, 0), Vector3(0.24, 0.03, 0.24), metall)
+		_kasten(ort + Vector3(0, 0.22, 0), Vector3(0.09, 0.20, 0.09), kerze)
+		for ecke: Vector3 in [Vector3(-0.1, 0, -0.1), Vector3(0.1, 0, -0.1),
+				Vector3(-0.1, 0, 0.1), Vector3(0.1, 0, 0.1)]:
+			_kasten(ort + ecke + Vector3(0, 0.21, 0),
+				Vector3(0.02, 0.38, 0.02), metall)
+		_kasten(ort + Vector3(0, 0.43, 0), Vector3(0.26, 0.04, 0.26), metall)
+		_kasten(ort + Vector3(0, 0.49, 0), Vector3(0.05, 0.09, 0.05), metall)
 
 	# Empfang: Stehtische mit Gläsern, etwas abseits.
 	for daten in [[-13.0, 12.0], [-9.5, 15.5], [12.5, 12.5], [16.0, 15.0]]:

@@ -88,6 +88,12 @@ def main(nur: int = -1) -> None:
             # RMS-Niveau der Musikbetten angleichen statt auf die Spitze.
             rms = float(np.sqrt((y ** 2).mean()))
             y = y * (0.11 / max(rms, 1e-9))
+            # Das Intro des Stücks ist leiser als der Rest — die ersten
+            # Sekunden bekommen einen sanft auslaufenden Schub (+2,5 dB
+            # auf Eins in 18 s), damit der Einstieg trägt.
+            t = np.arange(len(y)) / SR
+            schub = 1.0 + 0.33 * np.clip(1.0 - t / 18.0, 0.0, 1.0)
+            y = y * schub[:, None]
             spitze = float(np.max(np.abs(y)))
             if spitze > 0.95:
                 y = y * (0.95 / spitze)

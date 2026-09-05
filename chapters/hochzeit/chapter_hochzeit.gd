@@ -56,6 +56,7 @@ var truhe: TruhenFinale
 
 const _KLEID := preload("res://assets/hochzeit/kleid.glb")
 const _STRAUSS := preload("res://assets/props/strauss.glb")
+const _BANK := preload("res://assets/props/bank.glb")
 
 
 func _ready() -> void:
@@ -66,13 +67,14 @@ func _ready() -> void:
 	# während des Gesprächs sehen die beiden einander an.
 	_dialogue.zeile_begonnen.connect(_auf_sprechzeile)
 	_dialogue.finished.connect(func() -> void: _figur_anne.schaue_an(null))
-	# Die Spree unterm Fest: Wellen und Möwen als leiser Loop neben der
-	# Menge (synthetisiert, tools/make_ambience.py).
-	var wasser := AudioStreamPlayer.new()
-	wasser.stream = load("res://audio/wellen_moewen.wav")
-	wasser.volume_db = -14.0
-	add_child(wasser)
-	wasser.play()
+	# Unterm Fest liegt ganz leise die Stadt (fernes Verkehrsrauschen,
+	# tools/make_ambience.py) — die Spree ist mitten in Berlin, kein Meer;
+	# die alte Wellen-Möwen-Schleife klang nach Ostsee.
+	var stadt := AudioStreamPlayer.new()
+	stadt.stream = load("res://audio/stadt_fern.wav")
+	stadt.volume_db = -20.0
+	add_child(stadt)
+	stadt.play()
 	# Kapitelmusik: der Kanon in D (Klavier, CC0) — DAS Hochzeitsstück.
 	_musik = AudioStreamPlayer.new()
 	_musik.stream = load("res://audio/musik/hochzeit.ogg")
@@ -154,12 +156,17 @@ func _auf_runde_geschafft() -> void:
 	# durchs Schlussbild und bis zur Truhe.
 	_strauss_in_die_hand()
 
+	# 3b. Die Hochzeitsrede: das Paar setzt sich auf die Bank vor dem
+	# Bogen, ein Redner tritt davor, die Kamera wandert über das Fest.
+	await _rede_sequenz()
+
 	# 4. Schlussbild am Wasser: die beiden vor der Brücke.
 	_player.global_position = _SCHLUSS_ANNE
 	_player.rotation.y = PI * 0.92
 	_oliver.global_position = _SCHLUSS_OLIVER
 	_oliver.rotation.y = -PI * 0.92
 	_film(Vector3(0.0, 1.90, 6.4), Vector3(0.0, 1.62, 1.5))
+	await _aufblenden(0.6)
 	await _dialogue.play(HochzeitDialogue.GEWONNEN)
 
 	# 5. Das Truhen-Finale: der Code öffnet das eigentliche Geschenk.
@@ -216,8 +223,124 @@ func _truhen_finale() -> void:
 		_musik.stream = load("res://audio/musik/finale.ogg")
 		_musik.volume_db = -12.0
 		_musik.play())
-	# Den schwebenden Rucksack einen Moment wirken lassen.
-	await get_tree().create_timer(_wartezeit(3.2)).timeout
+	# Den schwebenden Rucksack in Ruhe wirken lassen — das ist das
+	# Geschenk, der Moment darf stehen.
+	await get_tree().create_timer(_wartezeit(7.5)).timeout
+
+
+## Die Hochzeitsrede nach dem gewonnenen Spiel: das Paar sitzt auf der
+## Bank vor dem Bogen, ein Redner steht davor, die Kamera wandert in
+## drei Einstellungen über das Fest. Die Audiodatei ist Olivers echte
+## Rede (`res://audio/rede.ogg` oder `.mp3`, ~2 min) — **liegt keine im
+## Projekt, läuft eine kurze stumme Fassung als Platzhalter.** Die Datei
+## später einfach nach `audio/` legen, mehr braucht es nicht.
+func _rede_sequenz() -> void:
+	await _abblenden(0.6)
+
+	var bank := _BANK.instantiate() as Node3D
+	add_child(bank)
+	bank.position = Vector3(0.0, 0.06, 5.1)
+	bank.rotation.y = PI
+
+	_player.global_position = Vector3(-0.38, 0.3, 5.0)
+	_player.rotation.y = PI
+	_oliver.global_position = Vector3(0.42, 0.25, 5.0)
+	_oliver.rotation.y = PI
+	# Mocap anhalten, sonst überschreibt der nächste Tick die Sitzpose.
+	_figur_anne.set_physics_process(false)
+	_figur_oliver.set_physics_process(false)
+	var anne_versatz := _figur_hinsetzen(_figur_anne)
+	var oliver_versatz := _figur_hinsetzen(_figur_oliver)
+
+	# Der Redner: ein Gast im Anzug, seitlich vor dem Bogen, zum Paar
+	# gedreht. Sein Idle-Leben (Atmen, Umherschauen) bringt er selbst mit.
+	var redner := Hochzeitsgast.new()
+	redner.modell_pfad = "res://actors/models/gast_7.glb"
+	redner.zielhoehe = 1.84
+	redner.mocap_aktiv = false
+	redner.gangwerk_aktiv = false
+	redner.position = Vector3(1.1, 0.0, 2.4)
+	redner.rotation.y = atan2(-0.38 - 1.1, 5.0 - 2.4) + PI
+	add_child(redner)
+
+	# Ton: die Musik duckt sich, die Rede übernimmt.
+	var rede: AudioStreamPlayer = null
+	var dauer := 10.0
+	for pfad in ["res://audio/rede.ogg", "res://audio/rede.mp3"]:
+		if ResourceLoader.exists(pfad):
+			rede = AudioStreamPlayer.new()
+			rede.stream = load(pfad)
+			rede.volume_db = -2.0
+			add_child(rede)
+			dauer = rede.stream.get_length()
+			break
+	var ducken := create_tween()
+	ducken.tween_property(_musik, ^"volume_db", -26.0, _wartezeit(1.5))
+
+	# Einstellung 1: über die Schultern des Paares auf Redner und Brücke.
+	_film(Vector3(-2.6, 1.7, 8.8), Vector3(0.7, 1.15, 2.4))
+	await _aufblenden(0.6)
+	if rede != null:
+		rede.play()
+	var drittel := _wartezeit(maxf(dauer, 3.0) / 3.0)
+	await get_tree().create_timer(drittel).timeout
+	# Einstellung 2: am Bogen und am Redner vorbei auf das sitzende Paar.
+	_film(Vector3(3.4, 1.5, 0.8), Vector3(-0.5, 0.95, 5.6))
+	await get_tree().create_timer(drittel).timeout
+	# Einstellung 3: weit von der Seite, Gäste und Speicher im Bild.
+	_film(Vector3(-8.5, 2.6, 13.5), Vector3(0.6, 1.0, 3.2))
+	await get_tree().create_timer(drittel).timeout
+
+	await _abblenden(0.6)
+	if rede != null and rede.playing:
+		create_tween().tween_property(rede, ^"volume_db", -40.0, _wartezeit(0.8))
+	# Aufstehen: Versatz zurücknehmen, der nächste Mocap-Tick stellt die
+	# Knochen von selbst wieder in die Stand-Pose.
+	_figur_anne.position.y += anne_versatz
+	_figur_oliver.position.y += oliver_versatz
+	_figur_anne.set_physics_process(true)
+	_figur_oliver.set_physics_process(true)
+	bank.queue_free()
+	redner.queue_free()
+	create_tween().tween_property(_musik, ^"volume_db", -13.0, _wartezeit(2.0))
+
+
+## Setzt eine Spielfigur in Sitzpose — dieselbe Skelettraum-Technik wie
+## bei den Gästen (`Hochzeitsgast._hinsetzen`), plus Oberarme leicht nach
+## vorn, damit die Hände nicht in den Oberschenkeln stecken. Liefert den
+## Höhenversatz zurück, damit die Sequenz ihn beim Aufstehen zurücknimmt.
+func _figur_hinsetzen(figur: Figur, sitzhoehe: float = 0.47) -> float:
+	var skelett := figur.skelett_finden()
+	if skelett == null:
+		return 0.0
+	for seite in ["Left", "Right"]:
+		var schenkel := skelett.find_bone("%sUpLeg" % seite)
+		var schienbein := skelett.find_bone("%sLeg" % seite)
+		if schenkel < 0 or schienbein < 0:
+			return 0.0
+		var lage := skelett.get_bone_global_pose(schenkel)
+		skelett.set_bone_global_pose(schenkel, Transform3D(
+			Basis(Vector3.RIGHT, -PI * 0.46) * lage.basis, lage.origin))
+		lage = skelett.get_bone_global_pose(schienbein)
+		skelett.set_bone_global_pose(schienbein, Transform3D(
+			Basis(Vector3.RIGHT, PI * 0.44) * lage.basis, lage.origin))
+	for paar: Array in [["Left", -1.0], ["Right", 1.0]]:
+		var arm := skelett.find_bone("%sArm" % paar[0])
+		if arm < 0:
+			continue
+		var lage := skelett.get_bone_global_pose(arm)
+		skelett.set_bone_global_pose(arm, Transform3D(
+			Basis(Vector3.RIGHT, -0.22)
+			* Basis(Vector3(0, 0, 1), -0.18 * (paar[1] as float)) * lage.basis,
+			lage.origin))
+	var huefte := skelett.find_bone("Hips")
+	if huefte < 0:
+		return 0.0
+	var hueft_welt := (skelett.global_transform
+		* skelett.get_bone_global_pose(huefte).origin).y - figur.global_position.y
+	var versatz := hueft_welt - sitzhoehe - 0.05
+	figur.position.y -= versatz
+	return versatz
 
 
 ## Das Hochzeitskleid: Mieder, Rock und Taillenband aus `kleid.glb`
@@ -398,6 +521,12 @@ func _film(ort: Vector3, blick: Vector3) -> void:
 func _abblenden(dauer: float) -> void:
 	var lauf := create_tween()
 	lauf.tween_property(_blende, ^"color:a", 1.0, _wartezeit(dauer))
+	await lauf.finished
+
+
+func _aufblenden(dauer: float) -> void:
+	var lauf := create_tween()
+	lauf.tween_property(_blende, ^"color:a", 0.0, _wartezeit(dauer))
 	await lauf.finished
 
 

@@ -167,7 +167,42 @@ def brems_zisch() -> None:
     print("brems_zisch.wav: One-Shot,", dauer, "s")
 
 
+def stadt_fern() -> None:
+    """Leises Tages-Stadtrauschen fuer die Hochzeit am Spreeufer: fernes
+    Verkehrsgrundrauschen, ab und zu ein weiches Anschwellen (ein Auto
+    auf der Bruecke), ein Hauch Luft in den Hoehen. Kein Meer, keine
+    Moewen — die Kulisse ist mitten in Berlin. 24-s-Loop, nahtlos wie
+    die uebrigen (FFT-Filter, ganze LFO-Zyklen)."""
+    dauer = 24.0
+    n = int(dauer * SR)
+
+    # Grundteppich: tiefes, breites Rauschen — die Stadt als Ganzes.
+    teppich = bandpass_loop(RNG.standard_normal(n), 40.0, 500.0)
+    teppich *= 0.55 + 0.10 * lfo(dauer, n, 2) + 0.06 * lfo(dauer, n, 5, 1.1)
+
+    # Hoehen-Luft: sehr leise, nimmt dem Teppich das Dumpfe.
+    luft = bandpass_loop(RNG.standard_normal(n), 1200.0, 5000.0) * 0.06
+
+    # Drei weiche Vorbeifahrten, fest im Loop verteilt: ein Anschwellen
+    # im Mittenband, ein paar Sekunden lang.
+    fahrten = np.zeros(n)
+    t = np.arange(n) / SR
+    for start, laenge, staerke in [(4.0, 5.0, 0.5), (12.5, 4.2, 0.35),
+                                   (18.5, 4.8, 0.45)]:
+        fenster = np.exp(-((t - start - laenge / 2.0) ** 2)
+                         / (2.0 * (laenge / 4.0) ** 2))
+        fahrten += fenster * staerke
+    mitten = bandpass_loop(RNG.standard_normal(n), 150.0, 900.0)
+    fahrt_klang = mitten * fahrten
+
+    mono = normieren(teppich + luft + fahrt_klang, 0.8)
+    stereo = np.stack([mono, np.roll(mono, int(0.0009 * SR))], axis=1)
+    sf.write("audio/stadt_fern.wav", stereo, SR, subtype="PCM_16")
+    print("stadt_fern.wav:", dauer, "s Loop")
+
+
 if __name__ == "__main__":
     wellen_moewen()
     zug_rumpeln()
     brems_zisch()
+    stadt_fern()

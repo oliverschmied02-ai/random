@@ -352,6 +352,15 @@ Trefferzone (`MASKEN_RADIUS`) und sichtbare Größe (Skalierung in
 | **Platzhalter** | Keiner mehr: vier echte Kenney-Tritte (CC0, `audio/kenney/schritt_1–4.ogg`); die alten synthetischen WAVs bleiben als Rückfallebene |
 | **Priorität** | GELIEFERT |
 
+### Die Hochzeitsrede (Audio) — OFFEN, nur Oliver
+| | |
+| --- | --- |
+| **Zweck** | Die echte Rede läuft als Sequenz nach dem gewonnenen Straußfangen |
+| **Szene** | `chapter_hochzeit._rede_sequenz` — Paar auf der Bank, Redner am Bogen, drei Kameraeinstellungen |
+| **Typ** | Eine Audiodatei, ~2 min, als `audio/rede.ogg` oder `audio/rede.mp3` |
+| **Platzhalter** | Ohne Datei läuft eine kurze stumme Fassung (10 s) |
+| **Priorität** | WICHTIG — die Sequenz ist gebaut und wartet nur auf die Datei |
+
 ### Dialog-Gebrabbel — GELIEFERT
 | | |
 | --- | --- |
