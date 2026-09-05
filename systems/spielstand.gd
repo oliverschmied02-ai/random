@@ -14,13 +14,16 @@ extends Node
 ##   2 — Frankfurt gewonnen → Kapitel 3 wählbar
 ##   3 — Hochzeit gewonnen → alles offen
 ##
-## Für die Entwicklung (und für Oliver): F9 auf dem Titelbildschirm
-## schaltet alles frei — siehe title_screen.gd.
+## **Auf Olivers Wunsch sind alle Kapitel von Anfang an offen** —
+## `erreicht` startet auf 3 statt 0. Das Spiel bleibt eine Reise, aber
+## niemand muss sich den Zugang erst erspielen. Wer die Sperre zurück
+## will: den Startwert unten wieder auf 0 setzen (F9 auf dem Titel
+## schaltet dann weiterhin alles frei).
 
 const PFAD := "user://spielstand.cfg"
 
-## Höchste freigeschaltete Stufe (siehe oben).
-var erreicht: int = 0
+## Höchste freigeschaltete Stufe (siehe oben). Start: alles offen.
+var erreicht: int = 3
 
 
 func _ready() -> void:
@@ -31,7 +34,9 @@ func laden() -> void:
 	var ablage := ConfigFile.new()
 	if ablage.load(PFAD) != OK:
 		return
-	erreicht = int(ablage.get_value("fortschritt", "erreicht", 0))
+	# maxi statt Zuweisung: ein alter Spielstand mit niedrigerer Stufe
+	# darf die Alles-offen-Voreinstellung nicht wieder zusperren.
+	erreicht = maxi(erreicht, int(ablage.get_value("fortschritt", "erreicht", 0)))
 
 
 ## Nach einem Kapitelsieg aufrufen — hebt die Stufe an und speichert.

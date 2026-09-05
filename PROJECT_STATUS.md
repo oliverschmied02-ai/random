@@ -1394,7 +1394,7 @@ Schritt, wenn mehr Leben gewünscht ist).
 gewonnenen Minispiel die höchste erreichte Stufe (`user://spielstand.cfg`,
 Autoload `Spielstand`). Der Titelbildschirm bietet die freigeschalteten
 Kapitel direkt an; gesperrte zeigen nur „Kapitel n — ✻ ✻ ✻", damit die
-Hochzeit keine Überraschung verrät. F9 auf dem Titel schaltet alles frei
+Hochzeit keine Überraschung verrät. alle Kapitel sind inzwischen von Anfang an offen
 (der Werkstattschlüssel fürs Testen).
 
 **Vom Kenney- zum Quaternius-Fahrzeugpark:** Oliver fand die
