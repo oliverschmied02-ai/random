@@ -18,5 +18,6 @@ hochzeit.ogg   <- Olivers eigenes Stück (AcidPlanet-Archiv auf
                   Build). Ersetzt den Kanon in D — der bleibt über
                   tools/make_musik.py wiederherstellbar, wenn die
                   MP3-Quelle entfernt wird.
-finale.ogg     <- "Romantic Inspiration" (freepd.com)
-                  Truhe, Geschenktext und Abspann
+(finale.ogg entfernt: Olivers Lied traegt jetzt das ganze Kapitel
+ bis durch den Abspann — "Romantic Inspiration" ist ueber
+ tools/make_musik.py wiederherstellbar.)

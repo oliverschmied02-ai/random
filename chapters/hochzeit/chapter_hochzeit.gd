@@ -67,14 +67,10 @@ func _ready() -> void:
 	# während des Gesprächs sehen die beiden einander an.
 	_dialogue.zeile_begonnen.connect(_auf_sprechzeile)
 	_dialogue.finished.connect(func() -> void: _figur_anne.schaue_an(null))
-	# Unterm Fest liegt ganz leise die Stadt (fernes Verkehrsrauschen,
-	# tools/make_ambience.py) — die Spree ist mitten in Berlin, kein Meer;
-	# die alte Wellen-Möwen-Schleife klang nach Ostsee.
-	var stadt := AudioStreamPlayer.new()
-	stadt.stream = load("res://audio/stadt_fern.wav")
-	stadt.volume_db = -20.0
-	add_child(stadt)
-	stadt.play()
+	# Bewusst KEIN Dauer-Ambiente in diesem Kapitel: sowohl die alte
+	# Wellen-Möwen-Schleife als auch der synthetische Menge-/Stadt-Teppich
+	# lasen sich als Meeresrauschen unter der Musik. Hier trägt allein
+	# Olivers Lied; übrig bleiben nur Momentklänge (Jubel, Fanfare).
 	# Kapitelmusik: der Kanon in D (Klavier, CC0) — DAS Hochzeitsstück.
 	_musik = AudioStreamPlayer.new()
 	_musik.stream = load("res://audio/musik/hochzeit.ogg")
@@ -115,7 +111,7 @@ func _ablauf() -> void:
 	_oliver.global_position = _START_OLIVER
 	_oliver.rotation.y = -0.7
 	_film(Vector3(-9.6, 1.75, 18.4), Vector3(-5.4, 1.35, 16.2))
-	_menge.play()
+	# _menge bleibt stumm — das Rausch-Gemurmel klang wie Brandung.
 	await _karte.auftakt(HochzeitDialogue.KARTE_TITEL,
 		HochzeitDialogue.KARTE_ZEILE)
 	await _dialogue.play(HochzeitDialogue.AUFTAKT)
@@ -215,14 +211,8 @@ func _truhen_finale() -> void:
 	_film(Vector3(-1.4, 1.35, 7.6), Vector3(0.2, 0.5, 5.2))
 	truhe.pad_zeigen()
 	await truhe.geoeffnet
-	# Musikwechsel zum Geschenk: der Kanon blendet aus, „Romantic
-	# Inspiration" trägt Rucksack, Geschenktext und Abspann.
-	var wechsel := create_tween()
-	wechsel.tween_property(_musik, ^"volume_db", -50.0, 2.0)
-	wechsel.tween_callback(func() -> void:
-		_musik.stream = load("res://audio/musik/finale.ogg")
-		_musik.volume_db = -12.0
-		_musik.play())
+	# Kein Musikwechsel mehr: Olivers Lied trägt durch — Truhe, Rucksack,
+	# Geschenktext und Abspann. „Romantic Inspiration" ist raus.
 	# Den schwebenden Rucksack in Ruhe wirken lassen — das ist das
 	# Geschenk, der Moment darf stehen.
 	await get_tree().create_timer(_wartezeit(7.5)).timeout
